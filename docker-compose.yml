@@ -1,0 +1,47 @@
+# @see https://docs.docker.com/compose/compose-file/#logging
+x-logging: &parthero-logging
+  options:
+    max-size: '12m'
+    max-file: '20'
+
+x-volumes: &django-volumes
+  - .:/app
+
+services:
+  parthero:
+    image: public.ecr.aws/docker/library/python:3.12-bookworm
+    build:
+      context: .
+      dockerfile: ./compose/django/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - parthero
+    volumes: *django-volumes
+    env_file: .env
+    ports:
+      - '8000:8000'
+    command: /gunicorn.sh
+    logging: *parthero-logging
+
+  postgres:
+    image: bitnami/postgresql:latest
+    volumes:
+      - ./pg_backups:/backups
+    env_file: .env
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 1s
+    logging: *parthero-logging
+    networks:
+      - parthero
+
+networks:
+  parthero:
+    external: false
