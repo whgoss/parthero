@@ -1,227 +1,181 @@
 {% extends "base.html" %}
 {% block content %}
-<div>
-  <!-- Header + primary actions -->
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
-        Pieces
-      </h1>
-      <p class="mt-1 text-sm text-slate-500">
-        Manage your orchestra's pieces and parts in one place.
-      </p>
-    </div>
-    <div class="flex flex-wrap gap-2 sm:justify-end">
-
-      <!-- In Django this would be an <a> to your create view -->
-      <a
-        href="#"
-        class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-              fill="none" stroke="currentColor"
-              class="h-4 w-4">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                d="M10 4v12m6-6H4" />
-        </svg>
-        New Piece
-      </a>
-    </div>
-  </div>
-
-  <!-- Search + filters -->
-  <section class="mb-4">
-    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <!-- Search -->
-      <div class="w-full md:max-w-md">
-        <label for="piece-search" class="sr-only">Search pieces</label>
-        <div class="relative">
-          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                  fill="none" stroke="currentColor"
-                  class="h-4 w-4 text-slate-400">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
-                    d="m14.5 14.5-3-3m1.5-3A4.5 4.5 0 1 1 5.5 5.5a4.5 4.5 0 0 1 7.5 3Z" />
-            </svg>
-          </span>
-          <input
-            id="piece-search"
-            name="q"
-            type="search"
-            placeholder="Search by title or composer..."
-            class="block w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
+        <!-- Header + primary actions -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Pieces</h1>
+                <p class="mt-1 text-sm text-slate-500">Manage your orchestra's pieces and parts in one place.</p>
+            </div>
+            <div class="flex flex-wrap gap-2 sm:justify-end">
+                <!-- In Django this would be an <a> to your create view -->
+                <a href="#"
+                   class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 20 20"
+                         fill="none"
+                         stroke="currentColor"
+                         class="h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M10 4v12m6-6H4" />
+                    </svg>
+                    New Piece
+                </a>
+            </div>
         </div>
-      </div>
-
-      <!-- Simple filter stub (can hook up later) -->
-      <div class="flex items-center gap-2 text-xs text-slate-500">
-        <span>Sort by:</span>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-        >
-          Recently updated
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                fill="none" stroke="currentColor"
-                class="h-3 w-3 text-slate-400">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
-                  d="m6 8 4 4 4-4" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Pieces table card -->
-  <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-    <!-- Table header row -->
-    <div class="border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
-      <div class="flex items-center justify-between text-xs text-slate-500">
-        <span>Showing 24 pieces</span> <!-- Use {{ page_obj.paginator.count }} later -->
-        <span>Click a piece to see its parts.</span>
-      </div>
-    </div>
-
-    <!-- Table body -->
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-200 text-sm">
-        <thead class="bg-slate-50">
-          <tr>
-            <th scope="col"
-                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Title
-            </th>
-            <th scope="col"
-                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Composer
-            </th>
-            <th scope="col"
-                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Parts
-            </th>
-            <th scope="col"
-                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Last updated
-            </th>
-            <th scope="col"
-                class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 bg-white">
-          <!-- Example row – in Django you’d loop over pieces -->
-          <tr class="hover:bg-slate-50/80 cursor-pointer">
-            <td class="px-4 py-3 align-top">
-              <div class="flex flex-col">
-                <span class="font-medium text-slate-900">Symphony No. 5 in C minor</span>
-                <span class="text-xs text-slate-500">Op. 67</span>
-              </div>
-            </td>
-            <td class="px-4 py-3 align-top text-slate-700">
-              Ludwig van Beethoven
-            </td>
-            <td class="px-4 py-3 align-top text-slate-700">
-              <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">
-                18 parts
-              </span>
-            </td>
-            <td class="px-4 py-3 align-top text-slate-600">
-              Nov 10, 2025
-              <div class="text-xs text-slate-400">
-                by Alice K.
-              </div>
-            </td>
-            <td class="px-4 py-3 align-top text-right">
-              <div class="inline-flex items-center gap-1">
-                <a href="#"
-                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
-                  View parts
-                </a>
-                <span class="text-slate-300">•</span>
-                <button
-                  type="button"
-                  class="text-xs text-slate-500 hover:text-slate-700"
-                >
-                  More
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Another example row -->
-          <tr class="hover:bg-slate-50/80 cursor-pointer">
-            <td class="px-4 py-3 align-top">
-              <div class="flex flex-col">
-                <span class="font-medium text-slate-900">The Planets</span>
-                <span class="text-xs text-slate-500">Suite for Large Orchestra</span>
-              </div>
-            </td>
-            <td class="px-4 py-3 align-top text-slate-700">
-              Gustav Holst
-            </td>
-            <td class="px-4 py-3 align-top text-slate-700">
-              <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">
-                26 parts
-              </span>
-            </td>
-            <td class="px-4 py-3 align-top text-slate-600">
-              Oct 28, 2025
-              <div class="text-xs text-slate-400">
-                by System import
-              </div>
-            </td>
-            <td class="px-4 py-3 align-top text-right">
-              <div class="inline-flex items-center gap-1">
-                <a href="#"
-                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
-                  View parts
-                </a>
-                <span class="text-slate-300">•</span>
-                <button
-                  type="button"
-                  class="text-xs text-slate-500 hover:text-slate-700">
-                  More
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty state example (conditionally render if no pieces) -->
-          <!--
+        <!-- Search + filters -->
+        <section class="mb-4">
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <!-- Search -->
+                <div class="w-full md:max-w-md">
+                    <label for="piece-search" class="sr-only">Search pieces</label>
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 20 20"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 class="h-4 w-4 text-slate-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="m14.5 14.5-3-3m1.5-3A4.5 4.5 0 1 1 5.5 5.5a4.5 4.5 0 0 1 7.5 3Z" />
+                            </svg>
+                        </span>
+                        <input id="piece-search"
+                               name="q"
+                               type="search"
+                               placeholder="Search by title or composer..."
+                               class="block w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                    </div>
+                </div>
+                <!-- Simple filter stub (can hook up later) -->
+                <div class="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Sort by:</span>
+                    <button type="button"
+                            class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+                        Recently updated
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="none"
+                             stroke="currentColor"
+                             class="h-3 w-3 text-slate-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="m6 8 4 4 4-4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+        <!-- Pieces table card -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <!-- Table header row -->
+            <div class="border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <span>Showing 24 pieces</span> <!-- Use {{ page_obj.paginator.count }} later -->
+                    <span>Click a piece to see its parts.</span>
+                </div>
+            </div>
+            <!-- Table body -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Title
+                            </th>
+                            <th scope="col"
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Composer
+                            </th>
+                            <th scope="col"
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Parts
+                            </th>
+                            <th scope="col"
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Last updated
+                            </th>
+                            <th scope="col"
+                                class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                        <!-- Example row – in Django you’d loop over pieces -->
+                        <tr class="hover:bg-slate-50/80 cursor-pointer">
+                            <td class="px-4 py-3 align-top">
+                                <div class="flex flex-col">
+                                    <span class="font-medium text-slate-900">Symphony No. 5 in C minor</span>
+                                    <span class="text-xs text-slate-500">Op. 67</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 align-top text-slate-700">Ludwig van Beethoven</td>
+                            <td class="px-4 py-3 align-top text-slate-700">
+                                <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">18 parts</span>
+                            </td>
+                            <td class="px-4 py-3 align-top text-slate-600">
+                                Nov 10, 2025
+                                <div class="text-xs text-slate-400">by Alice K.</div>
+                            </td>
+                            <td class="px-4 py-3 align-top text-right">
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="#"
+                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-800">View parts</a>
+                                    <span class="text-slate-300">•</span>
+                                    <button type="button" class="text-xs text-slate-500 hover:text-slate-700">More</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Another example row -->
+                        <tr class="hover:bg-slate-50/80 cursor-pointer">
+                            <td class="px-4 py-3 align-top">
+                                <div class="flex flex-col">
+                                    <span class="font-medium text-slate-900">The Planets</span>
+                                    <span class="text-xs text-slate-500">Suite for Large Orchestra</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 align-top text-slate-700">Gustav Holst</td>
+                            <td class="px-4 py-3 align-top text-slate-700">
+                                <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">26 parts</span>
+                            </td>
+                            <td class="px-4 py-3 align-top text-slate-600">
+                                Oct 28, 2025
+                                <div class="text-xs text-slate-400">by System import</div>
+                            </td>
+                            <td class="px-4 py-3 align-top text-right">
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="#"
+                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-800">View parts</a>
+                                    <span class="text-slate-300">•</span>
+                                    <button type="button" class="text-xs text-slate-500 hover:text-slate-700">More</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Empty state example (conditionally render if no pieces) -->
+                        <!--
           <tr>
             <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500">
               No pieces yet. Click <span class="font-medium text-slate-700">“Add new piece”</span> to get started.
             </td>
           </tr>
           -->
-        </tbody>
-      </table>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination / footer -->
+            <div class="border-t border-slate-200 bg-slate-50/80 px-4 py-2.5 flex items-center justify-between text-xs text-slate-500">
+                <div>
+                    Showing <span class="font-medium text-slate-700">1–10</span> of
+                    <span class="font-medium text-slate-700">24</span> pieces
+                </div>
+                <div class="flex items-center gap-1">
+                    <button type="button"
+                            class="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                            disabled>Previous</button>
+                    <button type="button"
+                            class="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </section>
     </div>
-
-    <!-- Pagination / footer -->
-    <div class="border-t border-slate-200 bg-slate-50/80 px-4 py-2.5 flex items-center justify-between text-xs text-slate-500">
-      <div>
-        Showing <span class="font-medium text-slate-700">1–10</span> of
-        <span class="font-medium text-slate-700">24</span> pieces
-      </div>
-      <div class="flex items-center gap-1">
-        <button
-          type="button"
-          class="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-          disabled
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  </section>
-</div>
 {% endblock %}
