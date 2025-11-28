@@ -8,9 +8,8 @@
                 <p class="mt-1 text-sm text-slate-500">Manage your orchestra's pieces and parts in one place.</p>
             </div>
             <div class="flex flex-wrap gap-2 sm:justify-end">
-                <!-- In Django this would be an <a> to your create view -->
                 <a href="#"
-                   class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
+                   class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          viewBox="0 0 20 20"
                          fill="none"
@@ -41,8 +40,8 @@
                         <input id="piece-search"
                                name="q"
                                type="search"
-                               placeholder="Search by title or composer..."
-                               class="block w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                               placeholder="Search by title or composer"
+                               class="block w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                     </div>
                 </div>
                 <!-- Simple filter stub (can hook up later) -->
@@ -67,7 +66,7 @@
             <!-- Table header row -->
             <div class="border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
                 <div class="flex items-center justify-between text-xs text-slate-500">
-                    <span>Showing 24 pieces</span> <!-- Use {{ page_obj.paginator.count }} later -->
+                    <span>Showing {{ pieces_count }} pieces</span>
                     <span>Click a piece to see its parts.</span>
                 </div>
             </div>
@@ -99,6 +98,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
+                        {% if pieces_count > 0 %}
                         <!-- Example row – in Django you’d loop over pieces -->
                         <tr class="hover:bg-slate-50/80 cursor-pointer">
                             <td class="px-4 py-3 align-top">
@@ -118,7 +118,7 @@
                             <td class="px-4 py-3 align-top text-right">
                                 <div class="inline-flex items-center gap-1">
                                     <a href="#"
-                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-800">View parts</a>
+                                       class="text-xs font-medium text-green-600 hover:text-green-800">View parts</a>
                                     <span class="text-slate-300">•</span>
                                     <button type="button" class="text-xs text-slate-500 hover:text-slate-700">More</button>
                                 </div>
@@ -143,20 +143,19 @@
                             <td class="px-4 py-3 align-top text-right">
                                 <div class="inline-flex items-center gap-1">
                                     <a href="#"
-                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-800">View parts</a>
+                                       class="text-xs font-medium text-green-600 hover:text-green-800">View parts</a>
                                     <span class="text-slate-300">•</span>
                                     <button type="button" class="text-xs text-slate-500 hover:text-slate-700">More</button>
                                 </div>
                             </td>
                         </tr>
-                        <!-- Empty state example (conditionally render if no pieces) -->
-                        <!--
-          <tr>
-            <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500">
-              No pieces yet. Click <span class="font-medium text-slate-700">“Add new piece”</span> to get started.
-            </td>
-          </tr>
-          -->
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500">
+                                No pieces yet.
+                            </td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
@@ -164,7 +163,7 @@
             <div class="border-t border-slate-200 bg-slate-50/80 px-4 py-2.5 flex items-center justify-between text-xs text-slate-500">
                 <div>
                     Showing <span class="font-medium text-slate-700">1–10</span> of
-                    <span class="font-medium text-slate-700">24</span> pieces
+                    <span class="font-medium text-slate-700">{{ pieces_count }}</span> pieces
                 </div>
                 <div class="flex items-center gap-1">
                     <button type="button"

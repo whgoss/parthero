@@ -2,7 +2,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
 from django.http import HttpResponseForbidden
-from core.services.music import get_pieces_for_organization
+from core.services.music import (
+    get_pieces_for_organization,
+    get_pieces_count_for_organization,
+)
 from core.models.users import UserOrganization
 
 
@@ -16,6 +19,7 @@ def pieces(request):
     pieces = get_pieces_for_organization(request.organization.id)
     context = {
         "pieces": pieces,
+        "pieces_count": get_pieces_count_for_organization(request.organization.id),
     }
     return render(request, "pieces.html", context)
 

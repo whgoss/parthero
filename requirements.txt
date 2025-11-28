@@ -1,6 +1,8 @@
+boto3==1.41.5
 Django==5.2.4
 djlint==1.36.4
 gunicorn==23.0.0
+moto[boto3]==5.1.17
 psycopg2-binary==2.9.11
 pydantic==2.11.7
 python-dotenv==1.1.1
