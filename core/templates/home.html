@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+  <!-- Header + primary actions -->
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
+        Welcome!
+      </h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Manage your orchestra's pieces and parts in one place.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2 sm:justify-end">
+
+      <!-- In Django this would be an <a> to your create view -->
+      <a
+        href="#"
+        class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+              fill="none" stroke="currentColor"
+              class="h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                d="M10 4v12m6-6H4" />
+        </svg>
+        New Piece
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

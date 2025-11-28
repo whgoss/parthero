@@ -1,0 +1,89 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>
+        {% block title %}PartHero {% endblock %}
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+          rel="stylesheet">
+</head>
+<!-- Pieces List – PartHero -->
+<div class="min-h-screen bg-slate-100 text-slate-900">
+  <!-- Top bar -->
+  {% if user and user.is_authenticated %}
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+      <!-- Logo / app name -->
+      <div class="flex items-center gap-2">
+        <div class="h-8 w-8 rounded-lg bg-green-600 flex items-center justify-center">
+          <span class="text-white font-semibold text-sm">PH</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-semibold tracking-tight">PartHero</span>
+          <span class="text-xs text-slate-500">Digital parts library</span>
+        </div>
+      </div>
+
+      <!-- Organization Selector -->
+      <div class="flex justify-center gap-2 items-center">
+        <span class="text-xs mt-0.5 uppercase tracking-wide text-slate-400">Organization</span>
+        <form method="post" action="{% url 'switch_organization' current_organization.id %}" class="flex items-center m-0">
+          {% csrf_token %}
+          <select name="org" onchange="window.location.href=this.value;" class="flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+            {% for organization in user_organizations %}
+              <option value="{% url 'switch_organization' organization.id %}{% if request.path %}?next={{ request.path }}{% endif %}"
+                      {% if current_organization and current_organization.id == organization.id %}selected{% endif %}>
+                {{ organization.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <!-- Primary nav -->
+    <nav class="border-t border-slate-200 bg-slate-50/80">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <ul class="flex gap-4 text-sm">
+          <li>
+            <a href="/"
+               class="inline-flex items-center border-b-2 border-green-500 px-2.5 pt-2 pb-2.5 font-bold text-green-700">
+              Home
+            </a>
+          </li>
+          <li>
+            <a href="/pieces"
+               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+              Pieces
+            </a>
+          </li>
+          <li>
+            <a href="#"
+               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+              Musicians
+            </a>
+          </li>
+          <li>
+            <a href="#"
+               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+              Programs
+            </a>
+          </li>
+          <li>
+            <a href="#"
+               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+              Settings
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+  {% endif %}
+
+  <!-- Main content -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}
+    {% endblock %}
+  </main>
+</div>
