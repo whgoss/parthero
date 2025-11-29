@@ -2,14 +2,12 @@ from core.dtos.organizations import OrganizationDTO
 from core.dtos.users import UserOrganizationDTO
 from core.models.organizations import Organization
 from core.models.users import UserOrganization
-from core.services.s3 import create_bucket_for_organization
 
 
 def create_organization(name: str) -> OrganizationDTO:
     organization = Organization(name=name)
     organization.save()
     organization
-    create_bucket_for_organization(str(organization.id))
     return OrganizationDTO.from_model(organization)
 
 

@@ -10,9 +10,16 @@
         </p>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
-      <form method="post" class="space-y-6 min-height-[500px]">
+      <form method="post" class="space-y-6 items-center">
         {% csrf_token %}
-        <input type="file" data-piece-id="{{ piece.id }}" class="filepond min-height-[500px]" multiple>
+        <div class="max-w-3xl">
+          <input
+            type="file"
+            data-piece-id="{{ piece.id }}"
+            class="filepond w-full"
+            multiple
+          >
+        </div>
       </form>
     </div>
   </div>

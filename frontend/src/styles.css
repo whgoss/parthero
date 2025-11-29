@@ -1,0 +1,17 @@
+/* Make the FilePond box bigger and fully clickable */
+.filepond--root {
+  width: 100%;
+  min-height: 128px;
+}
+
+.filepond--panel-root {
+  height: 100%;
+}
+
+.filepond--drop-label {
+  height: 100%;
+  padding: 1.0rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

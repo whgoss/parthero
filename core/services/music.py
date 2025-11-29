@@ -4,7 +4,7 @@ from datetime import timedelta
 from core.dtos.music import PieceDTO, PartDTO, SectionDTO
 from core.enum.status import UploadStatus
 from core.models import Piece, Part, Section
-from core.services.s3 import create_upload_url, create_bucket_for_organization
+from core.services.s3 import create_upload_url
 from core.utils import get_file_extension
 
 
@@ -39,9 +39,6 @@ def create_part(piece_id: str, filename: str) -> PartDTO:
     )
     part.save()
 
-    # Ensure the org bucket exists
-    create_bucket_for_organization(str(piece.organization.id))
-
     # Generate a pre-signed URL for upload
     file_key = str(piece.id) + "/" + str(part_id) + get_file_extension(filename)
     presigned_url = create_upload_url(
@@ -55,11 +52,18 @@ def create_part(piece_id: str, filename: str) -> PartDTO:
     part.status = UploadStatus.PENDING.value
     part.save()
 
-    # Upload the file to the organization storage bucket
-    # organization_id = str(piece.organization.id)
-    # create_bucket_for_organization(organization_id)
-    # upload_file(file_buffer, organization_id, file_key)
+    return PartDTO.from_model(part)
 
+
+def update_part(dto: PartDTO) -> PartDTO:
+    part = Part.objects.get(id=dto.id)
+
+    part.file_key = dto.file_key
+    part.upload_url = dto.upload_url
+    part.upload_filename = dto.upload_filename
+    part.status = dto.status.value
+
+    part.save()
     return PartDTO.from_model(part)
 
 

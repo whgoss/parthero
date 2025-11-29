@@ -27,8 +27,6 @@ services:
 
   postgres:
     image: bitnami/postgresql:latest
-    volumes:
-      - ./pg_backups:/backups
     env_file: .env
     ports:
       - '5432:5432'

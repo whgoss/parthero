@@ -23,7 +23,7 @@ def create_new_piece(request):
         composer = request.POST.get("composer")
         organization_id = request.organization.id
         piece = create_piece(title, composer, organization_id)
-        return redirect(f"piece/{piece.id}/parts")
+        return redirect(f"/piece/{piece.id}/parts")
     return render(request, "create_piece.html")
 
 
