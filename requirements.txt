@@ -1,5 +1,6 @@
 boto3==1.41.5
 Django==5.2.4
+djangorestframework==3.16.1
 djlint==1.36.4
 faker==38.2.0
 gunicorn==23.0.0

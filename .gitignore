@@ -177,3 +177,8 @@ __marimo__/
 
 # Localstack
 localstack-data/
+
+# NPM
+/frontend/node_modules/
+/frontend/dist/
+/static/frontend/

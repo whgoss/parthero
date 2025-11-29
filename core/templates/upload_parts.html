@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div>
+    <!-- Header + primary actions -->
+    <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-slate-900">Upload Parts</h1>
+        <p class="mt-2 text-sm text-slate-500">
+            Drag and drop files to add parts for <i>{{ piece.title}}</i> by {{ piece.composer }}.
+        </p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
+      <form method="post" class="space-y-6 min-height-[500px]">
+        {% csrf_token %}
+        <input type="file" data-piece-id="{{ piece.id }}" class="filepond min-height-[500px]" multiple>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

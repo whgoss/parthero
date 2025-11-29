@@ -1,4 +1,5 @@
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from parthero.settings import DEBUG
 
@@ -16,6 +17,11 @@ def get_s3_client():
                 endpoint_url="http://localhost:4566",
                 aws_access_key_id="test",
                 aws_secret_access_key="test",
+                region_name="us-east-1",
+                config=Config(
+                    signature_version="s3v4",
+                    s3={"addressing_style": "path"},
+                ),
             )
     return s3_client
 
@@ -23,7 +29,8 @@ def get_s3_client():
 def create_bucket_for_organization(organization_id: str):
     try:
         s3_client = get_s3_client()
-        s3_client.head_bucket(Bucket=organization_id)
+        response = s3_client.head_bucket(Bucket=organization_id)
+        print(response)
     except ClientError as error:
         error_code = error.response["Error"]["Code"]
         if error_code == "404":
@@ -35,3 +42,19 @@ def create_bucket_for_organization(organization_id: str):
 def upload_file(file_buffer, organization_id: str, file_key: str):
     s3_client = get_s3_client()
     s3_client.upload_fileobj(file_buffer, Bucket=organization_id, Key=file_key)
+
+
+def create_upload_url(
+    organization_id: str, file_key: str, expiration: int = 3600
+) -> str:
+    s3_client = get_s3_client()
+    try:
+        presigned_url = s3_client.generate_presigned_url(
+            "put_object",
+            Params={"Bucket": organization_id, "Key": file_key},
+            ExpiresIn=expiration,
+        )
+    except ClientError as error:
+        print(f"Error generating presigned URL: {error}")
+        return None
+    return presigned_url

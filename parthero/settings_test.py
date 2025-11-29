@@ -1,5 +1,3 @@
-from parthero.settings import *
-
 DEBUG = False
 SECRET_KEY = "test-secret-key"
 ALLOWED_HOSTS = ["*"]

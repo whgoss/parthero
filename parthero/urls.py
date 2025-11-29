@@ -1,33 +1,29 @@
-"""
-URL configuration for parthero project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
 from django.contrib import admin
-from django.urls import path
-from core.views import home, pieces, switch_organization, login_view, create_piece
+from django.urls import path, include
+from core.views.views import (
+    home,
+    pieces,
+    switch_organization,
+    login_view,
+    create_new_piece,
+    upload_parts,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("login/", login_view, name="login"),
     path("", home, name="home"),
     path("pieces/", pieces, name="pieces"),
-    path("create_piece/", create_piece, name="create_piece"),
+    path("create_piece/", create_new_piece, name="create_piece"),
+    path(
+        "piece/<str:piece_id>/parts",
+        upload_parts,
+        name="upload_parts",
+    ),
     path(
         "switch-organization/<str:organization_id>/",
         switch_organization,
         name="switch_organization",
     ),
+    path("api/", include("core.api.urls")),
 ]

@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
 from django.http import HttpResponseForbidden
 from core.services.music import (
+    create_piece,
+    get_piece_by_id,
     get_pieces_for_organization,
     get_pieces_count_for_organization,
 )
@@ -15,15 +17,23 @@ def home(request):
 
 
 @login_required
-def create_piece(request):
+def create_new_piece(request):
     if request.method == "POST":
         title = request.POST.get("title")
         composer = request.POST.get("composer")
-        # Here you would typically save the new piece to the database
-        # For example:
-        # Piece.objects.create(title=title, composer=composer, organization=request.organization)
-        return redirect("pieces")
+        organization_id = request.organization.id
+        piece = create_piece(title, composer, organization_id)
+        return redirect(f"piece/{piece.id}/parts")
     return render(request, "create_piece.html")
+
+
+@login_required
+def upload_parts(request, piece_id):
+    piece = get_piece_by_id(piece_id, request.organization.id)
+    context = {
+        "piece": piece,
+    }
+    return render(request, "upload_parts.html", context)
 
 
 @login_required

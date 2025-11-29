@@ -2,6 +2,7 @@ from typing import Optional
 from datetime import timedelta
 from core.dtos.base import BaseDTO
 from core.models.music import Piece, Part, Section
+from core.enum.status import UploadStatus
 from core.enum.instruments import Instrument, InstrumentFamily
 
 
@@ -26,15 +27,21 @@ class PieceDTO(BaseDTO):
 
 class PartDTO(BaseDTO):
     piece_id: str
-    section_id: str
-    file_key: str
+    status: UploadStatus
+    section_id: Optional[str] = None
+    upload_url: Optional[str] = None
+    upload_filename: Optional[str] = None
+    file_key: Optional[str] = None
 
     @classmethod
     def from_model(cls, model: Part):
         return cls(
             id=str(model.id),
             piece_id=str(model.piece.id),
-            section_id=str(model.section.id),
+            status=UploadStatus(model.status),
+            section_id=str(model.section.id) if model.section else None,
+            upload_url=model.upload_url,
+            upload_filename=model.upload_filename,
             file_key=model.file_key,
         )
 
