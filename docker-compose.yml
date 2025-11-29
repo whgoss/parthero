@@ -42,6 +42,21 @@ services:
     networks:
       - parthero
 
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs
+      - DEBUG=1
+      - LOCALSTACK_PERSISTENCE=1
+      - LS_LOG=info
+      - DATA_DIR=/var/lib/localstack
+    volumes:
+      # This folder on your host will hold all LocalStack data
+      - ./localstack-data:/var/lib/localstack
+
 networks:
   parthero:
     external: false

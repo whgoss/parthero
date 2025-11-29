@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+    <!-- Header + primary actions -->
+    <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-slate-900">Create a New Piece</h1>
+        <p class="mt-2 text-sm text-slate-500">
+            Add the basic details for this piece. You’ll upload the parts on the next screen.
+        </p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
+      <form method="post" action="{% url 'create_piece' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Piece title -->
+        <div>
+          <label for="title" class="block text-sm font-medium text-slate-700">
+            Title
+          </label>
+          <input
+            type="text"
+            name="title"
+            id="title"
+            required
+            class="mt-2 block w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
+            placeholder="Symphony No. 1 in C Minor"
+          >
+        </div>
+
+        <!-- Composer -->
+        <div>
+          <label for="composer" class="block text-sm font-medium text-slate-700">
+            Composer
+          </label>
+          <input
+            type="text"
+            name="composer"
+            id="composer"
+            class="mt-2 block w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
+            placeholder="Johannes Brahms"
+          >
+        </div>
+
+        <!-- Optional: instrumentation / notes -->
+        <div>
+          <label for="instrumentation" class="block text-sm font-medium text-slate-700">
+            Instrumentation / Ensemble
+          </label>
+          <input
+            type="text"
+            name="instrumentation"
+            id="instrumentation"
+            class="mt-2 block w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
+            placeholder="Full Orchestra, SATB Choir, Brass Quintet..."
+          >
+        </div>
+
+        <div>
+          <label for="notes" class="block text-sm font-medium text-slate-700">
+            Notes (optional)
+          </label>
+          <textarea
+            name="notes"
+            id="notes"
+            rows="3"
+            class="mt-2 block w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
+            placeholder="Any notes about editions, movements, or special instructions."
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <a
+            href="{% url 'pieces' %}"
+            class="inline-flex items-center px-3 py-1.5 border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Cancel
+          </a>
+          <button
+            type="submit"
+            class="inline-flex items-center px-4 py-2 rounded-md bg-green-600 text-sm font-medium text-white hover:bg-green-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Save &amp; Upload Parts
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

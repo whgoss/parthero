@@ -17,13 +17,14 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from core.views import home, pieces, switch_organization, login_view
+from core.views import home, pieces, switch_organization, login_view, create_piece
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("login/", login_view, name="login"),
     path("", home, name="home"),
     path("pieces/", pieces, name="pieces"),
-    path("login/", login_view, name="login"),
+    path("create_piece/", create_piece, name="create_piece"),
     path(
         "switch-organization/<str:organization_id>/",
         switch_organization,

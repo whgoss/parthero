@@ -6,6 +6,5 @@ class OrganizationDTO(BaseDTO):
     name: str
 
     @classmethod
-    def from_model(self, model: Organization):
-        self.id = str(model.id)
-        self.name = model.name
+    def from_model(cls, model: Organization):
+        return cls(id=str(model.id), name=model.name)

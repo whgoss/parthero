@@ -15,6 +15,18 @@ def home(request):
 
 
 @login_required
+def create_piece(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        composer = request.POST.get("composer")
+        # Here you would typically save the new piece to the database
+        # For example:
+        # Piece.objects.create(title=title, composer=composer, organization=request.organization)
+        return redirect("pieces")
+    return render(request, "create_piece.html")
+
+
+@login_required
 def pieces(request):
     pieces = get_pieces_for_organization(request.organization.id)
     context = {

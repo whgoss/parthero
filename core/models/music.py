@@ -12,29 +12,22 @@ from core.models.organizations import Organization
 from core.enum.instruments import Instrument, InstrumentFamily
 
 
-class Instrument(UUIDPrimaryKeyModel):
-    name = CharField(max_length=255, choices=Instrument.choices())
-    family = CharField(max_length=255, choices=InstrumentFamily.choices())
-
-    def __str__(self):
-        return f"{self.name} ({self.family})"
-
-
 class Section(UUIDPrimaryKeyModel):
-    instrument = ForeignKey(Instrument, on_delete=CASCADE)
+    instrument = CharField(max_length=255, choices=Instrument.choices())
+    family = CharField(max_length=255, choices=InstrumentFamily.choices())
     number = IntegerField(null=True)
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=["instrument", "number", "organization"],
+                fields=["instrument", "family", "number", "organization"],
                 name="unique_instrument_section_per_organization",
             ),
         ]
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.instrument} {self.number} ({self.family})"
 
 
 class Piece(UUIDPrimaryKeyModel):
@@ -51,7 +44,7 @@ class Piece(UUIDPrimaryKeyModel):
 class Part(UUIDPrimaryKeyModel):
     piece = ForeignKey(Piece, on_delete=CASCADE)
     section = ForeignKey(Section, on_delete=CASCADE)
-    file = CharField(max_length=255)
+    file_key = CharField(max_length=255)
 
     def __str__(self):
         return f"{self.piece.title} ({self.section})"
