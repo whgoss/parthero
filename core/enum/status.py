@@ -4,7 +4,7 @@ from enum import Enum
 class UploadStatus(Enum):
     PENDING = "Pending"
     FAILED = "Failed"
-    SUCCEEDED = "Succeeded"
+    UPLOADED = "Uploaded"
     ABORTED = "Aborted"
 
     def choices():

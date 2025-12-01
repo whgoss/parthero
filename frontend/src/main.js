@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
               // 2) Update part status after upload
               xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                  updatePart(pieceId, partDto, "Succeeded");
+                  updatePart(pieceId, partDto, "Uploaded");
                   load(partDto.id);
                 } else {
                   updatePart(pieceId, partDto, "Failed");

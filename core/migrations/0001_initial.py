@@ -293,7 +293,7 @@ class Migration(migrations.Migration):
                         choices=[
                             ("Pending", "Pending"),
                             ("Failed", "Failed"),
-                            ("Succeeded", "Succeeded"),
+                            ("Uploaded", "Uploaded"),
                             ("Aborted", "Aborted"),
                         ],
                         default="Pending",

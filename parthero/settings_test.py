@@ -1,3 +1,5 @@
+from parthero.settings import *  # noqa: F403, F401
+
 DEBUG = False
 SECRET_KEY = "test-secret-key"
 ALLOWED_HOSTS = ["*"]
