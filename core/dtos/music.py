@@ -1,7 +1,8 @@
 from typing import Optional
 from datetime import timedelta
 from core.dtos.base import BaseDTO
-from core.models.music import Piece, Part, Section
+from core.models.music import Piece, Part
+from core.models.organizations import Section
 from core.enum.status import UploadStatus
 from core.enum.instruments import Instrument, InstrumentFamily
 

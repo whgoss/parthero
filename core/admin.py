@@ -1,6 +1,6 @@
 from django.contrib import admin
-from core.models.music import Piece, Part, Musician, Section, MusicianSection
-from core.models.organizations import Organization
+from core.models.music import Piece, Part
+from core.models.organizations import Organization, Musician, Section, MusicianSection
 from core.models.users import User, UserOrganization
 
 admin.site.register(Musician)
