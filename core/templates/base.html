@@ -1,3 +1,4 @@
+{% load nav %}
 {% load static %}
 <head>
     <meta charset="UTF-8">
@@ -52,31 +53,31 @@
                     <ul class="flex gap-4 text-sm">
                         <li>
                             <a href="/"
-                               class="inline-flex items-center border-b-2 border-green-500 px-2.5 pt-2 pb-2.5 font-bold text-green-700">
+                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'home' %}">
                                 Home
                             </a>
                         </li>
                         <li>
                             <a href="/pieces"
-                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'pieces' %}">
                                 Pieces
                             </a>
                         </li>
                         <li>
                             <a href="#"
-                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'roster' %}">
                                 Musicians
                             </a>
                         </li>
                         <li>
                             <a href="#"
-                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'programs' %}">
                                 Programs
                             </a>
                         </li>
                         <li>
                             <a href="#"
-                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 text-slate-500 hover:text-slate-800 hover:border-slate-200">
+                               class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'settings' %}">
                                 Settings
                             </a>
                         </li>
