@@ -16,16 +16,13 @@
     <!-- Top bar -->
     {% if user and user.is_authenticated %}
         <header class="bg-white border-b border-slate-200">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-4">
                 <!-- Logo / app name -->
                 <div class="flex items-center gap-2">
-                    <div class="h-8 w-8 rounded-lg bg-green-600 flex items-center justify-center">
-                        <span class="text-white font-semibold text-sm">PH</span>
+                    <div>
+                        <img class="w-32 mt-2" src="/static/images/parthero_logo.png" />
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-md font-semibold tracking-tight">PartHero</span>
-                        <span class="text-xs text-slate-500">Digital Score Library</span>
-                    </div>
+                    
                 </div>
                 <!-- Organization Selector -->
                 <div class="flex justify-center gap-2 items-center">
@@ -64,19 +61,19 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#"
+                            <a href="/roster"
                                class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'roster' %}">
                                 Musicians
                             </a>
                         </li>
                         <li>
-                            <a href="#"
+                            <a href="/programs"
                                class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'programs' %}">
                                 Programs
                             </a>
                         </li>
                         <li>
-                            <a href="#"
+                            <a href="/settings"
                                class="inline-flex items-center border-b-2 border-transparent px-2.5 pt-2 pb-2.5 {% nav_active 'settings' %}">
                                 Settings
                             </a>

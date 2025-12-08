@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="max-w-5xl mx-auto">
+    <!-- Header + primary actions -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
+          Concert Programs
+        </h1>
+        <p class="mt-1 text-sm text-slate-500">
+          Plan your season, organize pieces, and make sure every musician has the right music for each concert.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2 lg:justify-end">
+        <!-- Primary: create new program -->
+        <a href="#"
+           class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 20 20"
+               fill="none"
+               stroke="currentColor"
+               class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                  d="M10 4v12m6-6H4" />
+          </svg>
+          New Program
+        </a>
+
+        <!-- Secondary: maybe view pieces library -->
+        <a href="/pieces"
+           class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 20 20"
+               fill="none"
+               stroke="currentColor"
+               class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                  d="M5 4h10M5 10h10M5 16h6" />
+          </svg>
+          View Pieces
+        </a>
+      </div>
+    </div>
+
+    <!-- Upcoming concert highlight -->
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)] items-start mb-8">
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-sm font-semibold tracking-wide text-slate-700 uppercase">
+            Upcoming concert
+          </h2>
+          {% if upcoming_program %}
+            <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
+              Next on the calendar
+            </span>
+          {% endif %}
+        </div>
+
+        {% if upcoming_program %}
+          <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <!-- Date block -->
+            <div class="flex items-center gap-4">
+              <div class="flex h-14 w-14 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50">
+                <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  {{ upcoming_program.date|date:"M" }}
+                </span>
+                <span class="text-xl font-semibold text-slate-900 leading-none">
+                  {{ upcoming_program.date|date:"j" }}
+                </span>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-slate-900">
+                  {{ upcoming_program.name }}
+                </p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  {{ upcoming_program.date|date:"l, F j, Y" }}
+                  {% if upcoming_program.time %}
+                    · {{ upcoming_program.time|time:"g:i A" }}
+                  {% endif %}
+                </p>
+                {% if upcoming_program.location %}
+                  <p class="mt-0.5 text-xs text-slate-500">
+                    {{ upcoming_program.location }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Pieces summary -->
+            <div class="sm:text-right">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Program summary
+              </p>
+              <p class="mt-1 text-sm text-slate-800">
+                {{ upcoming_program.pieces_count }} piece{{ upcoming_program.pieces_count|pluralize }}
+              </p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                Make sure all parts are uploaded and assigned before sharing with musicians.
+              </p>
+              <div class="mt-3 flex flex-wrap gap-2 sm:justify-end">
+                <a href="#"
+                   class="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+                  View program
+                </a>
+                <a href="#"
+                   class="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+                  Share with principals
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Piece list -->
+          <div class="mt-5 border-t border-slate-100 pt-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+              Pieces in this concert
+            </p>
+            <ul class="space-y-1.5">
+              {% for piece in upcoming_program.pieces %}
+                <li class="flex items-baseline justify-between gap-3 text-xs sm:text-sm">
+                  <div class="flex items-baseline gap-2">
+                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-slate-300 mt-1"></span>
+                    <span class="font-medium text-slate-800">
+                      {{ piece.title }}
+                    </span>
+                    {% if piece.composer %}
+                      <span class="text-slate-500">
+                        · {{ piece.composer }}
+                      </span>
+                    {% endif %}
+                  </div>
+                  {% if piece.duration %}
+                    <span class="text-[11px] text-slate-400">
+                      {{ piece.duration }}
+                    </span>
+                  {% endif %}
+                </li>
+              {% empty %}
+                <li class="text-xs text-slate-500">
+                  No pieces added to this program yet.
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% else %}
+          <div class="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
+            No upcoming concert is scheduled. Create a new program to plan your next performance and add pieces to it.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Side panel: tips / status -->
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-800">
+          Program checklist
+        </h3>
+        <p class="mt-1 text-xs text-slate-500">
+          Before sharing programs with musicians, double-check a few details:
+        </p>
+        <ul class="mt-3 space-y-2 text-xs text-slate-500">
+          <li class="flex gap-2">
+            <span class="mt-0.5 h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+            Every piece in the program has all required parts uploaded.
+          </li>
+          <li class="flex gap-2">
+            <span class="mt-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            Principals and sections are assigned correctly in the roster.
+          </li>
+          <li class="flex gap-2">
+            <span class="mt-0.5 h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+            You’ve previewed the musician view to confirm only the right parts are visible.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- All programs table -->
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-medium text-slate-800">
+            All programs
+          </p>
+          {% if programs %}
+            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+              {{ programs|length }} total
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th scope="col" class="py-2.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Program
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Date
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Pieces
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <!-- actions -->
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white">
+            {% if programs %}
+              {% for program in programs %}
+                <tr class="hover:bg-slate-50/60">
+                  <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
+                    {{ program.name }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
+                    {{ program.date|date:"M j, Y" }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
+                    {{ program.pieces_count }} piece{{ program.pieces_count|pluralize }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-right text-xs">
+                    <a href="#" class="font-medium text-slate-500 hover:text-slate-800">
+                      View
+                    </a>
+                    <span class="text-slate-300 mx-1">•</span>
+                    <a href="#" class="font-medium text-slate-500 hover:text-slate-800">
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="4" class="px-4 py-8 text-center text-sm text-slate-500">
+                  No programs yet. Create your first concert program to start planning your season.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,5 +1,6 @@
 import uuid
 from typing import List
+from django.db.models import Count
 from datetime import timedelta
 from core.dtos.music import PieceDTO, PartDTO, SectionDTO
 from core.enum.status import UploadStatus
@@ -24,6 +25,22 @@ def create_piece(
     )
     piece.save()
     return PieceDTO.from_model(piece)
+
+
+def get_piece_by_id(piece_id: str, organization_id: str) -> PieceDTO:
+    piece = Piece.objects.get(id=piece_id, organization__id=organization_id)
+    return PieceDTO.from_model(piece)
+
+
+def get_pieces(organization_id: str) -> List[PieceDTO]:
+    piece_models = Piece.objects.filter(organization__id=organization_id).annotate(
+        parts_count=Count("parts")
+    )
+    return PieceDTO.from_models(piece_models)
+
+
+def get_pieces_count(organization_id: str) -> int:
+    return Piece.objects.filter(organization__id=organization_id).count()
 
 
 def create_part(piece_id: str, filename: str) -> PartDTO:
@@ -67,6 +84,11 @@ def update_part(dto: PartDTO) -> PartDTO:
     return PartDTO.from_model(part)
 
 
+def get_parts(piece_id: str) -> List[PartDTO]:
+    parts = Part.objects.filter(piece_id=piece_id)
+    return PartDTO.from_models(parts)
+
+
 def create_section(
     instrument: str,
     family: str,
@@ -81,17 +103,3 @@ def create_section(
     )
     section.save()
     return SectionDTO.from_model(section)
-
-
-def get_piece_by_id(piece_id: str, organization_id: str) -> PieceDTO:
-    piece = Piece.objects.get(id=piece_id, organization__id=organization_id)
-    return PieceDTO.from_model(piece)
-
-
-def get_pieces_for_organization(organization_id: str) -> List[PieceDTO]:
-    pieces = Piece.objects.filter(organization__id__in=[organization_id])
-    return [PieceDTO.from_model(piece) for piece in pieces]
-
-
-def get_pieces_count_for_organization(organization_id: str) -> int:
-    return Piece.objects.filter(organization__id__in=[organization_id]).count()

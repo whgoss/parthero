@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-    <div>
+    <div class="max-w-5xl mx-auto">
         <!-- Header + primary actions -->
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
             <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Pieces</h1>
-                <p class="mt-1 text-sm text-slate-500">Manage your orchestra's pieces and parts in one place.</p>
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
+                Pieces
+                </h1>
+                <p class="mt-1 text-sm text-slate-500">
+                Manage your orchestra's pieces and parts in one place.
+                </p>
             </div>
+
             <div class="flex flex-wrap gap-2 sm:justify-end">
                 <a href="/create_piece"
-                   class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700">
+                   class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          viewBox="0 0 20 20"
                          fill="none"
@@ -41,7 +46,7 @@
                                name="q"
                                type="search"
                                placeholder="Search by title or composer"
-                               class="block w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
+                               class="block w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
                     </div>
                 </div>
                 <!-- Simple filter stub (can hook up later) -->
@@ -88,19 +93,15 @@
                                 Parts
                             </th>
                             <th scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Last updated
-                            </th>
-                            <th scope="col"
                                 class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Actions
+                                Last updated
                             </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         {% if pieces_count > 0 %}
                             {% for piece in pieces %}
-                                <tr class="hover:bg-slate-50/80 cursor-pointer">
+                                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/piece/{{ piece.id }}/'">
                                     <td class="px-4 py-3 align-top">
                                         <div class="flex flex-col">
                                             <span class="font-medium text-slate-900">{{ piece.title }}</span>
@@ -108,26 +109,18 @@
                                     </td>
                                     <td class="px-4 py-3 align-top text-slate-700">{{ piece.composer }}</td>
                                     <td class="px-4 py-3 align-top text-slate-700">
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">18 parts</span>
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">{{ piece.parts_count }} parts</span>
                                     </td>
-                                    <td class="px-4 py-3 align-top text-slate-600">
+                                    <td class="px-4 py-3 align-top text-slate-600 text-right">
                                         Nov 10, 2025
                                         <div class="text-xs text-slate-400">by Alice K.</div>
-                                    </td>
-                                    <td class="px-4 py-3 align-top text-right">
-                                        <div class="inline-flex items-center gap-1">
-                                            <a href="#"
-                                            class="text-xs font-medium text-green-600 hover:text-green-800">View parts</a>
-                                            <span class="text-slate-300">•</span>
-                                            <button type="button" class="text-xs text-slate-500 hover:text-slate-700">More</button>
-                                        </div>
                                     </td>
                                 </tr>
                             {% endfor %}
                         {% else %}
                         <tr>
                             <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500">
-                                No pieces have been uploaded.
+                                No pieces have been created.
                             </td>
                         </tr>
                         {% endif %}

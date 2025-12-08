@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header + primary actions -->
+    <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">{{ piece.title}}</h1>
+        <h3 class="text-md font-light">{{ piece.composer }}</h3>
+    </div>
+    {% if piece.parts_count > 0 %}
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+        <h1 class="text-xl font-bold">Parts ({{ piece.parts_count }})</h1>
+        {% for part in parts %}
+            {{ part.upload_filename }} <br />
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
+      <form method="post" class="space-y-4 items-center">
+        {% csrf_token %}
+        <div>
+          <input
+            type="file"
+            data-piece-id="{{ piece.id }}"
+            class="filepond w-full"
+            multiple
+          >
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

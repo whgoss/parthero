@@ -21,7 +21,7 @@ class Piece(UUIDPrimaryKeyModel):
 
 
 class Part(UUIDPrimaryKeyModel):
-    piece = ForeignKey(Piece, on_delete=CASCADE)
+    piece = ForeignKey(Piece, related_name="parts", on_delete=CASCADE)
     status = CharField(
         max_length=50,
         default=UploadStatus.PENDING.value,

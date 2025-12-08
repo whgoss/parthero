@@ -3,7 +3,6 @@ import "filepond/dist/filepond.min.css";
 import "./styles.css";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 
-// register plugin
 FilePond.registerPlugin(FilePondPluginFileValidateType);
 
 function getCookie(name) {
@@ -40,8 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
       allowMultiple: true,
       allowDrop: true,
       allowRemove: false,
+      allowRevert: false,
+      credits: null,
       maxFiles: null,
       dropOnPage: false,
+      labelIdle: 'Drag & Drop to Upload Parts (or <span class="filepond--label-action"> Browse</span>)',
       acceptedFileTypes: ['application/pdf'],
       fileValidateTypeLabelExpectedTypes: "Only PDF files are allowed",
       server: {

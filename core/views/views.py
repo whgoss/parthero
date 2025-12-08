@@ -5,8 +5,9 @@ from django.http import HttpResponseForbidden
 from core.services.music import (
     create_piece,
     get_piece_by_id,
-    get_pieces_for_organization,
-    get_pieces_count_for_organization,
+    get_pieces,
+    get_pieces_count,
+    get_parts,
 )
 from core.models.users import UserOrganization
 
@@ -23,7 +24,7 @@ def create_new_piece(request):
         composer = request.POST.get("composer")
         organization_id = request.organization.id
         piece = create_piece(title, composer, organization_id)
-        return redirect(f"/piece/{piece.id}/parts")
+        return redirect(f"/piece/{piece.id}/")
     return render(request, "create_piece.html")
 
 
@@ -37,13 +38,36 @@ def upload_parts(request, piece_id):
 
 
 @login_required
+def piece(request, piece_id):
+    piece = get_piece_by_id(piece_id, request.organization.id)
+    parts = get_parts(piece_id)
+    context = {
+        "piece": piece,
+        "parts": parts,
+    }
+    return render(request, "piece.html", context)
+
+
+@login_required
 def pieces(request):
-    pieces = get_pieces_for_organization(request.organization.id)
+    pieces = get_pieces(request.organization.id)
     context = {
         "pieces": pieces,
-        "pieces_count": get_pieces_count_for_organization(request.organization.id),
+        "pieces_count": get_pieces_count(request.organization.id),
     }
     return render(request, "pieces.html", context)
+
+
+@login_required
+def roster(request):
+    context = {}
+    return render(request, "roster.html", context)
+
+
+@login_required
+def programs(request):
+    context = {}
+    return render(request, "programs.html", context)
 
 
 @login_required

@@ -20,7 +20,7 @@ def nav_active(context, url_name):
 
     if path == target:
         # Active
-        return "border-green-500 font-bold text-green-700"
+        return "border-blue-500 font-bold text-blue-700"
     else:
         # Inactive
         return "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200"

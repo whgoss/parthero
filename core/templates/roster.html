@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load roster %}
+{% block content %}
+  <div class="max-w-5xl mx-auto">
+    <!-- Header + primary actions -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
+          Musician Roster
+        </h1>
+        <p class="mt-1 text-sm text-slate-500">
+          Keep your players organized by section so you can send the right parts to the right people every time.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2 lg:justify-end">
+        <!-- Upload roster -->
+        <a href="#"
+           class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 20 20"
+               fill="none"
+               stroke="currentColor"
+               class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                  d="M5 13.5 10 7l5 6.5M10 7V16M4 4h12" />
+          </svg>
+          Upload Roster
+        </a>
+
+        <!-- Add musician -->
+        <a href="#"
+           class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 20 20"
+               fill="none"
+               stroke="currentColor"
+               class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                  d="M10 4v12m6-6H4" />
+          </svg>
+          Add a Musician
+        </a>
+      </div>
+    </div>
+
+    <!-- Roster table card -->
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <!-- Table header: summary + filters -->
+      <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-medium text-slate-800">
+            All musicians
+          </p>
+          {% if musicians %}
+            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+              {{ musicians|length }} total
+            </span>
+          {% endif %}
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <!-- Optional: simple search -->
+          <div class="relative flex-1 sm:flex-none">
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   viewBox="0 0 20 20"
+                   fill="none"
+                   stroke="currentColor"
+                   class="h-4 w-4">
+                <circle cx="9" cy="9" r="4.5" stroke-width="1.5" />
+                <path d="M12.5 12.5 15.5 15.5" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              name="search"
+              placeholder="Search by name or email"
+              class="block w-full rounded-md border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th scope="col" class="py-2.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                First name
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Last name
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Section
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Email
+              </th>
+              <th scope="col" class="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <!-- actions -->
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white">
+            {% if musicians %}
+              {% for musician in musicians %}
+                <tr class="hover:bg-slate-50/60">
+                  <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
+                    {{ musician.first_name }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-900">
+                    {{ musician.last_name }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm">
+                    {% if musician.section %}
+                        <span class="{{ musician.section|section_pill_classes }}">
+                        {{ musician.section.name }}
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                        Unassigned
+                        </span>
+                    {% endif %}
+                </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600">
+                    <a href="mailto:{{ musician.email }}" class="hover:text-blue-700">
+                      {{ musician.email }}
+                    </a>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-right text-xs text-slate-400">
+                    <a href="#" class="font-medium text-slate-500 hover:text-slate-800">
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500">
+                  No musicians yet. Upload your roster or add your first musician to get started.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}
