@@ -23,6 +23,7 @@ def upload_roster(file, organization_id: str):
         musician = None
         email = row.get("Email", None)
         if email:
+            musician = None
             musician_exists = musician_exists_by_email(email, organization_id)
             if not musician_exists:
                 musician = Musician(
@@ -42,8 +43,13 @@ def upload_roster(file, organization_id: str):
                         instrument_id=instrument.id,
                     )
                     musician_instrument.save()
+            else:
+                musician = Musician.objects.filter(
+                    email=email, organization_id=organization_id
+                ).first()
 
-            musicians.append(musician)
+            if musician:
+                musicians.append(musician)
     return MusicianDTO.from_models(musicians)
 
 
