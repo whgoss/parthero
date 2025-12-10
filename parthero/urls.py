@@ -3,15 +3,13 @@ from django.urls import path, include
 from core.views.views import (
     home,
     pieces,
-    switch_organization,
     login_view,
     create_new_piece,
     piece,
-    roster,
     programs,
     upload_parts,
-    upload_roster,
 )
+from core.views import organizations
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -25,12 +23,14 @@ urlpatterns = [
         upload_parts,
         name="upload_parts",
     ),
-    path("roster/", roster, name="roster"),
-    path("upload_roster/", upload_roster, name="upload_roster"),
+    path("roster/", organizations.roster, name="roster"),
+    path("musician/", organizations.musician, name="musician"),
+    path("musician/<str:musician_id>/", organizations.musician, name="musician"),
+    path("upload_roster/", organizations.upload_roster, name="upload_roster"),
     path("programs/", programs, name="programs"),
     path(
         "switch-organization/<str:organization_id>/",
-        switch_organization,
+        organizations.switch_organization,
         name="switch_organization",
     ),
     # API URL Paths

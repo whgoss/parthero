@@ -15,3 +15,11 @@
   align-items: center;
   justify-content: center;
 }
+
+.toggle-input:checked + .track {
+  background-color: #2563EB;
+}
+
+.toggle-input:checked + .track .thumb {
+  transform: translateX(1.5rem);
+}

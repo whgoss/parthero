@@ -5,15 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0002_create_instruments'),
+        ("core", "0002_create_instruments"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='musicianinstrument',
-            name='musician',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='instruments', to='core.musician'),
+            model_name="musicianinstrument",
+            name="musician",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="instruments",
+                to="core.musician",
+            ),
         ),
     ]

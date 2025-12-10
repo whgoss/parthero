@@ -33,6 +33,8 @@ class MusicianDTO(BaseDTO):
 
     @classmethod
     def from_model(cls, model: Musician):
+        if not model:
+            return None
         return cls(
             id=str(model.id),
             first_name=model.first_name,
