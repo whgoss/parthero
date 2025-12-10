@@ -7,9 +7,10 @@ from core.views.views import (
     login_view,
     create_new_piece,
     piece,
-    upload_parts,
     roster,
     programs,
+    upload_parts,
+    upload_roster,
 )
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
         name="upload_parts",
     ),
     path("roster/", roster, name="roster"),
+    path("upload_roster/", upload_roster, name="upload_roster"),
     path("programs/", programs, name="programs"),
     path(
         "switch-organization/<str:organization_id>/",

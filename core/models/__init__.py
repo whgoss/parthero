@@ -1,14 +1,14 @@
-from core.models.music import Piece, Part
-from core.models.organizations import Musician, Section, MusicianSection
-from core.models.organizations import Organization
+from core.models.music import MusicianInstrument, Piece, Edition, Part, PartInstrument
+from core.models.organizations import Musician, Organization
 from core.models.users import User, UserOrganization
 
 __all__ = [
     "Piece",
+    "Edition",
     "Part",
+    "PartInstrument",
     "Musician",
-    "Section",
-    "MusicianSection",
+    "MusicianInstrument",
     "Organization",
     "User",
     "UserOrganization",

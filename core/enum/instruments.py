@@ -1,40 +1,41 @@
 from enum import Enum
 
 
-class InstrumentFamily(Enum):
-    STRING = "String"
-    PERCUSSION = "Percussion"
-    BRASS = "Brass"
-    WIND = "Wind"
-    VOCAL = "Vocal"
-
-    def choices():
-        return [(family.value, family.value) for family in InstrumentFamily]
-
-
-class Instrument(Enum):
+class InstrumentEnum(Enum):
     HARP = "Harp"
-    VIOLIN = "Violin"
+    VIOLIN_1 = "Violin 1"
+    VIOLIN_2 = "Violin 2"
     VIOLA = "Viola"
     CELLO = "Cello"
-    BASS = "Bass"
+    DOUBLE_BASS = "Double Bass"
     PIANO = "Piano"
+    ORGAN = "Organ"
+    SYNTH = "Synth"
     TIMPANI = "Timpani"
     BASS_DRUM = "Bass Drum"
-    SNARE_DRUM = "Snare Drum"
     PERCUSSION = "Percussion"
+    DRUM_KIT = "Drum Kit"
     TRUMPET = "Trumpet"
     FRENCH_HORN = "French Horn"
     TROMBONE = "Trombone"
     TUBA = "Tuba"
     FLUTE = "Flute"
     OBOE = "Oboe"
+    ENGLISH_HORN = "English Horn"
     CLARINET = "Clarinet"
+    BASS_CLARINET = "Bass Clarinet"
     BASSOON = "Bassoon"
-    SAXOPHONE = "Saxophone"
+    CONTRABASSOON = "Contrabassoon"
+    SOPRANO_SAXOPHONE = "Soprano Saxophone"
+    ALTO_SAXOPHONE = "Alto Saxophone"
+    TENOR_SAXOPHONE = "Tenor Saxophone"
     SOPRANO = "Soprano"
     ALTO = "Alto"
     TENOR = "Tenor"
+    BASS = "Bass"
+    GUITAR = "Guitar"
+    ELECTRIC_GUITAR = "Electric Guitar"
+    BASS_GUITAR = "Bass Guitar"
 
     def choices():
-        return [(instrument.value, instrument.value) for instrument in Instrument]
+        return [(instrument.value, instrument.value) for instrument in InstrumentEnum]

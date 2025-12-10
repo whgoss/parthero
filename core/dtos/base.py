@@ -17,7 +17,7 @@ class BaseDTO(BaseModel):
     )
 
     @abstractmethod
-    def from_model(cls, model: BaseModel):
+    def from_model(cls, model: BaseModel) -> "BaseDTO":
         pass
 
     @classmethod

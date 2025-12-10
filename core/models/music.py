@@ -2,11 +2,25 @@ from django.db.models import (
     CharField,
     DurationField,
     ForeignKey,
+    TextField,
+    IntegerField,
     CASCADE,
 )
 from core.models.base import UUIDPrimaryKeyModel
-from core.models.organizations import Organization, Section
+from core.models.organizations import Musician, Organization
 from core.enum.status import UploadStatus
+
+
+class Instrument(UUIDPrimaryKeyModel):
+    name = CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class MusicianInstrument(UUIDPrimaryKeyModel):
+    musician = ForeignKey(Musician, related_name="instruments", on_delete=CASCADE)
+    instrument = ForeignKey(Instrument, on_delete=CASCADE)
 
 
 class Piece(UUIDPrimaryKeyModel):
@@ -20,17 +34,28 @@ class Piece(UUIDPrimaryKeyModel):
         return f"{self.title} by {self.composer}"
 
 
+class Edition(UUIDPrimaryKeyModel):
+    name = CharField(max_length=255, default="Standard")
+    piece = ForeignKey(Piece, on_delete=CASCADE)
+    instrumentation = TextField()
+
+    def __str__(self):
+        return f"{self.name} Edition"
+
+
 class Part(UUIDPrimaryKeyModel):
-    piece = ForeignKey(Piece, related_name="parts", on_delete=CASCADE)
+    edition = ForeignKey(Edition, related_name="editions", on_delete=CASCADE)
     status = CharField(
         max_length=50,
         default=UploadStatus.PENDING.value,
         choices=UploadStatus.choices(),
     )
-    section = ForeignKey(Section, on_delete=CASCADE, null=True)
     upload_url = CharField(max_length=511, null=True)
     upload_filename = CharField(max_length=255, null=True)
     file_key = CharField(max_length=255, null=True)
 
-    def __str__(self):
-        return f"{self.piece.title} ({self.section})"
+
+class PartInstrument(UUIDPrimaryKeyModel):
+    part = ForeignKey(Part, related_name="part_instruments", on_delete=CASCADE)
+    instrument = ForeignKey(Instrument, on_delete=CASCADE)
+    chair_number = IntegerField()

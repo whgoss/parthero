@@ -1,3 +1,4 @@
+import io
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
@@ -9,6 +10,8 @@ from core.services.music import (
     get_pieces_count,
     get_parts,
 )
+from core.services.organizations import get_roster
+from core.services.files import upload_roster as upload_roster_file
 from core.models.users import UserOrganization
 
 
@@ -38,6 +41,18 @@ def upload_parts(request, piece_id):
 
 
 @login_required
+def upload_roster(request):
+    uploaded_file = request.FILES.get("roster_csv")
+
+    if uploaded_file:
+        file_data = uploaded_file.read().decode("utf-8")
+        io_string = io.StringIO(file_data)
+        upload_roster_file(io_string, request.organization.id)
+
+    return redirect("/roster")
+
+
+@login_required
 def piece(request, piece_id):
     piece = get_piece_by_id(piece_id, request.organization.id)
     parts = get_parts(piece_id)
@@ -60,7 +75,8 @@ def pieces(request):
 
 @login_required
 def roster(request):
-    context = {}
+    musicians = get_roster(request.organization.id)
+    context = {"musicians": musicians}
     return render(request, "roster.html", context)
 
 

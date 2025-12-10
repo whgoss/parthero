@@ -2,9 +2,10 @@ import uuid
 from typing import List
 from django.db.models import Count
 from datetime import timedelta
-from core.dtos.music import PieceDTO, PartDTO, SectionDTO
+from core.dtos.music import PieceDTO, PartDTO, InstrumentDTO
+from core.enum.instruments import InstrumentEnum
 from core.enum.status import UploadStatus
-from core.models import Piece, Part, Section
+from core.models.music import Piece, Part, Instrument
 from core.services.s3 import create_upload_url
 from core.utils import get_file_extension
 
@@ -89,17 +90,9 @@ def get_parts(piece_id: str) -> List[PartDTO]:
     return PartDTO.from_models(parts)
 
 
-def create_section(
-    instrument: str,
-    family: str,
-    number: int,
-    organization_id: str,
-) -> SectionDTO:
-    section = Section(
-        instrument=instrument,
-        family=family,
-        number=number,
-        organization_id=organization_id,
-    )
-    section.save()
-    return SectionDTO.from_model(section)
+def get_instrument(instrument: InstrumentEnum) -> InstrumentDTO | None:
+    instrument = Instrument.objects.filter(name=instrument.value).first()
+    if instrument:
+        return InstrumentDTO.from_model(instrument)
+    else:
+        return None

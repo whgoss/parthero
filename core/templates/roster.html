@@ -15,21 +15,38 @@
 
       <div class="flex flex-wrap gap-2 lg:justify-end">
         <!-- Upload roster -->
-        <a href="#"
-           class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
-          <svg xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 20 20"
-               fill="none"
-               stroke="currentColor"
-               class="h-4 w-4">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                  d="M5 13.5 10 7l5 6.5M10 7V16M4 4h12" />
-          </svg>
-          Upload Roster
-        </a>
+        <form id="upload-roster-form"
+          action="{% url 'upload_roster' %}"
+          method="post"
+          enctype="multipart/form-data"
+          class="inline-block">
+          {% csrf_token %}
+
+          <!-- Hidden file input -->
+          <input type="file"
+            name="roster_csv"
+            id="roster-csv-input"
+            accept=".csv"
+            class="hidden"
+            onchange="document.getElementById('upload-roster-form').submit();">
+
+          <button type="button"
+                  onclick="document.getElementById('roster-csv-input').click();"
+                  class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                class="h-4 w-4">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                    d="M5 13.5 10 7l5 6.5M10 7V16M4 4h12" />
+            </svg>
+            Upload Roster
+          </button>
+        </form>
 
         <!-- Add musician -->
-        <a href="#"
+        <button
            class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 20 20"
@@ -40,7 +57,7 @@
                   d="M10 4v12m6-6H4" />
           </svg>
           Add a Musician
-        </a>
+        </button>
       </div>
     </div>
 
@@ -114,9 +131,9 @@
                     {{ musician.last_name }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-2.5 text-sm">
-                    {% if musician.section %}
-                        <span class="{{ musician.section|section_pill_classes }}">
-                        {{ musician.section.name }}
+                    {% if musician.instruments %}
+                        <span class="{{ musician.instruments.0.instrument|section_pill_classes }}">
+                        {{ musician.instruments.0.instrument }}
                         </span>
                     {% else %}
                         <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
@@ -127,11 +144,6 @@
                   <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600">
                     <a href="mailto:{{ musician.email }}" class="hover:text-blue-700">
                       {{ musician.email }}
-                    </a>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-right text-xs text-slate-400">
-                    <a href="#" class="font-medium text-slate-500 hover:text-slate-800">
-                      Edit
                     </a>
                   </td>
                 </tr>
