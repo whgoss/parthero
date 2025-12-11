@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load roster %}
 {% block content %}
-  <div class="max-w-5xl mx-auto px-4">
+  <div class="max-w-5xl mx-auto">
     <!-- Messages -->
     {% include "partials/messages.html" with messages=messages %}
 
@@ -52,7 +52,7 @@
     <!-- Main form card -->
     <form id="musician-edit-form"
           method="post"
-          class="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          class="space-y-6 rounded-2xl border border-slate-200 px-6 py-2 bg-white shadow-sm">
       {% csrf_token %}
 
       <!-- Basic info -->
@@ -118,53 +118,21 @@
 
       <!-- Section pills -->
       <div class="bg-slate-50/60">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h2 class="text-sm font-medium text-slate-900">
-              Instruments/Sections
-            </h2>
-            <p class="text-xs text-slate-500">
-              Assign one or more sections. Hover a pill to remove it; use the + pill to add more.
-            </p>
-          </div>
-        </div>
+        <label for="instrument-sections" class="mb-1 block text-sm font-medium">
+          Instruments / Sections
+        </label>
+        <p class="text-xs text-slate-500">
+          Assign one or more sections. Hover a pill to remove it; use the + pill to add more.
+        </p>
 
-        <div class="mt-3 flex flex-wrap gap-2">
-          {# Existing sections as pills #}
-          {% for section in musician.sections.all %}
-            <button type="button"
-                    data-section-id="{{ section.id }}"
-                    class="group inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800 hover:bg-sky-200">
-              <span>{{ section.name }}</span>
-              <span class="ml-1 hidden text-sky-600 group-hover:inline">&times;</span>
-            </button>
-          {% empty %}
-            <p class="text-xs text-slate-500">
-              No sections assigned yet.
-            </p>
-          {% endfor %}
-
-          {# Add-section pill #}
-          <button type="button"
-                  id="add-section-pill"
-                  class="inline-flex items-center rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs font-medium hover:border-blue-600 hover:text-blue-600">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 viewBox="0 0 20 20"
-                 fill="none"
-                 stroke="currentColor"
-                 class="h-3 w-3">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                    d="M10 4.5v11M4.5 10h11" />
-            </svg>
-            <span class="ml-1">Add</span>
-          </button>
-        </div>
-
-        {# Hidden field to store selected section IDs (for JS to maintain) #}
-        <input type="hidden"
-               name="section_ids"
-               id="section-ids-input"
-               value="{{ musician.sections.all|join:',' }}">
+        <input
+          id="instrument-sections"
+          name="sections"
+          type="text"
+          data-options='{{ instrument_options|safe }}'
+          data-initial='{{ instruments|safe }}'
+          class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        />
       </div>
 
       <!-- Primary actions -->

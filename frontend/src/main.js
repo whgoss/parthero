@@ -1,6 +1,8 @@
-import * as FilePond from "filepond";
-import "filepond/dist/filepond.min.css";
 import "./styles.css";
+import "@yaireo/tagify/dist/tagify.css";
+import "filepond/dist/filepond.min.css";
+import * as FilePond from "filepond";
+import Tagify from "@yaireo/tagify";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 
 FilePond.registerPlugin(FilePondPluginFileValidateType);
@@ -30,6 +32,32 @@ function updatePart(pieceId, dto, newStatus) {
 
 // Automatically turn any <input type="file" class="filepond"> into a FilePond instance
 document.addEventListener("DOMContentLoaded", () => {
+  // Tagify
+  const instrumentElem = document.querySelector("#instrument-sections");
+  if (instrumentElem) {
+    const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
+    const initial = JSON.parse(instrumentElem.dataset.initial || "[]");
+
+    const tagify = new Tagify(instrumentElem, {
+      whitelist: whitelist,
+      enforceWhitelist: true,
+      dropdown: {
+        enabled: 0,
+        closeOnSelect: false,
+      },
+      originalInputValueFormat: (valuesArr) =>
+        valuesArr.map((t) => t.value).join(","),
+    });
+
+    // Just in case there's any leftover value from the DOM, clear it
+    tagify.removeAllTags();
+
+    if (initial.length) {
+      tagify.addTags(initial);
+    }
+  }
+
+  // FilePond
   const inputs = document.querySelectorAll('input[type="file"].filepond');
 
   inputs.forEach((input) => {

@@ -39,3 +39,6 @@ class InstrumentEnum(Enum):
 
     def choices():
         return [(instrument.value, instrument.value) for instrument in InstrumentEnum]
+
+    def values():
+        return [instrument.value for instrument in InstrumentEnum]

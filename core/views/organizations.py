@@ -1,8 +1,10 @@
 import io
+import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.http import HttpResponseForbidden
 from django.contrib import messages
+from core.enum.instruments import InstrumentEnum
 from core.services.organizations import (
     create_musician,
     get_roster,
@@ -53,7 +55,7 @@ def musician(request, musician_id: str | None = None):
                     last_name=form.cleaned_data["last_name"],
                     email=form.cleaned_data["email"],
                     core_member=form.cleaned_data.get("core_member", False),
-                    instrument_sections=None,
+                    instrument_sections=form.cleaned_data.get("sections"),
                 )
                 messages.success(
                     request,
@@ -89,7 +91,17 @@ def musician(request, musician_id: str | None = None):
             organization_id=request.organization.id,
         )
 
-    context = {"musician": musician, "form": form}
+    instruments = []
+    if musician:
+        for instrument in musician.instruments:
+            instruments.append(instrument.instrument)
+
+    context = {
+        "musician": musician,
+        "form": form,
+        "instruments": json.dumps(instruments),
+        "instrument_options": json.dumps(InstrumentEnum.values()),
+    }
     return render(request, "musician.html", context)
 
 

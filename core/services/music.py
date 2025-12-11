@@ -1,11 +1,13 @@
 import uuid
 from typing import List
+from django.db import transaction
 from django.db.models import Count
 from datetime import timedelta
 from core.dtos.music import PieceDTO, PartDTO, InstrumentDTO
 from core.enum.instruments import InstrumentEnum
 from core.enum.status import UploadStatus
-from core.models.music import Piece, Part, Instrument
+from core.models.organizations import Musician
+from core.models.music import Piece, Part, Instrument, MusicianInstrument
 from core.services.s3 import create_upload_url
 from core.utils import get_file_extension
 
@@ -96,3 +98,24 @@ def get_instrument(instrument: InstrumentEnum) -> InstrumentDTO | None:
         return InstrumentDTO.from_model(instrument)
     else:
         return None
+
+
+@transaction.atomic
+def update_musician_instruments(
+    musician_id: str, instrument_sections: List[InstrumentEnum]
+):
+    musician = Musician.objects.get(id=musician_id)
+    instrument_names = [s.value for s in instrument_sections]
+
+    instruments = list(Instrument.objects.filter(name__in=instrument_names))
+
+    # 1) Clear existing links
+    MusicianInstrument.objects.filter(musician=musician).delete()
+
+    # 2) Recreate
+    MusicianInstrument.objects.bulk_create(
+        [
+            MusicianInstrument(musician=musician, instrument=instrument)
+            for instrument in instruments
+        ]
+    )
