@@ -13,7 +13,7 @@ from core.services.organizations import (
 )
 from core.services.files import upload_roster as upload_roster_file
 from core.models.users import UserOrganization
-from core.forms import MusicianForm
+from core.forms.musician import MusicianForm
 
 
 @login_required
@@ -94,7 +94,7 @@ def musician(request, musician_id: str | None = None):
     instrument_sections = []
     if musician:
         for instrument_section in musician.instrument_sections:
-            instrument_sections.append(instrument_section.name)
+            instrument_sections.append(instrument_section.instrument_section.value)
 
     context = {
         "musician": musician,

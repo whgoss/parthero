@@ -31,7 +31,7 @@ class MusicianForm(Form):
     )
     email = EmailField(
         validators=[email_validator],
-        max_length=256,
+        max_length=255,
         widget=EmailInput(attrs={"class": class_attribute}),
         required=True,
     )

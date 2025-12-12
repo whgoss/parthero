@@ -1,7 +1,6 @@
 from typing import Optional, List
-from datetime import timedelta
 from core.dtos.base import BaseDTO
-from core.dtos.organizations import MusicianDTO, OrganizationDTO
+from core.dtos.organizations import MusicianDTO
 from core.models.music import (
     Piece,
     Part,
@@ -43,20 +42,25 @@ class MusicianInstrumentDTO(BaseDTO):
 class PieceDTO(BaseDTO):
     title: str
     composer: str
-    editions: List["EditionDTO"]
-    organization: OrganizationDTO
+    organization_id: str
+    editions_count: int
     arranger: Optional[str] = None
-    duration: Optional[timedelta] = None
 
     @classmethod
-    def from_model(cls, model: Piece):
+    def from_model(cls, model: Piece, editions_count: Optional[int] = None):
+        if editions_count is None:
+            editions_count = getattr(model, "editions_count", None)
+
+        if editions_count is None:
+            editions_count = model.editions.count()
+
         return cls(
             id=str(model.id),
             title=model.title,
             composer=model.composer,
-            organization=OrganizationDTO.from_model(model.organization),
+            organization_id=str(model.organization.id),
             arranger=model.arranger,
-            duration=model.duration,
+            editions_count=editions_count,
         )
 
 
@@ -64,8 +68,8 @@ class EditionDTO(BaseDTO):
     name: str
     piece: PieceDTO
     instrumentation: str
-    parts: List["PartDTO"]
     parts_count: int
+    duration: Optional[int] = None
 
     @classmethod
     def from_model(cls, model: Edition, parts_count: Optional[int] = None):
@@ -81,13 +85,14 @@ class EditionDTO(BaseDTO):
             piece=PieceDTO.from_model(model.piece),
             instrumentation=model.instrumentation,
             parts_count=parts_count,
+            duration=model.duration,
         )
 
 
 class PartDTO(BaseDTO):
-    edition: EditionDTO
+    edition_id: str
     status: UploadStatus
-    part_instruments: List["PartInstrumentDTO"]
+    part_instruments: List["PartInstrumentDTO"] = []
     upload_url: Optional[str] = None
     upload_filename: Optional[str] = None
     file_key: Optional[str] = None
@@ -96,7 +101,7 @@ class PartDTO(BaseDTO):
     def from_model(cls, model: Part):
         return cls(
             id=str(model.id),
-            edition=PieceDTO.from_model(model.edition),
+            edition_id=str(model.edition.id),
             status=UploadStatus(model.status),
             part_instruments=PartInstrumentDTO.from_models(
                 model.part_instruments.all()
@@ -108,15 +113,17 @@ class PartDTO(BaseDTO):
 
 
 class PartInstrumentDTO(BaseDTO):
-    part: PartDTO
-    instrument: InstrumentSectionDTO
+    part_id: str
+    instrument_section: InstrumentSectionDTO
     chair_number: int
 
     @classmethod
     def from_model(cls, model: PartInstrument):
         return cls(
             id=str(model.id),
-            part=PieceDTO.from_model(model.part),
-            instrument=InstrumentSectionDTO.from_model(model.instrument),
+            part_id=str(model.part.id),
+            instrument_section=InstrumentSectionDTO.from_model(
+                model.instrument_section
+            ),
             chair_number=model.chair_number,
         )

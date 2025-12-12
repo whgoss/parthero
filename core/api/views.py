@@ -27,7 +27,7 @@ class PartCreateViewSet(APIView):
 class PartViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated, IsInOrganization]
 
-    def put(self, request, piece_id, part_id, *args, **kwargs):
+    def put(self, request, edition_id, part_id, *args, **kwargs):
         serializer = PartDTOWrapperSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -37,7 +37,7 @@ class PartViewSet(APIView):
         part = part.model_copy(
             update={
                 "id": part_id,
-                "piece_id": piece_id,
+                "edition_id": edition_id,
             }
         )
 

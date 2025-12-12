@@ -22,6 +22,8 @@ class BaseDTO(BaseModel):
 
     @classmethod
     def from_models(cls, models: List[BaseModel]):
+        if not models:
+            return []
         return [cls.from_model(model) for model in models]
 
     def __eq__(self, value):

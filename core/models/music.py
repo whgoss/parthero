@@ -1,6 +1,5 @@
 from django.db.models import (
     CharField,
-    DurationField,
     ForeignKey,
     TextField,
     IntegerField,
@@ -29,7 +28,6 @@ class Piece(UUIDPrimaryKeyModel):
     title = CharField(max_length=255)
     composer = CharField(max_length=255)
     arranger = CharField(max_length=255, blank=True, null=True)
-    duration = DurationField(blank=True, null=True)
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     def __str__(self):
@@ -37,16 +35,17 @@ class Piece(UUIDPrimaryKeyModel):
 
 
 class Edition(UUIDPrimaryKeyModel):
-    name = CharField(max_length=255, default="Standard")
-    piece = ForeignKey(Piece, on_delete=CASCADE)
+    name = CharField(max_length=255, default="Standard Edition")
+    piece = ForeignKey(Piece, related_name="editions", on_delete=CASCADE)
     instrumentation = TextField()
+    duration = IntegerField(null=True)
 
     def __str__(self):
-        return f"{self.name} Edition"
+        return f"{self.name}"
 
 
 class Part(UUIDPrimaryKeyModel):
-    edition = ForeignKey(Edition, related_name="editions", on_delete=CASCADE)
+    edition = ForeignKey(Edition, related_name="parts", on_delete=CASCADE)
     status = CharField(
         max_length=50,
         default=UploadStatus.PENDING.value,

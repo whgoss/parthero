@@ -1,8 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
+from core.forms.music import PieceForm
 from core.services.music import (
     create_piece,
+    create_edition,
     get_piece_by_id,
     get_pieces,
     get_pieces_count,
@@ -18,17 +20,31 @@ def home(request):
 @login_required
 def create_new_piece(request):
     if request.method == "POST":
-        title = request.POST.get("title")
-        composer = request.POST.get("composer")
+        form = PieceForm(
+            request.POST,
+            organization_id=request.organization.id,
+        )
+        title = form.data["title"]
+        edition_name = form.data["edition_name"]
+        composer = form.data["composer"]
+        arranger = form.data["arranger"]
+        instrumentation = form.data["instrumentation"]
+        duration = form.data["duration"]
         organization_id = request.organization.id
-        piece = create_piece(title, composer, organization_id)
+        piece = create_piece(organization_id, title, composer, arranger)
+        create_edition(piece.id, edition_name, instrumentation, duration)
         return redirect(f"/piece/{piece.id}/")
-    return render(request, "create_piece.html")
+    else:
+        form = PieceForm(
+            organization_id=request.organization.id,
+        )
+    context = {"form": form}
+    return render(request, "create_piece.html", context)
 
 
 @login_required
 def upload_parts(request, piece_id):
-    piece = get_piece_by_id(piece_id, request.organization.id)
+    piece = get_piece_by_id(request.organization.id, piece_id)
     context = {
         "piece": piece,
     }
@@ -37,7 +53,7 @@ def upload_parts(request, piece_id):
 
 @login_required
 def piece(request, piece_id):
-    piece = get_piece_by_id(piece_id, request.organization.id)
+    piece = get_piece_by_id(request.organization.id, piece_id)
     parts = get_parts(piece_id)
     context = {
         "piece": piece,
