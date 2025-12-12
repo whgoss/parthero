@@ -107,10 +107,12 @@ def update_musician_instrument_sections(
     musician_id: str, instrument_sections: List[InstrumentSectionEnum]
 ):
     musician = Musician.objects.get(id=musician_id)
-    instrument_names = [s.value for s in instrument_sections]
+    instrument_section_strings = [
+        instrument_section.value for instrument_section in instrument_sections
+    ]
 
     instrument_sections = list(
-        InstrumentSection.objects.filter(name__in=instrument_names)
+        InstrumentSection.objects.filter(name__in=instrument_section_strings)
     )
 
     # 1) Clear existing links

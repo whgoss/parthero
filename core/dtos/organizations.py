@@ -1,6 +1,7 @@
 from typing import Optional, List
 from uuid import UUID
 from core.dtos.base import BaseDTO
+from core.enum.instruments import InstrumentSectionEnum
 from core.models.music import MusicianInstrument
 from core.models.organizations import Organization, Musician
 
@@ -51,11 +52,13 @@ class MusicianDTO(BaseDTO):
 
 
 class MusicianInstrumentDTO(BaseDTO):
-    name: str
+    musician_id: str
+    instrument_section: InstrumentSectionEnum
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
         return cls(
             id=str(model.id),
-            name=model.instrument_section.name,
+            musician_id=str(model.musician.id),
+            instrument_section=InstrumentSectionEnum(model.instrument_section.name),
         )
