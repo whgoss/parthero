@@ -10,7 +10,7 @@ from core.models.music import (
     MusicianInstrument,
 )
 from core.enum.status import UploadStatus
-from core.enum.instruments import InstrumentSectionEnum
+from core.enum.instruments import InstrumentSectionEnum, InstrumentFamily
 
 
 class InstrumentSectionDTO(BaseDTO):
@@ -114,16 +114,44 @@ class PartDTO(BaseDTO):
 
 class PartInstrumentDTO(BaseDTO):
     part_id: str
-    instrument_section: InstrumentSectionDTO
-    chair_number: int
+    family: InstrumentFamily
+    instrument_sections: Optional[List[InstrumentSectionEnum]] = []
+    number: Optional[int] = None
 
     @classmethod
     def from_model(cls, model: PartInstrument):
         return cls(
             id=str(model.id),
             part_id=str(model.part.id),
-            instrument_section=InstrumentSectionDTO.from_model(
-                model.instrument_section
+            instrument_sections=InstrumentSectionDTO.from_models(
+                model.instrument_sections.all()
             ),
-            chair_number=model.chair_number,
+            number=model.number,
         )
+
+
+class PartSlotDTO(BaseDTO):
+    family: InstrumentFamily
+    instrument_sections: List[InstrumentSectionEnum]
+    primary: InstrumentSectionEnum | None = None
+    number: int | None = None
+
+    @property
+    def is_doubling(self) -> bool:
+        return len(self.instrument_sections) > 1
+
+    @property
+    def display_label(self) -> str:
+        names = [i.value for i in self.instrument_sections]
+        if self.number and self.primary:
+            primary_name = self.primary.value
+            if self.is_doubling:
+                extras = [n for n in names if n != primary_name]
+                return f"{primary_name} {self.number} / {' + '.join(extras)}"
+            else:
+                return f"{primary_name} {self.number}"
+        return " / ".join(names)
+
+    @classmethod
+    def from_model(cls, model):
+        return None

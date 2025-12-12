@@ -12,6 +12,7 @@ from core.services.music import (
     get_editions,
     get_editions_count,
 )
+from core.services.instrumentation import parse_instrumentation
 
 
 @login_required
@@ -34,8 +35,8 @@ def create_new_piece(request):
         duration = form.data["duration"]
         organization_id = request.organization.id
         piece = create_piece(organization_id, title, composer, arranger)
-        create_edition(piece.id, edition_name, instrumentation, duration)
-        return redirect(f"/piece/{piece.id}/")
+        edition = create_edition(piece.id, edition_name, instrumentation, duration)
+        return redirect(f"/piece/{piece.id}/edition/{edition.id}/")
     else:
         form = PieceForm(
             organization_id=request.organization.id,
@@ -75,10 +76,12 @@ def edition(request, piece_id, edition_id):
     edition = get_edition(edition_id)
     editions = get_editions_for_piece(piece_id)
     parts = get_parts(edition_id)
+    instrumentation = parse_instrumentation(edition.instrumentation)
     context = {
         "parts": parts,
         "edition": edition,
         "editions": editions,
+        "instrumentation": instrumentation,
     }
     return render(request, "edition.html", context)
 

@@ -5,10 +5,12 @@ from core.models.music import (
     Edition,
     PartInstrument,
     MusicianInstrument,
+    InstrumentSection,
 )
 from core.models.organizations import Organization, Musician
 from core.models.users import User, UserOrganization
 
+admin.site.register(InstrumentSection)
 admin.site.register(Musician)
 admin.site.register(MusicianInstrument)
 admin.site.register(Organization)

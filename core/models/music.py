@@ -12,6 +12,7 @@ from core.enum.status import UploadStatus
 
 class InstrumentSection(UUIDPrimaryKeyModel):
     name = CharField(max_length=255)
+    family = CharField(max_length=255)
 
     def __str__(self):
         return f"{self.name}"
@@ -59,4 +60,4 @@ class Part(UUIDPrimaryKeyModel):
 class PartInstrument(UUIDPrimaryKeyModel):
     part = ForeignKey(Part, related_name="part_instruments", on_delete=CASCADE)
     instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE)
-    chair_number = IntegerField()
+    number = IntegerField()

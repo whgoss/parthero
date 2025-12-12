@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load roster %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
     <!-- Title, Composer, and Edition Selection -->
@@ -20,7 +21,7 @@
         <h3 class="text-md font-light">{{ edition.piece.composer }}</h3>
     </div>
 
-    <!-- Instrumentation and Parts -->
+    <!-- Instrumentation -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
       <h1 class="text-lg font-bold">Instrumentation</h1>
       <span class="text-md font-light">{{ edition.instrumentation }}</span>
@@ -34,6 +35,22 @@
       {% else %}
         <span class="font-light">No parts uploaded.</span>
       {% endif %}
+
+      <h1 class="text-lg font-bold mt-4">Detected Parts</h1>
+      <div>
+        {% for family, part_slots in instrumentation.items %}
+          {% if part_slots %}
+            <div class="instrument-family family-{{ part_slot.family.value|lower }}">
+              
+              {% for part_slot in part_slots %}
+                <span class="{{ part_slot.primary.value|section_pill_classes }}">
+                  {{ part_slot.display_label }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
       <h1 class="text-lg font-bold">Upload Parts</h1>

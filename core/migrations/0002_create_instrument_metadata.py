@@ -1,11 +1,14 @@
-from core.enum.instruments import InstrumentSectionEnum
+from core.enum.instruments import InstrumentSectionEnum, get_instrument_family
 from django.db import migrations
 
 
 def create_instrument_sections(apps, schema_editor):
     InstrumentSection = apps.get_model("core", "InstrumentSection")
     for instrument_section in InstrumentSectionEnum:
-        instrument_section_model = InstrumentSection(name=instrument_section.value)
+        instrument_family = get_instrument_family(instrument_section)
+        instrument_section_model = InstrumentSection(
+            name=instrument_section.value, family=instrument_family.value
+        )
         instrument_section_model.save()
 
 
