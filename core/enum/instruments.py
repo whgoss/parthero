@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class InstrumentEnum(Enum):
+class InstrumentSectionEnum(Enum):
     HARP = "Harp"
     VIOLIN_1 = "Violin 1"
     VIOLIN_2 = "Violin 2"
@@ -38,7 +38,9 @@ class InstrumentEnum(Enum):
     BASS_GUITAR = "Bass Guitar"
 
     def choices():
-        return [(instrument.value, instrument.value) for instrument in InstrumentEnum]
+        return [
+            (instrument.value, instrument.value) for instrument in InstrumentSectionEnum
+        ]
 
     def values():
-        return [instrument.value for instrument in InstrumentEnum]
+        return [instrument.value for instrument in InstrumentSectionEnum]

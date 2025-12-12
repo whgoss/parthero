@@ -1,4 +1,10 @@
-from core.models.music import MusicianInstrument, Piece, Edition, Part, PartInstrument
+from core.models.music import (
+    MusicianInstrument,
+    Piece,
+    Edition,
+    Part,
+    PartInstrument,
+)
 from core.models.organizations import Musician, Organization
 from core.models.users import User, UserOrganization
 

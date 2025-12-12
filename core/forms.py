@@ -8,7 +8,7 @@ from django.forms import (
     BooleanField,
     ValidationError,
 )
-from core.enum.instruments import InstrumentEnum
+from core.enum.instruments import InstrumentSectionEnum
 from core.services.organizations import get_musician_by_email
 from core.utils import is_valid_email
 
@@ -72,10 +72,10 @@ class MusicianForm(Form):
         ]
         sections = []
         for raw_section in raw_sections:
-            if raw_section not in InstrumentEnum.values():
+            if raw_section not in InstrumentSectionEnum.values():
                 raise ValidationError("Invalid instrument section.")
             else:
-                sections.append(InstrumentEnum(raw_section))
+                sections.append(InstrumentSectionEnum(raw_section))
         return sections
 
     def clean(self):

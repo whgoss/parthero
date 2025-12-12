@@ -3,11 +3,11 @@ from typing import List
 from django.db import transaction
 from django.db.models import Count
 from datetime import timedelta
-from core.dtos.music import PieceDTO, PartDTO, InstrumentDTO
-from core.enum.instruments import InstrumentEnum
+from core.dtos.music import PieceDTO, PartDTO, InstrumentSectionDTO
+from core.enum.instruments import InstrumentSectionEnum
 from core.enum.status import UploadStatus
 from core.models.organizations import Musician
-from core.models.music import Piece, Part, Instrument, MusicianInstrument
+from core.models.music import Piece, Part, InstrumentSection, MusicianInstrument
 from core.services.s3 import create_upload_url
 from core.utils import get_file_extension
 
@@ -92,22 +92,26 @@ def get_parts(piece_id: str) -> List[PartDTO]:
     return PartDTO.from_models(parts)
 
 
-def get_instrument(instrument: InstrumentEnum) -> InstrumentDTO | None:
-    instrument = Instrument.objects.filter(name=instrument.value).first()
-    if instrument:
-        return InstrumentDTO.from_model(instrument)
+def get_instrument_section(
+    instrument: InstrumentSectionEnum,
+) -> InstrumentSectionDTO | None:
+    instrument_section = InstrumentSection.objects.filter(name=instrument.value).first()
+    if instrument_section:
+        return InstrumentSectionDTO.from_model(instrument_section)
     else:
         return None
 
 
 @transaction.atomic
-def update_musician_instruments(
-    musician_id: str, instrument_sections: List[InstrumentEnum]
+def update_musician_instrument_sections(
+    musician_id: str, instrument_sections: List[InstrumentSectionEnum]
 ):
     musician = Musician.objects.get(id=musician_id)
     instrument_names = [s.value for s in instrument_sections]
 
-    instruments = list(Instrument.objects.filter(name__in=instrument_names))
+    instrument_sections = list(
+        InstrumentSection.objects.filter(name__in=instrument_names)
+    )
 
     # 1) Clear existing links
     MusicianInstrument.objects.filter(musician=musician).delete()
@@ -115,7 +119,7 @@ def update_musician_instruments(
     # 2) Recreate
     MusicianInstrument.objects.bulk_create(
         [
-            MusicianInstrument(musician=musician, instrument=instrument)
-            for instrument in instruments
+            MusicianInstrument(musician=musician, instrument_section=instrument_section)
+            for instrument_section in instrument_sections
         ]
     )

@@ -11,7 +11,7 @@ from core.models.organizations import Musician, Organization
 from core.enum.status import UploadStatus
 
 
-class Instrument(UUIDPrimaryKeyModel):
+class InstrumentSection(UUIDPrimaryKeyModel):
     name = CharField(max_length=255)
 
     def __str__(self):
@@ -19,8 +19,10 @@ class Instrument(UUIDPrimaryKeyModel):
 
 
 class MusicianInstrument(UUIDPrimaryKeyModel):
-    musician = ForeignKey(Musician, related_name="instruments", on_delete=CASCADE)
-    instrument = ForeignKey(Instrument, on_delete=CASCADE)
+    musician = ForeignKey(
+        Musician, related_name="instrument_sections", on_delete=CASCADE
+    )
+    instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE)
 
 
 class Piece(UUIDPrimaryKeyModel):
@@ -57,5 +59,5 @@ class Part(UUIDPrimaryKeyModel):
 
 class PartInstrument(UUIDPrimaryKeyModel):
     part = ForeignKey(Part, related_name="part_instruments", on_delete=CASCADE)
-    instrument = ForeignKey(Instrument, on_delete=CASCADE)
+    instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE)
     chair_number = IntegerField()

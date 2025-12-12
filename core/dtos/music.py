@@ -5,36 +5,38 @@ from core.dtos.organizations import MusicianDTO, OrganizationDTO
 from core.models.music import (
     Piece,
     Part,
-    Instrument,
+    InstrumentSection,
     Edition,
     PartInstrument,
     MusicianInstrument,
 )
 from core.enum.status import UploadStatus
-from core.enum.instruments import InstrumentEnum
+from core.enum.instruments import InstrumentSectionEnum
 
 
-class InstrumentDTO(BaseDTO):
-    name: InstrumentEnum
+class InstrumentSectionDTO(BaseDTO):
+    name: InstrumentSectionEnum
 
     @classmethod
-    def from_model(cls, model: Instrument):
+    def from_model(cls, model: InstrumentSection):
         return cls(
             id=str(model.id),
-            name=InstrumentEnum(model.name),
+            name=InstrumentSectionEnum(model.name),
         )
 
 
-class MusicianInstrument(BaseDTO):
+class MusicianInstrumentDTO(BaseDTO):
     musician: MusicianDTO
-    instrument: InstrumentDTO
+    instrument_section: InstrumentSectionDTO
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
         return cls(
             id=str(model.id),
             musician=MusicianDTO.from_model(model.musician),
-            instrument=InstrumentDTO.from_model(model.instrument),
+            instrument_section=InstrumentSectionDTO.from_model(
+                model.instrument_section
+            ),
         )
 
 
@@ -107,7 +109,7 @@ class PartDTO(BaseDTO):
 
 class PartInstrumentDTO(BaseDTO):
     part: PartDTO
-    instrument: InstrumentDTO
+    instrument: InstrumentSectionDTO
     chair_number: int
 
     @classmethod
@@ -115,6 +117,6 @@ class PartInstrumentDTO(BaseDTO):
         return cls(
             id=str(model.id),
             part=PieceDTO.from_model(model.part),
-            instrument=InstrumentDTO.from_model(model.instrument),
+            instrument=InstrumentSectionDTO.from_model(model.instrument),
             chair_number=model.chair_number,
         )
