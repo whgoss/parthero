@@ -8,6 +8,7 @@ from core.views.views import (
     piece,
     programs,
     upload_parts,
+    edition,
 )
 from core.views import organizations
 
@@ -18,6 +19,7 @@ urlpatterns = [
     path("create_piece/", create_new_piece, name="create_piece"),
     path("pieces/", pieces, name="pieces"),
     path("piece/<str:piece_id>/", piece, name="piece"),
+    path("piece/<str:piece_id>/edition/<str:edition_id>/", edition, name="edition"),
     path(
         "piece/<str:piece_id>/parts",
         upload_parts,

@@ -4,7 +4,7 @@
         <!-- Header + primary actions -->
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
             <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
+                <h1 class="text-2xl font-semibold tracking-tight">
                 Pieces
                 </h1>
                 <p class="mt-1 text-sm text-slate-500">
@@ -86,6 +86,10 @@
                             </th>
                             <th scope="col"
                                 class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Edition
+                            </th>
+                            <th scope="col"
+                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Composer
                             </th>
                             <th scope="col"
@@ -100,20 +104,19 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         {% if pieces_count > 0 %}
-                            {% for piece in pieces %}
-                                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/piece/{{ piece.id }}/'">
-                                    <td class="px-4 py-3 align-top">
-                                        <div class="flex flex-col">
-                                            <span class="font-medium text-slate-900">{{ piece.title }}</span>
-                                        </div>
+                            {% for edition in editions %}
+                                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/piece/{{ edition.piece.id }}/edition/{{ edition.id }}'">
+                                    <td class="px-4 py-3 align-center">
+                                        <span class="font-medium">{{ edition.piece.title }}</span>
                                     </td>
-                                    <td class="px-4 py-3 align-top text-slate-700">{{ piece.composer }}</td>
-                                    <td class="px-4 py-3 align-top text-slate-700">
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs text-slate-700">{{ piece.parts_count }} parts</span>
+                                    <td class="px-4 py-3 align-center text-xs italic font-light">{{ edition.name }}</td>
+                                    <td class="px-4 py-3 align-center text-xs font-light">{{ edition.piece.composer }}</td>
+                                    <td class="px-4 py-3 align-center">
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs font-light">{{ edition.parts_count }} parts</span>
                                     </td>
-                                    <td class="px-4 py-3 align-top text-slate-600 text-right">
+                                    <td class="px-4 py-3 align-center text-right text-xs font-light">
                                         Nov 10, 2025
-                                        <div class="text-xs text-slate-400">by Alice K.</div>
+                                        <div>by Alice K.</div>
                                     </td>
                                 </tr>
                             {% endfor %}

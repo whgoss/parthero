@@ -6,9 +6,11 @@ from core.services.music import (
     create_piece,
     create_edition,
     get_piece_by_id,
-    get_pieces,
-    get_pieces_count,
     get_parts,
+    get_edition,
+    get_editions_for_piece,
+    get_editions,
+    get_editions_count,
 )
 
 
@@ -54,22 +56,31 @@ def upload_parts(request, piece_id):
 @login_required
 def piece(request, piece_id):
     piece = get_piece_by_id(request.organization.id, piece_id)
-    parts = get_parts(piece_id)
-    context = {
-        "piece": piece,
-        "parts": parts,
-    }
-    return render(request, "piece.html", context)
+    editions = get_editions_for_piece(piece_id)
+    return redirect(f"/piece/{piece.id}/edition/{editions[0].id}")
 
 
 @login_required
 def pieces(request):
-    pieces = get_pieces(request.organization.id)
+    editions = get_editions(request.organization.id)
     context = {
-        "pieces": pieces,
-        "pieces_count": get_pieces_count(request.organization.id),
+        "editions": editions,
+        "pieces_count": get_editions_count(request.organization.id),
     }
     return render(request, "pieces.html", context)
+
+
+@login_required
+def edition(request, piece_id, edition_id):
+    edition = get_edition(edition_id)
+    editions = get_editions_for_piece(piece_id)
+    parts = get_parts(edition_id)
+    context = {
+        "parts": parts,
+        "edition": edition,
+        "editions": editions,
+    }
+    return render(request, "edition.html", context)
 
 
 @login_required

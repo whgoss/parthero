@@ -13,12 +13,12 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-function updatePart(pieceId, dto, newStatus) {
+function updatePart(editionId, dto, newStatus) {
   if (!dto) return;
 
   const updatedDto = { ...dto, status: newStatus };
 
-  return fetch(`/api/piece/${pieceId}/part/${dto.id}`, {
+  return fetch(`/api/edition/${editionId}/part/${dto.id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputs = document.querySelectorAll('input[type="file"].filepond');
 
   inputs.forEach((input) => {
-    const pieceId = input.dataset.pieceId; // <input ... data-piece-id="{{ piece.id }}">
+    const editionId = input.dataset.editionId; // <input ... data-edition-id="{{ edition.id }}">
 
     FilePond.create(input, {
       allowMultiple: true,
@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
           let xhr = null;
 
           // 1) Create part, get presigned URL
-          fetch(`/api/piece/${pieceId}/part`, {
+          fetch(`/api/edition/${editionId}/part`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -101,16 +101,16 @@ document.addEventListener("DOMContentLoaded", () => {
               // 2) Update part status after upload
               xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                  updatePart(pieceId, partDto, "Uploaded");
+                  updatePart(editionId, partDto, "Uploaded");
                   load(partDto.id);
                 } else {
-                  updatePart(pieceId, partDto, "Failed");
+                  updatePart(editionId, partDto, "Failed");
                   error("Upload failed");
                 }
               };
 
               xhr.onerror = () => {
-                updatePart(pieceId, partDto, "Aborted");
+                updatePart(editionId, partDto, "Aborted");
                 error("Upload error");
               };
 

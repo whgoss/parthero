@@ -11,7 +11,7 @@ from core.services.music import update_part
 class PartCreateViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated, IsInOrganization]
 
-    def post(self, request, piece_id, *args, **kwargs):
+    def post(self, request, edition_id, *args, **kwargs):
         serializer = PartCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -19,7 +19,7 @@ class PartCreateViewSet(APIView):
         filename = serializer.validated_data["filename"]
 
         # 2. Pass to service layer to create part
-        part = create_part(piece_id, filename)
+        part = create_part(edition_id, filename)
         response_data = part.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)
 

@@ -63,6 +63,25 @@ def create_edition(
     return EditionDTO.from_model(edition)
 
 
+def get_edition(edition_id: str) -> EditionDTO:
+    edition = Edition.objects.get(id=edition_id)
+    return EditionDTO.from_model(edition)
+
+
+def get_editions(organization_id: str) -> List[EditionDTO]:
+    editions = Edition.objects.filter(piece__organization__id=organization_id)
+    return EditionDTO.from_models(editions)
+
+
+def get_editions_for_piece(piece_id: str) -> List[EditionDTO]:
+    editions = Edition.objects.filter(piece_id=piece_id)
+    return EditionDTO.from_models(editions)
+
+
+def get_editions_count(organization_id: str) -> int:
+    return Edition.objects.filter(piece__organization__id=organization_id).count()
+
+
 def create_part(edition_id: str, filename: str) -> PartDTO:
     edition = Edition.objects.get(id=edition_id)
 

@@ -5,15 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0002_create_instrument_sections'),
+        ("core", "0002_create_instrument_sections"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='edition',
-            name='piece',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='editions', to='core.piece'),
+            model_name="edition",
+            name="piece",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="editions",
+                to="core.piece",
+            ),
         ),
     ]
