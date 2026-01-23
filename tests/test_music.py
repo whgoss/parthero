@@ -28,7 +28,6 @@ def test_create_piece():
     assert piece.title == "Firebird Suite"
     assert piece.composer == "Igor Stravinsky"
     assert piece.organization_id == organization.id
-    assert piece.arranger is None
     assert edition.piece == piece
     assert edition.name == "1919 Version"
     assert (

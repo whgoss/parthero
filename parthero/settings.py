@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -135,3 +136,10 @@ LOGIN_REDIRECT_URL = "/home/"
 LOGOUT_REDIRECT_URL = "/"
 
 AUTH_USER_MODEL = "core.User"
+
+REQUEST_TIMEOUT = os.environ.get("REQUEST_TIMEOUT", 5)
+
+# Daniels' Orchestral Music API
+DOMO_ID = os.environ.get("DOMO_ID")
+DOMO_TOKEN = os.environ.get("DOMO_TOKEN")
+DOMO_URL = os.environ.get("DOMO_URL")

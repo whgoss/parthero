@@ -1,8 +1,16 @@
+import re
 import uuid
+import requests
 from typing import List, Optional
 from django.db import transaction
 from django.db.models import Count
-from core.dtos.music import PieceDTO, PartDTO, InstrumentSectionDTO, EditionDTO
+from core.dtos.music import (
+    PieceDTO,
+    PartDTO,
+    InstrumentSectionDTO,
+    EditionDTO,
+    PartSlotDTO,
+)
 from core.enum.instruments import InstrumentSectionEnum
 from core.enum.status import UploadStatus
 from core.models.organizations import Musician
@@ -21,13 +29,11 @@ def create_piece(
     organization_id: str,
     title: str,
     composer: str,
-    arranger: str = None,
 ) -> PieceDTO:
     piece = Piece(
         organization_id=organization_id,
         title=title,
         composer=composer,
-        arranger=arranger,
     )
     piece.save()
     return PieceDTO.from_model(piece)
@@ -161,3 +167,47 @@ def update_musician_instrument_sections(
             for instrument_section in instrument_sections
         ]
     )
+
+
+def looks_like_numbered_part(tail: str) -> bool:
+    # e.g. " 2.pdf", "_ii.pdf", "-1", "(III)"
+    PART_NUMBER_REGEX = re.compile(
+        r"""(?:^|[^a-z0-9])(?:1|2|3|4|5|i|ii|iii|iv|v)(?:[^a-z0-9]|$)""", re.VERBOSE
+    )
+    return bool(PART_NUMBER_REGEX.search(tail))
+
+
+def covered_slots_for_part(
+    part_id: str, required_slots: list[PartSlotDTO]
+) -> set[PartSlotDTO]:
+    part = Part.objects.get(id=part_id)
+    filename = (part.upload_filename or "").lower()
+    covered = list()
+
+    # 1) If the user uploaded "Flute.pdf" (generic), assume it covers all flute slots
+    for instrument_section in InstrumentSectionEnum:
+        instrument_name = instrument_section.value.lower()
+        index = filename.find(instrument_name)
+        if index == -1:
+            continue
+
+        tail = filename[index:]
+        if not looks_like_numbered_part(tail):
+            for part_slot in required_slots:
+                if part_slot.primary == instrument_section:
+                    covered.append(part_slot)
+            # covered |= {
+            #     part_slot
+            #     for part_slot in required_slots
+            #     if part_slot.primary == instrument_section
+            # }
+
+    # 2) Otherwise, match more specifically (Piccolo implies the flute/picc doubling slot, etc.)
+    # for slot in required_slots:
+    #     if any(
+    #         instrument_section.value.lower() in filename
+    #         for instrument_section in slot.instrument_sections
+    #     ):
+    #         covered.append(slot)
+
+    return covered

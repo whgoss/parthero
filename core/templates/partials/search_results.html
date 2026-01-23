@@ -1,0 +1,22 @@
+{% if search_results %}
+<div id="search-results-container">
+    <div id="search-results-table">
+        <table class="w-full text-sm border-separate">
+            <tbody>
+                {% for search_result in search_results %}
+                    <tr>
+                        <td colspan="2" class="p-0">
+                            <a class="block" href="{% url 'create_piece' %}?domo_id={{ search_result.id }}">
+                                <div class="bg-white border border-slate-200 shadow-sm rounded-xl px-6 py-4 grid grid-cols-3 gap-6 cursor-pointer hover:bg-blue-100">
+                                    <div class="col-span-2">{{ search_result.title }}</div>
+                                    <div class="col-span-1">{{ search_result.composer }}</div>
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

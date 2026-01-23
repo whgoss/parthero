@@ -1,4 +1,5 @@
 import "./styles.css";
+import "htmx.org"
 import "@yaireo/tagify/dist/tagify.css";
 import "filepond/dist/filepond.min.css";
 import * as FilePond from "filepond";

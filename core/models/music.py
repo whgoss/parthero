@@ -28,7 +28,8 @@ class MusicianInstrument(UUIDPrimaryKeyModel):
 class Piece(UUIDPrimaryKeyModel):
     title = CharField(max_length=255)
     composer = CharField(max_length=255)
-    arranger = CharField(max_length=255, blank=True, null=True)
+    domo_id = IntegerField(null=True, blank=True)
+    composer_domo_id = IntegerField(null=True, blank=True)
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     def __str__(self):
@@ -59,5 +60,5 @@ class Part(UUIDPrimaryKeyModel):
 
 class PartInstrument(UUIDPrimaryKeyModel):
     part = ForeignKey(Part, related_name="part_instruments", on_delete=CASCADE)
-    instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE)
-    number = IntegerField()
+    instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE, null=True)
+    number = IntegerField(null=True)

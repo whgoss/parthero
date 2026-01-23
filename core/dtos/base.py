@@ -16,7 +16,7 @@ class BaseDTO(BaseModel):
         use_enum_values=False,
     )
 
-    @abstractmethod
+    @classmethod
     def from_model(cls, model: BaseModel) -> "BaseDTO":
         pass
 

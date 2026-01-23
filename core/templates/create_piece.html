@@ -1,5 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
+
+<script>
+  // Grab your inputs (adjust composer selector to your actual form field)
+  const titleId = "{{ form.title.id_for_label|escapejs }}";
+  const composerId = "{{ form.composer.id_for_label|escapejs }}";
+  const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+  const titleInput = document.getElementById(titleId);
+  const composerInput = document.getElementById(composerId);
+
+  console.log({ titleId, composerId, titleInput, composerInput });
+
+  // Debounce + cancel in-flight requests while user is typing
+  let debounceTimer = null;
+  let abortController = null;
+
+  async function search() {
+    const title = titleInput?.value?.trim() ?? "";
+    const composer = composerInput?.value?.trim() ?? "";
+
+    // Optional: don't spam your server for tiny inputs
+    if (title.length < 2 && composer.length < 2) return;
+
+    // Cancel previous request
+    if (abortController) abortController.abort();
+    abortController = new AbortController();
+
+    await fetch("/search", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken,
+      },
+      body: JSON.stringify({ title, composer }),
+      signal: abortController.signal,
+    });
+    // Intentionally not doing anything with the response yet.
+  }
+
+  function scheduleSearch() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(search, 250);
+  }
+
+  titleInput?.addEventListener("input", scheduleSearch);
+  composerInput?.addEventListener("input", scheduleSearch); // nice if composer changes too
+</script>
+
 <div class="max-w-5xl mx-auto">
     <!-- Header + primary actions -->
     <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -39,13 +87,6 @@
             </label>
             {{ form.composer }}
             {% if form.composer.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.composer.errors|striptags }}</p>{% endif %}
-          </div>
-          <div class="ml-4">
-            <label for="{{ form.arranger.id_for_label }}" class="mb-1 block text-sm font-medium">
-              Arranger
-            </label>
-            {{ form.arranger }}
-            {% if form.arranger.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.arranger.errors|striptags }}</p>{% endif %}
           </div>
         </div>
 

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header + primary actions -->
+    <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-slate-900">Search for a Piece</h1>
+        <p class="mt-2 text-sm text-slate-500">
+            Search our catalog of over 22,100 works.
+        </p>
+    </div>
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
+      <form method="post"
+            class="space-y-6"
+            hx-post="/search/"
+            hx-trigger="input delay:400ms from:#title, input delay:400ms from:#composer"
+            hx-target="#search-results"
+            hx-swap="innerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        {% csrf_token %}
+
+        <div class="grid grid-cols-2">
+          <div>
+            <label for="title" class="mb-1 block text-sm font-medium">Title</label>
+            <input type="text" name="title" id="title" required class="w-full border rounded px-3 py-2 mt-1" />
+          </div>
+
+          <div class="ml-4">
+            <label for="composer" class="mb-1 block text-sm font-medium">Composer</label>
+            <input type="text" name="composer" id="composer" class="w-full border rounded px-3 py-2 mt-1" />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div id="search-results">{% include "partials/search_results.html" with composer=composer title=title %}</div>
+  </div>
+</div>
+{% endblock %}

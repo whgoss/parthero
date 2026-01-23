@@ -36,33 +36,36 @@ BRASS_ORDER = [
 DASH_PATTERN = re.compile(r"\s*[—-]\s*")
 
 
-def parse_instrumentation(notation: str) -> List[InstrumentSectionEnum]:
+def parse_instrumentation(notation: str) -> List[PartSlotDTO]:
     # Split on em dash / hyphen
     segments = [seg.strip() for seg in DASH_PATTERN.split(notation) if seg.strip()]
-    # result: List[InstrumentSectionEnum] = []
-    result = {
-        InstrumentFamily.WOODWINDS: [],
-        InstrumentFamily.BRASS: [],
-        InstrumentFamily.PERCUSSION: [],
-        InstrumentFamily.AUXILIARY: [],
-        InstrumentFamily.STRINGS: [],
-        InstrumentFamily.VOICE: [],
-    }
+    result: List[PartSlotDTO] = []
+    # result = {
+    #     InstrumentFamily.WOODWINDS: [],
+    #     InstrumentFamily.BRASS: [],
+    #     InstrumentFamily.PERCUSSION: [],
+    #     InstrumentFamily.AUXILIARY: [],
+    #     InstrumentFamily.STRINGS: [],
+    #     InstrumentFamily.VOICE: [],
+    # }
 
     # 1) Woodwinds: by position
     if segments:
         winds = _parse_woodwinds(segments[0])
-        result[InstrumentFamily.WOODWINDS] = winds
+        # result[InstrumentFamily.WOODWINDS] = winds
+        result.extend(winds)
 
     # 2) Brass: by position
     if len(segments) >= 2:
         brass = _parse_brass(segments[1])
-        result[InstrumentFamily.BRASS] = brass
+        # result[InstrumentFamily.BRASS] = brass
+        result.extend(brass)
 
     # 3) Percussion (e.g., "tmp+1")
     if len(segments) >= 3:
         percussion = _parse_percussion(segments[2])
-        result[InstrumentFamily.PERCUSSION] = percussion
+        # result[InstrumentFamily.PERCUSSION] = percussion
+        result.extend(percussion)
 
     # 4) Everything after that is one-per-token (hp, cel, pf, str, etc.)
     if len(segments) > 3:
@@ -81,7 +84,8 @@ def parse_instrumentation(notation: str) -> List[InstrumentSectionEnum]:
                     number=None,
                     instrument_sections=[section],
                 )
-                result[family].append(part_slot)
+                # result[family].append(part_slot)
+                result.append(part_slot)
 
     return result
 

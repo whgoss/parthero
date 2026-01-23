@@ -17,6 +17,7 @@
   "dependencies": {
     "@yaireo/tagify": "^4.35.6",
     "filepond": "^4.32.10",
-    "filepond-plugin-file-validate-type": "^1.2.9"
+    "filepond-plugin-file-validate-type": "^1.2.9",
+    "htmx.org": "^2.0.8"
   }
 }

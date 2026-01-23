@@ -15,12 +15,14 @@ from core.enum.instruments import InstrumentSectionEnum, InstrumentFamily
 
 class InstrumentSectionDTO(BaseDTO):
     name: InstrumentSectionEnum
+    family: InstrumentFamily
 
     @classmethod
     def from_model(cls, model: InstrumentSection):
         return cls(
             id=str(model.id),
             name=InstrumentSectionEnum(model.name),
+            family=InstrumentFamily(model.family),
         )
 
 
@@ -44,7 +46,6 @@ class PieceDTO(BaseDTO):
     composer: str
     organization_id: str
     editions_count: int
-    arranger: Optional[str] = None
 
     @classmethod
     def from_model(cls, model: Piece, editions_count: Optional[int] = None):
@@ -59,7 +60,6 @@ class PieceDTO(BaseDTO):
             title=model.title,
             composer=model.composer,
             organization_id=str(model.organization.id),
-            arranger=model.arranger,
             editions_count=editions_count,
         )
 
@@ -92,7 +92,7 @@ class EditionDTO(BaseDTO):
 class PartDTO(BaseDTO):
     edition_id: str
     status: UploadStatus
-    part_instruments: List["PartInstrumentDTO"] = []
+    part_instruments: Optional[List["PartInstrumentDTO"]] = None
     upload_url: Optional[str] = None
     upload_filename: Optional[str] = None
     file_key: Optional[str] = None
@@ -114,8 +114,7 @@ class PartDTO(BaseDTO):
 
 class PartInstrumentDTO(BaseDTO):
     part_id: str
-    family: InstrumentFamily
-    instrument_sections: Optional[List[InstrumentSectionEnum]] = []
+    instrument_section: InstrumentSectionDTO
     number: Optional[int] = None
 
     @classmethod
@@ -123,8 +122,8 @@ class PartInstrumentDTO(BaseDTO):
         return cls(
             id=str(model.id),
             part_id=str(model.part.id),
-            instrument_sections=InstrumentSectionDTO.from_models(
-                model.instrument_sections.all()
+            instrument_section=InstrumentSectionDTO.from_model(
+                model.instrument_section
             ),
             number=model.number,
         )
@@ -133,15 +132,15 @@ class PartInstrumentDTO(BaseDTO):
 class PartSlotDTO(BaseDTO):
     family: InstrumentFamily
     instrument_sections: List[InstrumentSectionEnum]
-    primary: InstrumentSectionEnum | None = None
-    number: int | None = None
+    primary: Optional[InstrumentSectionEnum] = None
+    number: Optional[int] = None
 
     @property
     def is_doubling(self) -> bool:
         return len(self.instrument_sections) > 1
 
     @property
-    def display_label(self) -> str:
+    def display_name(self) -> str:
         names = [i.value for i in self.instrument_sections]
         if self.number and self.primary:
             primary_name = self.primary.value

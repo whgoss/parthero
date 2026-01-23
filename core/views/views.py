@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
+from django.views.decorators.http import require_POST
 from core.forms.music import PieceForm
 from core.services.music import (
     create_piece,
@@ -12,6 +13,7 @@ from core.services.music import (
     get_editions,
     get_editions_count,
 )
+from core.services.domo import search_for_piece
 from core.services.instrumentation import parse_instrumentation
 
 
@@ -30,28 +32,20 @@ def create_new_piece(request):
         title = form.data["title"]
         edition_name = form.data["edition_name"]
         composer = form.data["composer"]
-        arranger = form.data["arranger"]
         instrumentation = form.data["instrumentation"]
         duration = form.data["duration"]
         organization_id = request.organization.id
-        piece = create_piece(organization_id, title, composer, arranger)
+        piece = create_piece(organization_id, title, composer)
         edition = create_edition(piece.id, edition_name, instrumentation, duration)
         return redirect(f"/piece/{piece.id}/edition/{edition.id}/")
     else:
+        domo_id = request.GET.get("domo_id", None)
         form = PieceForm(
             organization_id=request.organization.id,
+            domo_id=domo_id,
         )
     context = {"form": form}
     return render(request, "create_piece.html", context)
-
-
-@login_required
-def upload_parts(request, piece_id):
-    piece = get_piece_by_id(request.organization.id, piece_id)
-    context = {
-        "piece": piece,
-    }
-    return render(request, "upload_parts.html", context)
 
 
 @login_required
@@ -72,16 +66,64 @@ def pieces(request):
 
 
 @login_required
+def select_piece(request):
+    return render(request, "select_piece.html")
+
+
+@require_POST
+@login_required
+def search(request):
+    title = request.POST.get("title", None)
+    composer = request.POST.get("composer", None)
+
+    results = []
+    if title or composer:
+        results = search_for_piece(title, composer)
+
+    context = {
+        "search_results": results,
+    }
+    return render(request, "partials/search_results.html", context)
+
+
+@login_required
 def edition(request, piece_id, edition_id):
     edition = get_edition(edition_id)
     editions = get_editions_for_piece(piece_id)
     parts = get_parts(edition_id)
     instrumentation = parse_instrumentation(edition.instrumentation)
+
+    instrumentation = parse_instrumentation(edition.instrumentation)
+    part_instruments = []
+    for part in parts:
+        for part_instrument in part.part_instruments:
+            part_instruments.append(part_instrument.instrument_section.name)
+
+    missing_parts = []
+    for part_slot in instrumentation:
+        for instrument_section in part_slot.instrument_sections:
+            if instrument_section not in part_instruments:
+                missing_parts.append(part_slot)
+
+    # uploaded_sections = {
+    #     part_instrument.instrument_section
+    #     for part in parts
+    #     for part_instrument in part.part_instruments
+    # }
+
+    # missing_parts = [
+    #     part_slot
+    #     for part_slot in instrumentation
+    #     if set(part_slot.instrument_sections).isdisjoint(uploaded_sections)
+    # ]
+
     context = {
         "parts": parts,
         "edition": edition,
         "editions": editions,
         "instrumentation": instrumentation,
+        "missing_parts": missing_parts,
+        "missing_parts_count": len(missing_parts),
     }
     return render(request, "edition.html", context)
 
