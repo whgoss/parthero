@@ -9,7 +9,6 @@ from core.views.views import (
     search,
     piece,
     programs,
-    edition,
 )
 from core.views import organizations
 
@@ -20,7 +19,6 @@ urlpatterns = [
     path("create_piece/", create_new_piece, name="create_piece"),
     path("pieces/", pieces, name="pieces"),
     path("piece/<str:piece_id>/", piece, name="piece"),
-    path("piece/<str:piece_id>/edition/<str:edition_id>/", edition, name="edition"),
     path("roster/", organizations.roster, name="roster"),
     path("musician/", organizations.musician, name="musician"),
     path("musician/<str:musician_id>/", organizations.musician, name="musician"),

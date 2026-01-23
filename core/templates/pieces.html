@@ -71,7 +71,7 @@
             <!-- Table header row -->
             <div class="border-b border-slate-200 bg-slate-50/70 px-4 py-2.5">
                 <div class="flex items-center justify-between text-xs text-slate-500">
-                    <span>Showing {{ pieces_count }} pieces</span>
+                    <span>Showing {{ piece_count }} pieces</span>
                     <span>Click a piece to see its parts.</span>
                 </div>
             </div>
@@ -83,10 +83,6 @@
                             <th scope="col"
                                 class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Title
-                            </th>
-                            <th scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Edition
                             </th>
                             <th scope="col"
                                 class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -103,16 +99,15 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
-                        {% if pieces_count > 0 %}
-                            {% for edition in editions %}
-                                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/piece/{{ edition.piece.id }}/edition/{{ edition.id }}'">
+                        {% if piece_count > 0 %}
+                            {% for piece in pieces %}
+                                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/piece/{{ piece.id }}/'">
                                     <td class="px-4 py-3 align-center">
-                                        <span class="font-medium">{{ edition.piece.title }}</span>
+                                        <span class="font-medium">{{ piece.title }}</span>
                                     </td>
-                                    <td class="px-4 py-3 align-center text-xs italic font-light">{{ edition.name }}</td>
-                                    <td class="px-4 py-3 align-center text-xs font-light">{{ edition.piece.composer }}</td>
+                                    <td class="px-4 py-3 align-center text-xs font-light">{{ piece.composer }}</td>
                                     <td class="px-4 py-3 align-center">
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs font-light">{{ edition.parts_count }} parts</span>
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs font-light">{{ piece.parts_count }} parts</span>
                                     </td>
                                     <td class="px-4 py-3 align-center text-right text-xs font-light">
                                         Nov 10, 2025

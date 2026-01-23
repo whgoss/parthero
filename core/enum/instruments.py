@@ -39,6 +39,7 @@ class InstrumentSectionEnum(Enum):
     GUITAR = "Guitar"
     ELECTRIC_GUITAR = "Electric Guitar"
     BASS_GUITAR = "Bass Guitar"
+    ELECTRONICA = "Electronica"
 
     def choices():
         return [
@@ -94,6 +95,7 @@ INSTRUMENT_FAMILIES = {
         InstrumentSectionEnum.GUITAR,
         InstrumentSectionEnum.ELECTRIC_GUITAR,
         InstrumentSectionEnum.BASS_GUITAR,
+        InstrumentSectionEnum.ELECTRONICA,
     ],
     InstrumentFamily.STRINGS: [
         InstrumentSectionEnum.VIOLIN_1,

@@ -3,32 +3,22 @@
 {% load roster %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    <!-- Title, Composer, and Edition Selection -->
+    <!-- Basic Details -->
     <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
       <span class="text-2xl font-semibold tracking-tight">
-                {{ edition.piece.title }}
-          <select
-            id="edition-select"
-            class="ml-2 rounded-md bg-blue-600 text-white text-sm px-3 py-1.5 shadow-sm border border-blue-700"
-        >
-            {% for edition_option in editions %}
-            <option value="{{ edition_option.id }}" {% if edition_option.id == edition.id %}selected{% endif %}>
-                {{ edition_option.name }}
-            </option>
-            {% endfor %}
-        </select>
-        </span>
-        <h3 class="text-md font-light">{{ edition.piece.composer }}</h3>
+        {{ piece.title }}
+      </span>
+      <h3 class="text-md font-light">{{ piece.composer }}</h3>
     </div>
 
     <!-- Instrumentation -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
       <h1 class="text-lg font-bold">Instrumentation</h1>
-      <span class="text-md font-light">{{ edition.instrumentation }}</span>
+      <span class="text-md font-light">{{ piece.instrumentation }}</span>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
-      <h1 class="text-lg font-bold">Parts ({{ edition.parts_count }})</h1>
-      {% if edition.parts_count > 0 %}
+      <h1 class="text-lg font-bold">Parts ({{ piece.parts_count }})</h1>
+      {% if piece.parts_count > 0 %}
         {% for part in parts %}
             <span class="font-light">{{ part.upload_filename }}</span><br />
             {% for part_instrument in part.part_instruments %}
@@ -65,6 +55,7 @@
         {% endfor %}
       </div> {% endcomment %}
     </div>
+    <!-- Part Uplaod -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
       <h1 class="text-lg font-bold">Upload Parts</h1>
       <form method="post" class="space-y-4 items-center">
@@ -73,7 +64,6 @@
           <input
             type="file"
             data-piece-id="{{ piece.id }}"
-            data-edition-id="{{ edition.id }}"
             class="filepond w-full"
             multiple
           >

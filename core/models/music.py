@@ -30,24 +30,16 @@ class Piece(UUIDPrimaryKeyModel):
     composer = CharField(max_length=255)
     domo_id = IntegerField(null=True, blank=True)
     composer_domo_id = IntegerField(null=True, blank=True)
+    instrumentation = TextField()
+    duration = IntegerField(null=True)
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     def __str__(self):
         return f"{self.title} by {self.composer}"
 
 
-class Edition(UUIDPrimaryKeyModel):
-    name = CharField(max_length=255, default="Standard Edition")
-    piece = ForeignKey(Piece, related_name="editions", on_delete=CASCADE)
-    instrumentation = TextField()
-    duration = IntegerField(null=True)
-
-    def __str__(self):
-        return f"{self.name}"
-
-
 class Part(UUIDPrimaryKeyModel):
-    edition = ForeignKey(Edition, related_name="parts", on_delete=CASCADE)
+    piece = ForeignKey(Piece, related_name="parts", on_delete=CASCADE)
     status = CharField(
         max_length=50,
         default=UploadStatus.PENDING.value,

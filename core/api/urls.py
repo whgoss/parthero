@@ -3,13 +3,13 @@ from core.api.views import PartCreateViewSet, PartViewSet
 
 urlpatterns = [
     path(
-        "edition/<str:edition_id>/part",
+        "piece/<str:piece_id>/part",
         PartCreateViewSet.as_view(),
-        name="api_piece_part_create",
+        name="api_part_create",
     ),
     path(
-        "edition/<str:edition_id>/part/<str:part_id>",
+        "piece/<str:piece_id>/part/<str:part_id>",
         PartViewSet.as_view(),
-        name="api_piece_part_update",
+        name="api_part_update",
     ),
 ]

@@ -10,7 +10,7 @@ from core.services.music import (
     create_part,
     update_part,
     covered_slots_for_part,
-    get_edition,
+    get_piece,
     get_instrument_section,
 )
 from core.services.instrumentation import parse_instrumentation
@@ -23,7 +23,7 @@ class PartCreateViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated, IsInOrganization]
 
     @transaction.atomic
-    def post(self, request, edition_id, *args, **kwargs):
+    def post(self, request, piece_id, *args, **kwargs):
         serializer = PartCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -31,11 +31,11 @@ class PartCreateViewSet(APIView):
         filename = serializer.validated_data["filename"]
 
         # 2. Pass to service layer to create part
-        part = create_part(edition_id, filename)
+        part = create_part(piece_id, filename)
 
         # 3. Determine covered part slot for part
-        edition = get_edition(edition_id)
-        instrumentation = parse_instrumentation(edition.instrumentation)
+        piece = get_piece(request.organization.id, piece_id)
+        instrumentation = parse_instrumentation(piece.instrumentation)
         part_slots = covered_slots_for_part(part.id, instrumentation)
         for part_slot in part_slots:
             for instrument_section in part_slot.instrument_sections:
@@ -54,7 +54,7 @@ class PartCreateViewSet(APIView):
 class PartViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated, IsInOrganization]
 
-    def put(self, request, edition_id, part_id, *args, **kwargs):
+    def put(self, request, piece_id, part_id, *args, **kwargs):
         serializer = PartDTOWrapperSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -64,7 +64,7 @@ class PartViewSet(APIView):
         part = part.model_copy(
             update={
                 "id": part_id,
-                "edition_id": edition_id,
+                "piece_id": piece_id,
             }
         )
 

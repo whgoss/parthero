@@ -5,7 +5,6 @@ from core.models.music import (
     Piece,
     Part,
     InstrumentSection,
-    Edition,
     PartInstrument,
     MusicianInstrument,
 )
@@ -45,34 +44,12 @@ class PieceDTO(BaseDTO):
     title: str
     composer: str
     organization_id: str
-    editions_count: int
-
-    @classmethod
-    def from_model(cls, model: Piece, editions_count: Optional[int] = None):
-        if editions_count is None:
-            editions_count = getattr(model, "editions_count", None)
-
-        if editions_count is None:
-            editions_count = model.editions.count()
-
-        return cls(
-            id=str(model.id),
-            title=model.title,
-            composer=model.composer,
-            organization_id=str(model.organization.id),
-            editions_count=editions_count,
-        )
-
-
-class EditionDTO(BaseDTO):
-    name: str
-    piece: PieceDTO
     instrumentation: str
     parts_count: int
     duration: Optional[int] = None
 
     @classmethod
-    def from_model(cls, model: Edition, parts_count: Optional[int] = None):
+    def from_model(cls, model: Piece, parts_count: Optional[int] = None):
         if parts_count is None:
             parts_count = getattr(model, "parts_count", None)
 
@@ -81,8 +58,9 @@ class EditionDTO(BaseDTO):
 
         return cls(
             id=str(model.id),
-            name=model.name,
-            piece=PieceDTO.from_model(model.piece),
+            title=model.title,
+            composer=model.composer,
+            organization_id=str(model.organization.id),
             instrumentation=model.instrumentation,
             parts_count=parts_count,
             duration=model.duration,
@@ -90,7 +68,7 @@ class EditionDTO(BaseDTO):
 
 
 class PartDTO(BaseDTO):
-    edition_id: str
+    piece_id: str
     status: UploadStatus
     part_instruments: Optional[List["PartInstrumentDTO"]] = None
     upload_url: Optional[str] = None
@@ -101,7 +79,7 @@ class PartDTO(BaseDTO):
     def from_model(cls, model: Part):
         return cls(
             id=str(model.id),
-            edition_id=str(model.edition.id),
+            piece_id=str(model.piece.id),
             status=UploadStatus(model.status),
             part_instruments=PartInstrumentDTO.from_models(
                 model.part_instruments.all()

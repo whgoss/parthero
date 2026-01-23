@@ -1,66 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-
-<script>
-  // Grab your inputs (adjust composer selector to your actual form field)
-  const titleId = "{{ form.title.id_for_label|escapejs }}";
-  const composerId = "{{ form.composer.id_for_label|escapejs }}";
-  const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
-  const titleInput = document.getElementById(titleId);
-  const composerInput = document.getElementById(composerId);
-
-  console.log({ titleId, composerId, titleInput, composerInput });
-
-  // Debounce + cancel in-flight requests while user is typing
-  let debounceTimer = null;
-  let abortController = null;
-
-  async function search() {
-    const title = titleInput?.value?.trim() ?? "";
-    const composer = composerInput?.value?.trim() ?? "";
-
-    // Optional: don't spam your server for tiny inputs
-    if (title.length < 2 && composer.length < 2) return;
-
-    // Cancel previous request
-    if (abortController) abortController.abort();
-    abortController = new AbortController();
-
-    await fetch("/search", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken,
-      },
-      body: JSON.stringify({ title, composer }),
-      signal: abortController.signal,
-    });
-    // Intentionally not doing anything with the response yet.
-  }
-
-  function scheduleSearch() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(search, 250);
-  }
-
-  titleInput?.addEventListener("input", scheduleSearch);
-  composerInput?.addEventListener("input", scheduleSearch); // nice if composer changes too
-</script>
-
 <div class="max-w-5xl mx-auto">
     <!-- Header + primary actions -->
     <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 class="text-2xl font-semibold text-slate-900">Create a New Piece</h1>
         <p class="mt-2 text-sm text-slate-500">
-            Add the basic details for this piece. You’ll upload the parts on the next screen.
+            Add the basic details for this piece. You'll upload the parts on the next screen.
         </p>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
-      <form method="post" action="{% url 'create_piece' %}" class="space-y-6">
+      <form method="post" 
+        action="{% url 'create_piece' %}"
+        class="space-y-6">
         {% csrf_token %}
 
-        <!-- Title -->
+        <!-- Basic Details -->
         <div class="grid grid-cols-2">
           <div>
             {{ form.title.required }}
@@ -71,17 +25,6 @@
             {% if form.title.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.title.errors|striptags }}</p>{% endif %}
           </div>
           <div class="ml-4">
-            <label for="{{ form.edition_name.id_for_label }}" class="mb-1 block text-sm font-medium">
-              Edition Name
-            </label>
-            {{ form.edition_name }}
-            {% if form.edition_name.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.edition_name.errors|striptags }}</p>{% endif %}
-          </div>
-        </div>
-
-        <!-- Composer -->
-        <div class="grid grid-cols-2">
-          <div>
             <label for="{{ form.composer.id_for_label }}" class="mb-1 block text-sm font-medium">
               Composer
             </label>
@@ -109,6 +52,10 @@
             {% if form.duration.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.duration.errors|striptags }}</p>{% endif %}
           </div>
         </div>
+
+        <!-- Hidden inputs -->
+        {{ form.domo_id }}
+        {{ form.composer_domo_id }}
 
         <div class="flex items-center justify-end gap-3">
           <a

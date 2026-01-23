@@ -18,7 +18,7 @@ def nav_active(context, url_name):
     except NoReverseMatch:
         target = url_name
 
-    if path == target:
+    if target != "/" and target in path or path == target:
         # Active
         return "border-blue-500 font-bold text-blue-700"
     else:
