@@ -3,13 +3,13 @@ from core.models.music import (
     Piece,
     Part,
     PartInstrument,
-    InstrumentSection,
+    Instrument,
 )
 from core.models.organizations import Musician, Organization
 from core.models.users import User, UserOrganization
 
 __all__ = [
-    "InstrumentSection",
+    "Instrument",
     "Piece",
     "Part",
     "PartInstrument",

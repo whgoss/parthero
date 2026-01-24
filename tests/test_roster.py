@@ -3,7 +3,7 @@ from faker import Faker
 from moto import mock_aws
 from tests.mocks import create_organization
 from core.services.files import upload_roster
-from core.enum.instruments import InstrumentSectionEnum
+from core.enum.instruments import InstrumentEnum
 from core.services.organizations import create_musician, update_musician
 from parthero.settings_test import BASE_DIR
 
@@ -32,8 +32,8 @@ def test_create_musician():
         email,
         True,
         instrument_sections=[
-            InstrumentSectionEnum.VIOLIN_1,
-            InstrumentSectionEnum.VIOLIN_2,
+            InstrumentEnum.VIOLIN_1,
+            InstrumentEnum.VIOLIN_2,
         ],
     )
 
@@ -46,8 +46,8 @@ def test_create_musician():
         instrument_section.instrument_section
         for instrument_section in musician.instrument_sections
     ]
-    assert InstrumentSectionEnum.VIOLIN_1 in instrument_sections
-    assert InstrumentSectionEnum.VIOLIN_2 in instrument_sections
+    assert InstrumentEnum.VIOLIN_1 in instrument_sections
+    assert InstrumentEnum.VIOLIN_2 in instrument_sections
 
 
 def test_update_musician():
@@ -62,8 +62,8 @@ def test_update_musician():
         email,
         True,
         instrument_sections=[
-            InstrumentSectionEnum.VIOLIN_1,
-            InstrumentSectionEnum.VIOLIN_2,
+            InstrumentEnum.VIOLIN_1,
+            InstrumentEnum.VIOLIN_2,
         ],
     )
 
@@ -74,7 +74,7 @@ def test_update_musician():
         last_name,
         faker.email(),
         True,
-        instrument_sections=[InstrumentSectionEnum.TIMPANI],
+        instrument_sections=[InstrumentEnum.TIMPANI],
     )
 
     assert musician.first_name == first_name
@@ -86,6 +86,6 @@ def test_update_musician():
         instrument_section.instrument_section
         for instrument_section in musician.instrument_sections
     ]
-    assert InstrumentSectionEnum.TIMPANI in instrument_sections
-    assert InstrumentSectionEnum.VIOLIN_1 not in instrument_sections
-    assert InstrumentSectionEnum.VIOLIN_2 not in instrument_sections
+    assert InstrumentEnum.TIMPANI in instrument_sections
+    assert InstrumentEnum.VIOLIN_1 not in instrument_sections
+    assert InstrumentEnum.VIOLIN_2 not in instrument_sections

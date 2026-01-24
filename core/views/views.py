@@ -1,16 +1,17 @@
+import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from core.forms.music import PieceForm
 from core.services.music import (
     create_piece,
     get_piece,
     get_parts,
     get_pieces,
+    get_part_assets,
 )
 from core.services.domo import search_for_piece
-from core.services.instrumentation import parse_instrumentation
 
 
 @login_required
@@ -53,35 +54,18 @@ def create_new_piece(request):
 
 
 @login_required
-def piece(request, piece_id):
+def get_piece_view(request, piece_id):
     piece = get_piece(request.organization.id, piece_id)
-    parts = get_parts(piece_id)
-    instrumentation = parse_instrumentation(piece.instrumentation)
-    part_instruments = []
-    for part in parts:
-        for part_instrument in part.part_instruments:
-            part_instruments.append(part_instrument.instrument_section.name)
-
-    missing_parts = []
-    for part_slot in instrumentation:
-        if any(
-            section not in part_instruments for section in part_slot.instrument_sections
-        ):
-            missing_parts.append(part_slot)
-
     context = {
         "piece": piece,
-        "parts": parts,
-        "instrumentation": instrumentation,
-        "missing_parts": missing_parts,
-        "missing_parts_count": len(missing_parts),
+        "instrumentation": piece.instrumentation,
     }
 
     return render(request, "piece.html", context)
 
 
 @login_required
-def pieces(request):
+def get_pieces_view(request):
     pieces = get_pieces(request.organization.id)
     context = {
         "pieces": pieces,
@@ -93,6 +77,42 @@ def pieces(request):
 @login_required
 def select_piece(request):
     return render(request, "select_piece.html")
+
+
+@require_GET
+@login_required
+def get_parts_view(request, piece_id):
+    parts = get_parts(piece_id)
+    part_assets = get_part_assets(piece_id)
+
+    # Find all parts that don't have an asset
+    completed_parts = []
+    for part_asset in part_assets:
+        if part_asset.parts is not None:
+            for part in part_asset.parts:
+                completed_parts.append(part)
+    missing_parts = []
+    for part in parts:
+        if part not in completed_parts:
+            missing_parts.append(part)
+
+    # Collect all unassigned part assets
+    unassigned_part_assets = []
+    for part_asset in part_assets:
+        if not part_asset.parts:
+            unassigned_part_assets.append(part_asset)
+
+    context = {
+        "piece_id": piece_id,
+        "part_assets": part_assets,
+        "missing_parts": missing_parts,
+        "unassigned_part_assets": unassigned_part_assets,
+        "part_options_json": json.dumps(
+            [{"value": part.display_name, "id": part.id} for part in parts]
+        ),
+    }
+
+    return render(request, "partials/parts.html", context)
 
 
 @require_POST
@@ -109,48 +129,6 @@ def search(request):
         "search_results": results,
     }
     return render(request, "partials/search_results.html", context)
-
-
-# @login_required
-# def edition(request, piece_id, edition_id):
-#     edition = get_edition(edition_id)
-#     editions = get_editions_for_piece(piece_id)
-#     parts = get_parts(edition_id)
-#     instrumentation = parse_instrumentation(edition.instrumentation)
-
-#     instrumentation = parse_instrumentation(edition.instrumentation)
-#     part_instruments = []
-#     for part in parts:
-#         for part_instrument in part.part_instruments:
-#             part_instruments.append(part_instrument.instrument_section.name)
-
-#     missing_parts = []
-#     for part_slot in instrumentation:
-#         for instrument_section in part_slot.instrument_sections:
-#             if instrument_section not in part_instruments:
-#                 missing_parts.append(part_slot)
-
-#     # uploaded_sections = {
-#     #     part_instrument.instrument_section
-#     #     for part in parts
-#     #     for part_instrument in part.part_instruments
-#     # }
-
-#     # missing_parts = [
-#     #     part_slot
-#     #     for part_slot in instrumentation
-#     #     if set(part_slot.instrument_sections).isdisjoint(uploaded_sections)
-#     # ]
-
-#     context = {
-#         "parts": parts,
-#         "edition": edition,
-#         "editions": editions,
-#         "instrumentation": instrumentation,
-#         "missing_parts": missing_parts,
-#         "missing_parts_count": len(missing_parts),
-#     }
-#     return render(request, "edition.html", context)
 
 
 @login_required

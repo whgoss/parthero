@@ -1,7 +1,7 @@
 from typing import List, Optional
 from core.dtos.organizations import OrganizationDTO, MusicianDTO
 from core.dtos.users import UserOrganizationDTO
-from core.enum.instruments import InstrumentSectionEnum
+from core.enum.instruments import InstrumentEnum
 from core.models.organizations import Organization, Musician
 from core.models.users import UserOrganization
 from core.services.music import update_musician_instrument_sections
@@ -35,7 +35,7 @@ def create_musician(
     last_name: str,
     email: str,
     core_member: bool,
-    instrument_sections: Optional[List[InstrumentSectionEnum]],
+    instrument_sections: Optional[List[InstrumentEnum]],
 ) -> MusicianDTO | None:
     musician = Musician.objects.filter(
         organization__id=organization_id, email=email
@@ -85,7 +85,7 @@ def update_musician(
     last_name: str,
     email: str,
     core_member: bool,
-    instrument_sections: Optional[List[InstrumentSectionEnum]],
+    instrument_sections: Optional[List[InstrumentEnum]],
 ) -> MusicianDTO | None:
     musician = Musician.objects.filter(
         organization__id=organization_id, id=musician_id

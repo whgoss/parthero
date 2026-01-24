@@ -4,11 +4,13 @@
 {% block content %}
 <div class="max-w-5xl mx-auto">
     <!-- Basic Details -->
-    <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-      <span class="text-2xl font-semibold tracking-tight">
-        {{ piece.title }}
-      </span>
-      <h3 class="text-md font-light">{{ piece.composer }}</h3>
+    <div class="grid grid-cols-5 w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div class="col-span-4">
+        <span class="text-2xl font-semibold tracking-tight">
+          {{ piece.title }}
+        </span>
+        <h3 class="text-md font-light">{{ piece.composer }}</h3>
+      </div>
     </div>
 
     <!-- Instrumentation -->
@@ -16,46 +18,14 @@
       <h1 class="text-lg font-bold">Instrumentation</h1>
       <span class="text-md font-light">{{ piece.instrumentation }}</span>
     </div>
-    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
-      <h1 class="text-lg font-bold">Parts ({{ piece.parts_count }})</h1>
-      {% if piece.parts_count > 0 %}
-        {% for part in parts %}
-            <span class="font-light">{{ part.upload_filename }}</span><br />
-            {% for part_instrument in part.part_instruments %}
-              <span class="{{ part_instrument.instrument_section.name.value|section_pill_classes }}">
-                {{ part_instrument.instrument_section.name.value }}
-              </span>
-            {% endfor %}
-        {% endfor %}
-      {% else %}
-        <span class="font-light">No parts uploaded.</span>
-      {% endif %}
-      {% if missing_parts %}
-      <h1 class="text-lg font-bold mt-4 text-red-600">⚠️ {{ missing_parts_count }} Missing Parts</h1>
-      <div>
-        {% for part_slot in missing_parts %}
-            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-500 text-white">
-              {{ part_slot.display_name }}
-            </span>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% comment %} <div>
-        {% for family, part_slots in instrumentation.items %}
-          {% if part_slots %}
-            <div class="instrument-family family-{{ part_slot.family.value|lower }}">
-              
-              {% for part_slot in part_slots %}
-                <span class="{{ part_slot.primary.value|section_pill_classes }}">
-                  {{ part_slot.display_name }}
-                </span>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endfor %}
-      </div> {% endcomment %}
-    </div>
-    <!-- Part Uplaod -->
+
+    <!-- Parts -->
+    <div id="parts"
+      hx-get="{% url 'get_parts' piece.id %}"
+      hx-trigger="load"
+      hx-swap="innerHTML"></div>
+
+    <!-- Part Upload -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
       <h1 class="text-lg font-bold">Upload Parts</h1>
       <form method="post" class="space-y-4 items-center">

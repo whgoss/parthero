@@ -1,42 +1,42 @@
+import json
 from typing import Optional, List
 from core.dtos.base import BaseDTO
 from core.dtos.organizations import MusicianDTO
 from core.models.music import (
     Piece,
     Part,
-    InstrumentSection,
+    PartAsset,
+    Instrument,
     PartInstrument,
     MusicianInstrument,
 )
 from core.enum.status import UploadStatus
-from core.enum.instruments import InstrumentSectionEnum, InstrumentFamily
+from core.enum.instruments import InstrumentEnum, InstrumentFamily
 
 
-class InstrumentSectionDTO(BaseDTO):
-    name: InstrumentSectionEnum
+class InstrumentDTO(BaseDTO):
+    name: InstrumentEnum
     family: InstrumentFamily
 
     @classmethod
-    def from_model(cls, model: InstrumentSection):
+    def from_model(cls, model: Instrument):
         return cls(
             id=str(model.id),
-            name=InstrumentSectionEnum(model.name),
+            name=InstrumentEnum(model.name),
             family=InstrumentFamily(model.family),
         )
 
 
 class MusicianInstrumentDTO(BaseDTO):
     musician: MusicianDTO
-    instrument_section: InstrumentSectionDTO
+    instrument_section: InstrumentDTO
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
         return cls(
             id=str(model.id),
             musician=MusicianDTO.from_model(model.musician),
-            instrument_section=InstrumentSectionDTO.from_model(
-                model.instrument_section
-            ),
+            instrument_section=InstrumentDTO.from_model(model.instrument_section),
         )
 
 
@@ -69,59 +69,31 @@ class PieceDTO(BaseDTO):
 
 class PartDTO(BaseDTO):
     piece_id: str
-    status: UploadStatus
-    part_instruments: Optional[List["PartInstrumentDTO"]] = None
-    upload_url: Optional[str] = None
-    upload_filename: Optional[str] = None
-    file_key: Optional[str] = None
-
-    @classmethod
-    def from_model(cls, model: Part):
-        return cls(
-            id=str(model.id),
-            piece_id=str(model.piece.id),
-            status=UploadStatus(model.status),
-            part_instruments=PartInstrumentDTO.from_models(
-                model.part_instruments.all()
-            ),
-            upload_url=model.upload_url,
-            upload_filename=model.upload_filename,
-            file_key=model.file_key,
-        )
-
-
-class PartInstrumentDTO(BaseDTO):
-    part_id: str
-    instrument_section: InstrumentSectionDTO
-    number: Optional[int] = None
-
-    @classmethod
-    def from_model(cls, model: PartInstrument):
-        return cls(
-            id=str(model.id),
-            part_id=str(model.part.id),
-            instrument_section=InstrumentSectionDTO.from_model(
-                model.instrument_section
-            ),
-            number=model.number,
-        )
-
-
-class PartSlotDTO(BaseDTO):
-    family: InstrumentFamily
-    instrument_sections: List[InstrumentSectionEnum]
-    primary: Optional[InstrumentSectionEnum] = None
+    instruments: Optional[List["PartInstrumentDTO"]] = None
     number: Optional[int] = None
 
     @property
     def is_doubling(self) -> bool:
-        return len(self.instrument_sections) > 1
+        return len(self.instruments) > 1
 
     @property
     def display_name(self) -> str:
-        names = [i.value for i in self.instrument_sections]
-        if self.number and self.primary:
-            primary_name = self.primary.value
+        names = [
+            part_instrument.instrument.name.value
+            for part_instrument in self.instruments
+        ]
+        if len(names) == 1:
+            if self.number:
+                return f"{names[0]} {self.number}"
+            else:
+                return f"{names[0]}"
+
+        primary = None
+        for part_instrument in self.instruments:
+            if part_instrument.primary:
+                primary = part_instrument
+        if self.number and primary:
+            primary_name = primary.instrument.name.value
             if self.is_doubling:
                 extras = [n for n in names if n != primary_name]
                 return f"{primary_name} {self.number} / {' + '.join(extras)}"
@@ -129,6 +101,54 @@ class PartSlotDTO(BaseDTO):
                 return f"{primary_name} {self.number}"
         return " / ".join(names)
 
+    @property
+    def display_name_json(self) -> str:
+        return json.dumps([self.display_name])
+
     @classmethod
-    def from_model(cls, model):
-        return None
+    def from_model(cls, model: Part):
+        return cls(
+            id=str(model.id),
+            piece_id=str(model.piece.id),
+            instruments=PartInstrumentDTO.from_models(model.instruments.all()),
+            number=model.number,
+        )
+
+
+class PartInstrumentDTO(BaseDTO):
+    part_id: str
+    primary: bool
+    instrument: InstrumentDTO
+
+    @classmethod
+    def from_model(cls, model: PartInstrument):
+        return cls(
+            id=str(model.id),
+            part_id=str(model.part.id),
+            primary=model.primary,
+            instrument=InstrumentDTO.from_model(model.instrument),
+        )
+
+
+class PartAssetDTO(BaseDTO):
+    piece_id: str
+    status: UploadStatus
+    parts: Optional[List[PartDTO]] = None
+    upload_url: Optional[str] = None
+    upload_filename: Optional[str] = None
+    file_key: Optional[str] = None
+
+    def display_name_json(self) -> str:
+        return json.dumps([part.display_name for part in self.parts])
+
+    @classmethod
+    def from_model(cls, model: PartAsset):
+        return cls(
+            id=str(model.id),
+            piece_id=str(model.piece.id),
+            parts=PartDTO.from_models(model.parts.all()) if model.parts else None,
+            status=UploadStatus(model.status),
+            upload_url=model.upload_url,
+            upload_filename=model.upload_filename,
+            file_key=model.file_key,
+        )

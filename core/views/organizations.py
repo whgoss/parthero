@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.http import HttpResponseForbidden
 from django.contrib import messages
-from core.enum.instruments import InstrumentSectionEnum
+from core.enum.instruments import InstrumentEnum
 from core.services.organizations import (
     create_musician,
     get_roster,
@@ -100,7 +100,7 @@ def musician(request, musician_id: str | None = None):
         "musician": musician,
         "form": form,
         "instrument_sections": json.dumps(instrument_sections),
-        "instrument_section_options": json.dumps(InstrumentSectionEnum.values()),
+        "instrument_section_options": json.dumps(InstrumentEnum.values()),
     }
     return render(request, "musician.html", context)
 

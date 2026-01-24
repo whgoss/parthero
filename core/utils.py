@@ -1,4 +1,5 @@
 import os
+from rest_framework import serializers
 from email_validator import validate_email, EmailNotValidError
 
 
@@ -26,3 +27,13 @@ def is_valid_email(email: str) -> bool:
         return True
     except EmailNotValidError:
         return False
+
+
+class EnumChoiceField(serializers.ChoiceField):
+    def __init__(self, enum_cls, **kwargs):
+        self.enum_cls = enum_cls
+        super().__init__(choices=[e.value for e in enum_cls], **kwargs)
+
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        return self.enum_cls(value)

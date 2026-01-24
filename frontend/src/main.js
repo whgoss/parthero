@@ -14,51 +14,83 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-function updatePart(pieceId, dto, newStatus) {
-  if (!dto) return;
-
-  const updatedDto = { ...dto, status: newStatus };
-
-  return fetch(`/api/piece/${pieceId}/part/${dto.id}`, {
-    method: "PUT",
+function updatePartAsset(pieceId, partAssetDto, newStatus) {
+  if (!pieceId || !partAssetDto) return;
+  const partIds = partAssetDto.parts.map(part => part.id);
+  return fetch(`/api/piece/${pieceId}/asset/${partAssetDto.id}`, {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
     },
-    body: JSON.stringify(updatedDto),
+    body: JSON.stringify({ status: newStatus, part_ids: partIds }),
   }).catch((err) => {
-    console.error("Failed to update part status", err);
+    console.error("Failed to update part asset status", err);
   });
 }
 
-// Automatically turn any <input type="file" class="filepond"> into a FilePond instance
+document.addEventListener("htmx:afterSwap", () => {
+  // Automatically turn any <input class="instrument-sections"> into a Tagify instance
+  document.querySelectorAll(".part-asset").forEach((instrumentElem) => {
+    const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
+    const initial = JSON.parse(instrumentElem.dataset.initial || "[]");
+    const partId = instrumentElem.dataset.partId;
+    const pieceId = instrumentElem.dataset.pieceId;
+    const partAssetId = instrumentElem.dataset.partAssetId;
+
+    const tagify = new Tagify(instrumentElem, {
+      whitelist,
+      enforceWhitelist: true,
+      dropdown: { enabled: 0, closeOnSelect: false },
+      originalInputValueFormat: (valuesArr) => valuesArr.map((tag) => tag.value).join(","),
+    });
+
+    tagify.loadOriginalValues(initial);
+
+    // Perform PATCH updates
+    let t = null;
+    const save = () => {
+      // For part instruments
+      if (pieceId && partAssetId) {
+        const partIds = tagify.value.map(tag => tag.id);
+        console.log("Calling API", pieceId, partAssetId, partId);
+        
+        fetch(`/api/piece/${pieceId}/asset/${partAssetId}`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,
+          },
+          body: JSON.stringify({ part_ids: partIds }),
+        });
+      }
+    }
+
+    tagify.on("change", (e) => {
+      console.log(e);
+      clearTimeout(t);
+      t = setTimeout(save, 300);
+    });
+  });
+})
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Tagify
-  const instrumentElem = document.querySelector("#instrument-sections");
-  if (instrumentElem) {
+  document.querySelectorAll(".instrument-sections").forEach((instrumentElem) => {
     const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
     const initial = JSON.parse(instrumentElem.dataset.initial || "[]");
 
     const tagify = new Tagify(instrumentElem, {
-      whitelist: whitelist,
+      whitelist,
       enforceWhitelist: true,
-      dropdown: {
-        enabled: 0,
-        closeOnSelect: false,
-      },
-      originalInputValueFormat: (valuesArr) =>
-        valuesArr.map((t) => t.value).join(","),
+      dropdown: { enabled: 0, closeOnSelect: false },
+      originalInputValueFormat: (valuesArr) => valuesArr.map((t) => t.value).join(","),
     });
 
-    // Just in case there's any leftover value from the DOM, clear it
-    tagify.removeAllTags();
+    tagify.loadOriginalValues(initial);
+  });
 
-    if (initial.length) {
-      tagify.addTags(initial);
-    }
-  }
-
-  // FilePond
+  // FilePond - Automatically turn any <input type="file" class="filepond"> into a FilePond instance
   const inputs = document.querySelectorAll('input[type="file"].filepond');
 
   inputs.forEach((input) => {
@@ -72,16 +104,17 @@ document.addEventListener("DOMContentLoaded", () => {
       credits: null,
       maxFiles: null,
       dropOnPage: false,
-      labelIdle: 'Drag & Drop to Upload Parts (or <span class="filepond--label-action"> Browse</span>)',
+      labelIdle: 'Drag & Drop Files to Upload Parts (or <span class="filepond--label-action"> Browse</span>)',
       acceptedFileTypes: ['application/pdf'],
       fileValidateTypeLabelExpectedTypes: "Only PDF files are allowed",
       server: {
         process: (fieldName, file, metadata, load, error, progress, abort) => {
-          let partDto = null;
+          let partAssetDto = null;
           let xhr = null;
 
-          // 1) Create part, get presigned URL
-          fetch(`/api/piece/${pieceId}/part`, {
+
+          // 1) Determine part for filename
+          fetch(`/api/piece/${pieceId}/asset`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -91,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
           })
             .then((res) => res.json())
             .then((data) => {
-              partDto = data;
+              partAssetDto = data;
               xhr = new XMLHttpRequest();
               xhr.open("PUT", data.upload_url, true);
               xhr.upload.onprogress = (e) => {
@@ -102,16 +135,16 @@ document.addEventListener("DOMContentLoaded", () => {
               // 2) Update part status after upload
               xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                  updatePart(pieceId, partDto, "Uploaded");
-                  load(partDto.id);
+                  updatePartAsset(pieceId, partAssetDto, "Uploaded");
+                  load(partAssetDto.id);
                 } else {
-                  updatePart(pieceId, partDto, "Failed");
+                  updatePartAsset(pieceId, partAssetDto, "Failed");
                   error("Upload failed");
                 }
               };
 
               xhr.onerror = () => {
-                updatePart(pieceId, partDto, "Aborted");
+                updatePartAsset(pieceId, partAssetDto, "Aborted");
                 error("Upload error");
               };
 

@@ -3,6 +3,9 @@ from django.db.models import (
     ForeignKey,
     TextField,
     IntegerField,
+    ManyToManyField,
+    UniqueConstraint,
+    BooleanField,
     CASCADE,
 )
 from core.models.base import UUIDPrimaryKeyModel
@@ -10,7 +13,7 @@ from core.models.organizations import Musician, Organization
 from core.enum.status import UploadStatus
 
 
-class InstrumentSection(UUIDPrimaryKeyModel):
+class Instrument(UUIDPrimaryKeyModel):
     name = CharField(max_length=255)
     family = CharField(max_length=255)
 
@@ -22,7 +25,7 @@ class MusicianInstrument(UUIDPrimaryKeyModel):
     musician = ForeignKey(
         Musician, related_name="instrument_sections", on_delete=CASCADE
     )
-    instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE)
+    instrument = ForeignKey(Instrument, on_delete=CASCADE)
 
 
 class Piece(UUIDPrimaryKeyModel):
@@ -40,17 +43,30 @@ class Piece(UUIDPrimaryKeyModel):
 
 class Part(UUIDPrimaryKeyModel):
     piece = ForeignKey(Piece, related_name="parts", on_delete=CASCADE)
+    number = IntegerField(null=True)
+
+
+class PartAsset(UUIDPrimaryKeyModel):
+    parts = ManyToManyField(Part, related_name="assets", blank=True)
+    piece = ForeignKey(Piece, related_name="assets", on_delete=CASCADE)
+    upload_url = CharField(max_length=511, null=True, blank=True)
+    upload_filename = CharField(max_length=255, null=True, blank=True)
+    file_key = CharField(max_length=255, null=True, blank=True)
     status = CharField(
         max_length=50,
-        default=UploadStatus.PENDING.value,
+        default=UploadStatus.NONE.value,
         choices=UploadStatus.choices(),
     )
-    upload_url = CharField(max_length=511, null=True)
-    upload_filename = CharField(max_length=255, null=True)
-    file_key = CharField(max_length=255, null=True)
 
 
 class PartInstrument(UUIDPrimaryKeyModel):
-    part = ForeignKey(Part, related_name="part_instruments", on_delete=CASCADE)
-    instrument_section = ForeignKey(InstrumentSection, on_delete=CASCADE, null=True)
-    number = IntegerField(null=True)
+    part = ForeignKey(Part, related_name="instruments", on_delete=CASCADE)
+    primary = BooleanField(default=False)
+    instrument = ForeignKey(Instrument, on_delete=CASCADE, null=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["part", "instrument"], name="unique_part_instrument"
+            )
+        ]

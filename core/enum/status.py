@@ -6,6 +6,7 @@ class UploadStatus(Enum):
     FAILED = "Failed"
     UPLOADED = "Uploaded"
     ABORTED = "Aborted"
+    NONE = "None"
 
     def choices():
         return [(status.value, status.value) for status in UploadStatus]

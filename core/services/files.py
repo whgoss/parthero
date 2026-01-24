@@ -2,11 +2,11 @@ import csv
 import logging
 from rapidfuzz import fuzz
 from django.db import transaction
-from core.dtos.music import MusicianDTO, InstrumentSectionDTO
-from core.enum.instruments import InstrumentSectionEnum
+from core.dtos.music import MusicianDTO, InstrumentDTO
+from core.enum.instruments import InstrumentEnum
 from core.models.music import MusicianInstrument
 from core.models.organizations import Musician
-from core.services.music import get_instrument_section
+from core.services.music import get_instrument
 from core.services.organizations import get_organization, musician_exists_by_email
 
 logger = logging.getLogger()
@@ -57,13 +57,13 @@ def upload_roster(file, organization_id: str):
 
 def determine_instrument_section(
     instrument_string: str,
-) -> InstrumentSectionDTO | None:
-    for instrument in InstrumentSectionEnum:
+) -> InstrumentDTO | None:
+    for instrument in InstrumentEnum:
         score = fuzz.ratio(
             instrument_string.strip().casefold(), instrument.value.strip().casefold()
         )
         if score > 95.0:
-            return get_instrument_section(instrument)
+            return get_instrument(instrument)
 
     return None
 

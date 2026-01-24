@@ -1,15 +1,40 @@
 from rest_framework import serializers
-from core.dtos.music import PartDTO
 from pydantic import ValidationError as PydanticValidationError
+from core.dtos.music import PartDTO
+from core.enum.status import UploadStatus
+from core.enum.instruments import InstrumentEnum
+from core.utils import EnumChoiceField
+
+
+class PartAssetCreateSerializer(serializers.Serializer):
+    filename = serializers.CharField(max_length=255)
+
+    def validate_filename(self, value):
+        # TODO: ensure extension is allowed, etc.
+        return value
+
+
+class PartAssetPatchSerializer(serializers.Serializer):
+    status = EnumChoiceField(UploadStatus, required=False)
+    part_ids = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
 
 
 class PartCreateSerializer(serializers.Serializer):
     filename = serializers.CharField(max_length=255)
 
-    # if you want, you can do extra validation here
     def validate_filename(self, value):
-        # e.g. ensure extension is allowed, etc.
+        # TODO: ensure extension is allowed, etc.
         return value
+
+
+class PartPatchSerializer(serializers.Serializer):
+    instrument_sections = serializers.ListField(
+        child=EnumChoiceField(InstrumentEnum),
+        required=False,
+    )
 
 
 class PartDTOWrapperSerializer(serializers.Serializer):
