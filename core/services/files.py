@@ -36,13 +36,11 @@ def upload_roster(file, organization_id: str):
                 musician.save()
 
                 instrument_section_string = row.get("Instrument", None)
-                instrument_section = determine_instrument_section(
-                    instrument_section_string
-                )
-                if instrument_section:
+                instrument = determine_instrument_section(instrument_section_string)
+                if instrument:
                     musician_instrument = MusicianInstrument(
                         musician_id=musician.id,
-                        instrument_section_id=instrument_section.id,
+                        instrument_id=instrument.id,
                     )
                     musician_instrument.save()
             else:

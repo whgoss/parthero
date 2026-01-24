@@ -26,7 +26,7 @@ function updatePartAsset(pieceId, partAssetDto, newStatus) {
     body: JSON.stringify({ status: newStatus, part_ids: partIds }),
   }).then(async (res) => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      requestPartsRefresh();
+      requestPartsRefresh({ immediate: false });
     return res;
   }).catch((err) => {
     console.error("Failed to update part asset status", err);
@@ -34,21 +34,50 @@ function updatePartAsset(pieceId, partAssetDto, newStatus) {
 }
 
 let refreshTimer = null;
+let scrollAnchorId = null;
 
-function requestPartsRefresh() {
+
+function requestPartsRefresh({ anchorId = null, immediate = false } = {}) {
+  const partsEl = document.getElementById("parts");
+  if (!partsEl) return;
+  if (anchorId) partsEl.dataset.scrollAnchor = anchorId;
+  if (immediate) {
+    document.body.dispatchEvent(new Event("refreshParts"));
+    return;
+  } 
+
   clearTimeout(refreshTimer);
     refreshTimer = setTimeout(() => {
-    document.body.dispatchEvent(new Event("refreshParts"));
-  }, 400);
+      document.body.dispatchEvent(new Event("refreshParts"));
+    }, 500);
 }
 
 document.body.addEventListener("htmx:afterRequest", (e) => {
   if (e.detail.successful && e.detail.requestConfig?.verb === "delete") {
-    requestPartsRefresh(); 
+    requestPartsRefresh({ immediate: true });
   }
 });
 
-document.addEventListener("htmx:afterSwap", () => {
+document.body.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-scroll-anchor]");
+  if (!a) return;
+
+  // Store it on #parts so the next refresh can use it
+  requestPartsRefresh({ anchorId: a.dataset.scrollAnchor });
+});
+
+document.addEventListener("htmx:afterSwap", (e) => {
+  if (e.detail.target?.id !== "parts") return;
+
+  const parts = e.detail.target;
+  const anchorId = parts.dataset.scrollAnchor;
+
+  const el = anchorId ? document.getElementById(anchorId) : null;
+  (el || parts.querySelector(".part-asset-row:last-child"))
+  ?.scrollIntoView({ block: el ? "center" : "end" });
+
+  delete parts.dataset.scrollAnchor; // clear after using it
+
   // Automatically turn any <input class="instrument-sections"> into a Tagify instance
   document.querySelectorAll(".part-asset").forEach((instrumentElem) => {
     const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
@@ -80,9 +109,7 @@ document.addEventListener("htmx:afterSwap", () => {
             "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,
           },
           body: JSON.stringify({ part_ids: partIds }),
-        }).then(() => {
-          requestPartsRefresh();
-        });
+        })
       }
     }
 

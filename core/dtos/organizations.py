@@ -28,7 +28,7 @@ class MusicianDTO(BaseDTO):
     email: str
     core_member: bool
     organization: OrganizationDTO
-    instrument_sections: List["MusicianInstrumentDTO"]
+    instruments: List["MusicianInstrumentDTO"]
     phone_number: Optional[str] = None
     address: Optional[str] = None
 
@@ -43,9 +43,7 @@ class MusicianDTO(BaseDTO):
             email=model.email,
             core_member=model.core_member,
             organization=OrganizationDTO.from_model(model.organization),
-            instrument_sections=MusicianInstrumentDTO.from_models(
-                model.instrument_sections.all()
-            ),
+            instruments=MusicianInstrumentDTO.from_models(model.instruments.all()),
             phone_number=model.phone_number if model.phone_number else None,
             address=model.address if model.address else None,
         )
@@ -53,12 +51,12 @@ class MusicianDTO(BaseDTO):
 
 class MusicianInstrumentDTO(BaseDTO):
     musician_id: str
-    instrument_section: InstrumentEnum
+    instrument: InstrumentEnum
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
         return cls(
             id=str(model.id),
             musician_id=str(model.musician.id),
-            instrument_section=InstrumentEnum(model.instrument_section.name),
+            instrument=InstrumentEnum(model.instrument.name),
         )

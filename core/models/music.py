@@ -22,9 +22,7 @@ class Instrument(UUIDPrimaryKeyModel):
 
 
 class MusicianInstrument(UUIDPrimaryKeyModel):
-    musician = ForeignKey(
-        Musician, related_name="instrument_sections", on_delete=CASCADE
-    )
+    musician = ForeignKey(Musician, related_name="instruments", on_delete=CASCADE)
     instrument = ForeignKey(Instrument, on_delete=CASCADE)
 
 

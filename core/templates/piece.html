@@ -20,14 +20,30 @@
     </div>
 
     <!-- Parts -->
-    <div id="parts"
-      hx-get="{% url 'get_parts' piece.id %}"
-      hx-trigger="load, refreshParts from:body"
-      hx-swap="innerHTML">
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+      <h1 class="text-lg font-bold">Parts</h1>
+      <form method="post" class="space-y-4 items-center">
+        {% csrf_token %}
+        <div class="relative z-10">
+          <input
+            type="file"
+            data-piece-id="{{ piece.id }}"
+            class="filepond w-full"
+            multiple
+          >
+        </div>
+      </form>
+
+      <div id="parts"
+        class="relative z-0"
+        hx-get="{% url 'get_parts' piece.id %}"
+        hx-trigger="load, refreshParts from:body"
+        hx-swap="innerHTML">
+      </div>
     </div>
 
     <!-- Part Upload -->
-    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
+    {% comment %} <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
       <h1 class="text-lg font-bold">Upload Parts</h1>
       <form method="post" class="space-y-4 items-center">
         {% csrf_token %}
@@ -40,7 +56,8 @@
           >
         </div>
       </form>
-    </div>
+    </div> {% endcomment %}
+
   </div>
 </div>
 {% endblock %}

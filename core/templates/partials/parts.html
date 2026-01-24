@@ -1,5 +1,4 @@
-<div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
-    <h1 class="text-lg font-bold">Parts ({{ part_assets|length }})</h1>
+<div>
     <div class="py-2">
     {% if missing_parts %}
         <h1 class="text-md font-bold text-red-600">⚠️ {{ missing_parts|length }} Missing Parts</h1>
@@ -18,8 +17,12 @@
     </div>
     {% if part_assets|length > 0 %}
         {% for part_asset in part_assets %}
-            <div class="grid grid-cols-6 gap-1 mt-2">
+            <div class="part-asset-row grid grid-cols-6 gap-1 mt-2" id="part-asset-{{ part_asset.id }}">
+                {% if part_asset.parts %}
                 <span class="font-light col-span-3 text-sm">{{ part_asset.upload_filename }}</span>
+                {% else %}
+                <span class="font-light col-span-3 text-sm text-red-600">{{ part_asset.upload_filename }}</span>
+                {% endif %}
                 <input
                     name="sections"
                     type="text"
@@ -33,6 +36,7 @@
                     <a href="#"
                         hx-delete="/api/piece/{{ piece_id }}/asset/{{ part_asset.id }}"
                         hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                        data-scroll-anchor="part-asset-{{ part_asset.id }}"
                         hx-swap="outerHTML">
                         Delete
                     </a>
@@ -42,5 +46,4 @@
     {% else %}
         <span class="font-light">No parts uploaded.</span>
     {% endif %}
-    
 </div>

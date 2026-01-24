@@ -29,14 +29,14 @@ class InstrumentDTO(BaseDTO):
 
 class MusicianInstrumentDTO(BaseDTO):
     musician: MusicianDTO
-    instrument_section: InstrumentDTO
+    instrument: InstrumentDTO
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
         return cls(
             id=str(model.id),
             musician=MusicianDTO.from_model(model.musician),
-            instrument_section=InstrumentDTO.from_model(model.instrument_section),
+            instrument=InstrumentDTO.from_model(model.instrument),
         )
 
 
