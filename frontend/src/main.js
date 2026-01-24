@@ -24,10 +24,29 @@ function updatePartAsset(pieceId, partAssetDto, newStatus) {
       "X-CSRFToken": getCookie("csrftoken"),
     },
     body: JSON.stringify({ status: newStatus, part_ids: partIds }),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      requestPartsRefresh();
+    return res;
   }).catch((err) => {
     console.error("Failed to update part asset status", err);
   });
 }
+
+let refreshTimer = null;
+
+function requestPartsRefresh() {
+  clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+    document.body.dispatchEvent(new Event("refreshParts"));
+  }, 400);
+}
+
+document.body.addEventListener("htmx:afterRequest", (e) => {
+  if (e.detail.successful && e.detail.requestConfig?.verb === "delete") {
+    requestPartsRefresh(); 
+  }
+});
 
 document.addEventListener("htmx:afterSwap", () => {
   // Automatically turn any <input class="instrument-sections"> into a Tagify instance
@@ -63,6 +82,8 @@ document.addEventListener("htmx:afterSwap", () => {
             "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,
           },
           body: JSON.stringify({ part_ids: partIds }),
+        }).then(() => {
+          requestPartsRefresh();
         });
       }
     }

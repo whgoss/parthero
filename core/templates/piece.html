@@ -22,8 +22,9 @@
     <!-- Parts -->
     <div id="parts"
       hx-get="{% url 'get_parts' piece.id %}"
-      hx-trigger="load"
-      hx-swap="innerHTML"></div>
+      hx-trigger="load, refreshParts from:body"
+      hx-swap="innerHTML">
+    </div>
 
     <!-- Part Upload -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">

@@ -132,6 +132,7 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
         if not _contains_word(normalized_filename, instrument_name):
             continue
         tail = normalized_filename
+
         if not looks_like_numbered_part(tail):
             for part in parts:
                 if part.assets.exists():
@@ -180,6 +181,10 @@ def update_part_asset(
         part_asset.parts.set([])
 
     return PartAssetDTO.from_model(part_asset)
+
+
+def delete_part_asset(part_asset_id: str) -> None:
+    PartAsset.objects.get(id=part_asset_id).delete()
 
 
 def get_part_assets(piece_id: str) -> List[PartAssetDTO]:
@@ -304,11 +309,20 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
 
 
 def looks_like_numbered_part(tail: str) -> bool:
+    # These are parts with numbers that don't correspond to the seat number (i.e. violin 1)
+    # and need to be exempted from this check
+    unnumbered_parts = [
+        InstrumentEnum.VIOLIN_1.value.lower(),
+        InstrumentEnum.VIOLIN_2.value.lower(),
+    ]
+
     # e.g. " 2.pdf", "_ii.pdf", "-1", "(III)"
     PART_NUMBER_REGEX = re.compile(
         r"""(?:^|[^a-z0-9])(?:1|2|3|4|5|i|ii|iii|iv|v)(?:[^a-z0-9]|$)""", re.VERBOSE
     )
-    return bool(PART_NUMBER_REGEX.search(tail))
+    return bool(PART_NUMBER_REGEX.search(tail)) and not any(
+        unnumbered_part in tail for unnumbered_part in unnumbered_parts
+    )
 
 
 def _parse_woodwinds(piece_id: str, segment: str) -> List[PartDTO]:

@@ -9,6 +9,7 @@ from core.api.serializers import (
 from core.services.music import (
     create_part_asset,
     update_part_asset,
+    delete_part_asset,
 )
 from core.api.permissions import IsInOrganization
 
@@ -41,3 +42,8 @@ class PartAssetViewSet(
         part_asset = update_part_asset(part_asset_id, part_ids, upload_status)
         response_data = part_asset.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def delete(self, request, part_asset_id, *args, **kwargs):
+        delete_part_asset(part_asset_id)
+        return Response(status=status.HTTP_200_OK)
