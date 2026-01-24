@@ -72,8 +72,6 @@ document.addEventListener("htmx:afterSwap", () => {
       // For part instruments
       if (pieceId && partAssetId) {
         const partIds = tagify.value.map(tag => tag.id);
-        console.log("Calling API", pieceId, partAssetId, partId);
-        
         fetch(`/api/piece/${pieceId}/asset/${partAssetId}`, {
           method: "PATCH",
           credentials: "same-origin",
@@ -89,7 +87,6 @@ document.addEventListener("htmx:afterSwap", () => {
     }
 
     tagify.on("change", (e) => {
-      console.log(e);
       clearTimeout(t);
       t = setTimeout(save, 300);
     });
