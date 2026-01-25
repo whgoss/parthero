@@ -118,20 +118,20 @@
 
       <!-- Section pills -->
       <div class="bg-slate-50/60">
-        <label for="instrument-sections" class="mb-1 block text-sm font-medium">
-          Instrument Sections
+        <label for="instruments" class="mb-1 block text-sm font-medium">
+          Instruments
         </label>
         <p class="text-xs text-slate-500">
           Assign one or more sections. Hover a pill to remove it; use the + pill to add more.
         </p>
 
         <input
-          id="instrument-sections"
-          name="sections"
+          id="instruments"
+          name="instruments"
           type="text"
-          data-options='{{ instrument_section_options|safe }}'
-          data-initial='{{ instrument_sections|safe }}'
-          class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          data-options='{{ instrument_options|safe }}'
+          data-initial='{{ instruments|safe }}'
+          class="instruments block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
       </div>
 

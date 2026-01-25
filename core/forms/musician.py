@@ -36,11 +36,11 @@ class MusicianForm(Form):
         required=True,
     )
     core_member = BooleanField(required=False)
-    sections = CharField(
+    instruments = CharField(
         required=False,
         widget=TextInput(
             attrs={
-                "id": "instrument-sections",
+                "id": "instruments",
                 "class": "block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100",
             }
         ),
@@ -61,22 +61,24 @@ class MusicianForm(Form):
             raise ValidationError("A musician with this email already exists.")
         return email
 
-    def clean_sections(self):
+    def clean_instruments(self):
         """
         Tagify will submit something like: "Violin 1,Violin 2,Cello"
         Turn that into a Python list: ["Violin 1", "Violin 2", "Cello"]
         """
-        raw = self.cleaned_data.get("sections", "") or ""
-        raw_sections = [
-            raw_section.strip() for raw_section in raw.split(",") if raw_section.strip()
+        raw = self.cleaned_data.get("instruments", "") or ""
+        raw_instruments = [
+            raw_instrument.strip()
+            for raw_instrument in raw.split(",")
+            if raw_instrument.strip()
         ]
-        sections = []
-        for raw_section in raw_sections:
-            if raw_section not in InstrumentEnum.values():
-                raise ValidationError("Invalid instrument section.")
+        instruments = []
+        for raw_instrument in raw_instruments:
+            if raw_instrument not in InstrumentEnum.values():
+                raise ValidationError("Invalid instrument.")
             else:
-                sections.append(InstrumentEnum(raw_section))
-        return sections
+                instruments.append(InstrumentEnum(raw_instrument))
+        return instruments
 
     def clean(self):
         cleaned = super().clean()

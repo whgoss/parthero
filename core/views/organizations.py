@@ -55,7 +55,7 @@ def musician(request, musician_id: str | None = None):
                     last_name=form.cleaned_data["last_name"],
                     email=form.cleaned_data["email"],
                     core_member=form.cleaned_data.get("core_member", False),
-                    instrument_sections=form.cleaned_data.get("sections"),
+                    instruments=form.cleaned_data.get("instruments"),
                 )
                 messages.success(
                     request,
@@ -69,7 +69,7 @@ def musician(request, musician_id: str | None = None):
                     last_name=form.cleaned_data["last_name"],
                     email=form.cleaned_data["email"],
                     core_member=form.cleaned_data.get("core_member", False),
-                    instrument_sections=None,
+                    instruments=None,
                 )
                 messages.success(
                     request,
@@ -91,16 +91,16 @@ def musician(request, musician_id: str | None = None):
             organization_id=request.organization.id,
         )
 
-    instrument_sections = []
+    instruments = []
     if musician:
-        for instrument_section in musician.instrument_sections:
-            instrument_sections.append(instrument_section.instrument_section.value)
+        for instrument in musician.instruments:
+            instruments.append(instrument.instrument.value)
 
     context = {
         "musician": musician,
         "form": form,
-        "instrument_sections": json.dumps(instrument_sections),
-        "instrument_section_options": json.dumps(InstrumentEnum.values()),
+        "instruments": json.dumps(instruments),
+        "instrument_options": json.dumps(InstrumentEnum.values()),
     }
     return render(request, "musician.html", context)
 

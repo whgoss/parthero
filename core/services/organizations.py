@@ -35,7 +35,7 @@ def create_musician(
     last_name: str,
     email: str,
     core_member: bool,
-    instrument_sections: Optional[List[InstrumentEnum]],
+    instruments: Optional[List[InstrumentEnum]],
 ) -> MusicianDTO | None:
     musician = Musician.objects.filter(
         organization__id=organization_id, email=email
@@ -52,8 +52,8 @@ def create_musician(
     )
     musician.save()
 
-    if instrument_sections:
-        update_musician_instrument_sections(musician.id, instrument_sections)
+    if instruments:
+        update_musician_instrument_sections(musician.id, instruments)
 
     return MusicianDTO.from_model(musician)
 
@@ -85,7 +85,7 @@ def update_musician(
     last_name: str,
     email: str,
     core_member: bool,
-    instrument_sections: Optional[List[InstrumentEnum]],
+    instruments: Optional[List[InstrumentEnum]],
 ) -> MusicianDTO | None:
     musician = Musician.objects.filter(
         organization__id=organization_id, id=musician_id
@@ -98,8 +98,8 @@ def update_musician(
     musician.email = email
     musician.core_member = core_member
 
-    if instrument_sections:
-        update_musician_instrument_sections(musician.id, instrument_sections)
+    if instruments:
+        update_musician_instrument_sections(musician.id, instruments)
 
     musician.save()
     return MusicianDTO.from_model(musician)

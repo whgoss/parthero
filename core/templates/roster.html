@@ -132,9 +132,9 @@
                     {{ musician.last_name }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-2.5 text-sm">
-                    {% if musician.instrument_sections %}
-                        <span class="{{ musician.instrument_sections.0.instrument_section.value|section_pill_classes }}">
-                        {{ musician.instrument_sections.0.instrument_section.value }}
+                    {% if musician.instruments %}
+                        <span class="{{ musician.instruments.0.instrument.value|section_pill_classes }}">
+                        {{ musician.instruments.0.instrument.value }}
                         </span>
                     {% else %}
                         <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">

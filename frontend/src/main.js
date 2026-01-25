@@ -121,9 +121,11 @@ document.addEventListener("htmx:afterSwap", (e) => {
 })
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".instrument-sections").forEach((instrumentElem) => {
+  document.querySelectorAll(".instruments").forEach((instrumentElem) => {
+    console.log("Hi!");
     const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
     const initial = JSON.parse(instrumentElem.dataset.initial || "[]");
+    console.log(initial);
 
     const tagify = new Tagify(instrumentElem, {
       whitelist,

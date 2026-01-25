@@ -212,16 +212,12 @@ def get_instrument(
 
 @transaction.atomic
 def update_musician_instrument_sections(
-    musician_id: str, instrument_sections: List[InstrumentEnum]
+    musician_id: str, instruments: List[InstrumentEnum]
 ):
     musician = Musician.objects.get(id=musician_id)
-    instrument_section_strings = [
-        instrument_section.value for instrument_section in instrument_sections
-    ]
+    instrument_strings = [instrument.value for instrument in instruments]
 
-    instrument_sections = list(
-        Instrument.objects.filter(name__in=instrument_section_strings)
-    )
+    instrument_models = list(Instrument.objects.filter(name__in=instrument_strings))
 
     # 1) Clear existing links
     MusicianInstrument.objects.filter(musician=musician).delete()
@@ -229,8 +225,8 @@ def update_musician_instrument_sections(
     # 2) Recreate
     MusicianInstrument.objects.bulk_create(
         [
-            MusicianInstrument(musician=musician, instrument_section=instrument_section)
-            for instrument_section in instrument_sections
+            MusicianInstrument(musician=musician, instrument=instrument_model)
+            for instrument_model in instrument_models
         ]
     )
 
