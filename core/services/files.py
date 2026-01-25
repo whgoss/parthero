@@ -30,6 +30,7 @@ def upload_roster(file, organization_id: str):
                     first_name=normalize_text(row.get("First Name")),
                     last_name=normalize_text(row.get("Last Name")),
                     email=normalize_text(email),
+                    principal=True if row.get("Principal") else False,
                     core_member=True if row.get("Core") else False,
                     organization_id=organization_id,
                 )

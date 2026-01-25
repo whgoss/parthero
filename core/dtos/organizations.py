@@ -26,6 +26,7 @@ class MusicianDTO(BaseDTO):
     first_name: str
     last_name: str
     email: str
+    principal: bool
     core_member: bool
     organization: OrganizationDTO
     instruments: List["MusicianInstrumentDTO"]
@@ -41,6 +42,7 @@ class MusicianDTO(BaseDTO):
             first_name=model.first_name,
             last_name=model.last_name,
             email=model.email,
+            principal=model.principal,
             core_member=model.core_member,
             organization=OrganizationDTO.from_model(model.organization),
             instruments=MusicianInstrumentDTO.from_models(model.instruments.all()),

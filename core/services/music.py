@@ -211,9 +211,7 @@ def get_instrument(
 
 
 @transaction.atomic
-def update_musician_instrument_sections(
-    musician_id: str, instruments: List[InstrumentEnum]
-):
+def update_musician_instruments(musician_id: str, instruments: List[InstrumentEnum]):
     musician = Musician.objects.get(id=musician_id)
     instrument_strings = [instrument.value for instrument in instruments]
 

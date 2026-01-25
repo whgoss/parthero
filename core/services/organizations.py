@@ -4,7 +4,7 @@ from core.dtos.users import UserOrganizationDTO
 from core.enum.instruments import InstrumentEnum
 from core.models.organizations import Organization, Musician
 from core.models.users import UserOrganization
-from core.services.music import update_musician_instrument_sections
+from core.services.music import update_musician_instruments
 
 
 def create_organization(name: str) -> OrganizationDTO:
@@ -34,6 +34,7 @@ def create_musician(
     first_name: str,
     last_name: str,
     email: str,
+    principal: bool,
     core_member: bool,
     instruments: Optional[List[InstrumentEnum]],
 ) -> MusicianDTO | None:
@@ -47,13 +48,14 @@ def create_musician(
         first_name=first_name,
         last_name=last_name,
         email=email,
+        principal=principal,
         core_member=core_member,
         organization_id=organization_id,
     )
     musician.save()
 
     if instruments:
-        update_musician_instrument_sections(musician.id, instruments)
+        update_musician_instruments(musician.id, instruments)
 
     return MusicianDTO.from_model(musician)
 
@@ -84,6 +86,7 @@ def update_musician(
     first_name: str,
     last_name: str,
     email: str,
+    principal: bool,
     core_member: bool,
     instruments: Optional[List[InstrumentEnum]],
 ) -> MusicianDTO | None:
@@ -96,10 +99,11 @@ def update_musician(
     musician.first_name = first_name
     musician.last_name = last_name
     musician.email = email
+    musician.principal = principal
     musician.core_member = core_member
 
     if instruments:
-        update_musician_instrument_sections(musician.id, instruments)
+        update_musician_instruments(musician.id, instruments)
 
     musician.save()
     return MusicianDTO.from_model(musician)

@@ -61,20 +61,16 @@
           <label class="mb-1 block text-sm font-medium text-slate-700">
             First Name
           </label>
-          <input type="text"
-                 name="first_name"
-                 value="{{ musician.first_name }}"
-                 class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" />
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.first_name.errors|striptags }}</p>{% endif %}
         </div>
 
         <div>
           <label class="mb-1 block text-sm font-medium text-slate-700">
             Last Name
           </label>
-          <input type="text"
-                 name="last_name"
-                 value="{{ musician.last_name }}"
-                 class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" />
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.last_name.errors|striptags }}</p>{% endif %}
         </div>
 
         <div class="md:col-span-2">
@@ -86,6 +82,36 @@
         </div>
       </div>
 
+      <!-- Principal toggle -->
+      <div class="flex items-start justify-between gap-4 rounded-2xl bg-slate-50 py-3">
+        <div>
+          <p class="text-sm font-medium text-slate-800">
+            Principal
+          </p>
+          <p class="text-xs text-slate-500">
+            Principals decide who receives what parts for a program.
+          </p>
+        </div>
+
+        <label class="inline-flex cursor-pointer items-center gap-3 select-none">
+            <span class="text-sm font-light">No</span>
+            <input
+                type="checkbox"
+                name="principal"
+                class="sr-only toggle-input"
+                {% if musician.principal %}value="true"{% endif %}
+                {% if musician.principal %}checked="checked"{% endif %}
+            />
+
+            <span class="track relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
+                <span
+                class="thumb h-5 w-5 rounded-full bg-white shadow transform transition-transform translate-x-0"
+                ></span>
+            </span>
+            <span class="text-sm font-light">Yes</span>
+        </label>
+      </div>
+
       <!-- Core member toggle -->
       <div class="flex items-start justify-between gap-4 rounded-2xl bg-slate-50 py-3">
         <div>
@@ -93,7 +119,7 @@
             Core member
           </p>
           <p class="text-xs text-slate-500">
-            Core members are included automatically when building programs and part assignments.
+            Core members are a subset of the master roster that are frequently featured in programs.
           </p>
         </div>
 

@@ -35,6 +35,7 @@ class MusicianForm(Form):
         widget=EmailInput(attrs={"class": class_attribute}),
         required=True,
     )
+    principal = BooleanField(required=False)
     core_member = BooleanField(required=False)
     instruments = CharField(
         required=False,

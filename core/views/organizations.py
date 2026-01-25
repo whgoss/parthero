@@ -54,6 +54,7 @@ def musician(request, musician_id: str | None = None):
                     first_name=form.cleaned_data["first_name"],
                     last_name=form.cleaned_data["last_name"],
                     email=form.cleaned_data["email"],
+                    principal=form.cleaned_data.get("principal", False),
                     core_member=form.cleaned_data.get("core_member", False),
                     instruments=form.cleaned_data.get("instruments"),
                 )
@@ -68,6 +69,7 @@ def musician(request, musician_id: str | None = None):
                     first_name=form.cleaned_data["first_name"],
                     last_name=form.cleaned_data["last_name"],
                     email=form.cleaned_data["email"],
+                    principal=form.cleaned_data.get("principal", False),
                     core_member=form.cleaned_data.get("core_member", False),
                     instruments=None,
                 )
@@ -85,6 +87,7 @@ def musician(request, musician_id: str | None = None):
                 "first_name": musician.first_name if musician else None,
                 "last_name": musician.last_name if musician else None,
                 "email": musician.email if musician else None,
+                "principal": musician.principal if musician else None,
                 "core_member": musician.core_member if musician else None,
             },
             original_email=original_email,
