@@ -29,8 +29,8 @@ class MusicianInstrument(UUIDPrimaryKeyModel):
 class Piece(UUIDPrimaryKeyModel):
     title = CharField(max_length=255)
     composer = CharField(max_length=255)
-    domo_id = IntegerField(null=True, blank=True)
-    composer_domo_id = IntegerField(null=True, blank=True)
+    domo_id = CharField(null=True, blank=True)
+    composer_domo_id = CharField(null=True, blank=True)
     instrumentation = TextField()
     duration = IntegerField(null=True)
     organization = ForeignKey(Organization, on_delete=CASCADE)

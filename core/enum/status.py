@@ -10,3 +10,11 @@ class UploadStatus(Enum):
 
     def choices():
         return [(status.value, status.value) for status in UploadStatus]
+
+
+class ProgramStatus(Enum):
+    DRAFT = "Draft"
+    PUBLISHED = "Published"
+
+    def choices():
+        return [(status.value, status.value) for status in ProgramStatus]

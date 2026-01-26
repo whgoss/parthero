@@ -28,8 +28,10 @@ logger = logging.getLogger()
 
 CODE_MAP = {
     "pic": [InstrumentEnum.PICCOLO],
+    "picc": [InstrumentEnum.PICCOLO],
     "eh": [InstrumentEnum.ENGLISH_HORN],
     "bcl": [InstrumentEnum.BASS_CLARINET],
+    "bkl": [InstrumentEnum.BASS_CLARINET],
     "hp": [InstrumentEnum.HARP],
     "cel": [InstrumentEnum.CELESTA],
     "pf": [InstrumentEnum.PIANO],
@@ -41,7 +43,13 @@ CODE_MAP = {
         InstrumentEnum.CELLO,
         InstrumentEnum.DOUBLE_BASS,
     ],
+    "cbn": InstrumentEnum.CONTRABASSOON,
     "electronica": [InstrumentEnum.ELECTRONICA],
+    "bd": [InstrumentEnum.BASS_DRUM],
+    "sd": [InstrumentEnum.SNARE_DRUM],
+    "tam-tam": [InstrumentEnum.TAM_TAM],
+    "cym": [InstrumentEnum.CYMBAL],
+    "tri": [InstrumentEnum.TRIANGLE],
 }
 
 WOODWIND_ORDER = [
