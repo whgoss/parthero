@@ -10,38 +10,68 @@
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
       <form method="post" 
-        action="{% url 'create_piece' %}"
+        x-data="performanceDates()" x-init="init()"
         class="space-y-6">
         {% csrf_token %}
 
-        <!-- Basic Details -->
-        <div class="grid grid-cols-2">
+        <!-- Title and Performance Dates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
             {{ form.title.required }}
             <label for="{{ form.title.id_for_label }}" class="mb-1 block text-sm font-medium">
               Title
             </label>
             {{ form.title }}
             {% if form.title.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.title.errors|striptags }}</p>{% endif %}
-        </div>
-
-        <!-- Performance Dates -->
-         <div>
+          </div>
+          <div>
             <label for="{{ form.instrumentation.id_for_label }}" class="mb-1 block text-sm font-medium">
               Performance Dates
             </label>
-            <input class="date-picker" />
-            {{ form.instrumentation }}
-            {% if form.instrumentation.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.instrumentation.errors|striptags }}</p>{% endif %}
-        </div>
 
-        <!-- Rehearsal Dates -->
-         <div class="grid grid-cols-2">
-          <div>
-            <label for="{{ form.duration.id_for_label }}" class="mb-1 block text-sm font-medium">
-              Rehearsal Dates
-            </label>
-            {{ form.duration }}
-            {% if form.duration.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.duration.errors|striptags }}</p>{% endif %}
+            {{ formset.management_form }}
+            {{ formset.non_form_errors }}
+            <div id="performance-rows" class="space-y-2">
+              {% for set in formset %}
+              <div class="perf-row flex items-center gap-2">
+                  <div class="flex-1">
+                    {{ set.date }}
+                    {{ set.date.errors }}
+                  </div>
+
+                  {% if formset.can_delete %}
+                    <div class="flex items-center gap-2">
+                      {{ set.DELETE }}
+                      <button type="button" class="btn-danger" @click="remove($event)">
+                        Remove
+                      </button>
+                    </div>
+                    {% endif %}
+                </div>
+              {% endfor %}
+
+              <!-- Hidden template for new rows -->
+              <template x-ref="emptyRow">
+          <div class="perf-row flex items-center gap-2" x-data="{ removed: false }" x-show="!removed" x-transition>
+                  <div class="flex-1">
+                    {{ formset.empty_form.date }}
+                  </div>
+
+                  {% if formset.can_delete %}
+                    <div class="flex items-center gap-2">
+                      <button type="button" class="btn-danger" @click="remove($event)">
+                        Remove
+                      </button>
+                    </div>
+                  {% endif %}
+                </div>
+              </template>
+
+              
+            </div>
+            <button type="button" class="btn-secondary mt-1" @click="add()">
+                + Add performance date
+              </button>
           </div>
         </div>
 

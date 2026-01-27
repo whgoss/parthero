@@ -23,8 +23,8 @@ class Program(UUIDPrimaryKeyModel):
 
 
 class ProgramPiece(UUIDPrimaryKeyModel):
-    program = ForeignKey(Program, on_delete=CASCADE)
-    piece = ForeignKey(Piece, related_name="pieces", on_delete=CASCADE)
+    program = ForeignKey(Program, related_name="pieces", on_delete=CASCADE)
+    piece = ForeignKey(Piece, on_delete=CASCADE)
     concert_order = IntegerField()
 
 
@@ -38,8 +38,10 @@ class ProgramPartMusicianSlot(UUIDPrimaryKeyModel):
 class ProgramPerformance(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, related_name="performances", on_delete=CASCADE)
     date = DateTimeField()
+    timezone = CharField(default="America/New_York")
 
 
 class ProgramRehearsal(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, related_name="rehearsals", on_delete=CASCADE)
     date = DateTimeField()
+    timezone = CharField(default="America/New_York")

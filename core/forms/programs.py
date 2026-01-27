@@ -3,7 +3,9 @@ from django.forms import (
     Form,
     CharField,
     TextInput,
+    DateTimeField,
 )
+from django.forms import formset_factory
 
 
 class ProgramForm(Form):
@@ -15,10 +17,6 @@ class ProgramForm(Form):
         widget=TextInput(attrs={"class": class_attribute}),
         required=True,
     )
-    status = CharField(
-        widget=TextInput(attrs={"class": class_attribute}),
-        required=True,
-    )
 
     def __init__(self, *args, organization_id=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,3 +25,20 @@ class ProgramForm(Form):
     def clean(self):
         cleaned = super().clean()
         return cleaned
+
+
+class PerformanceForm(Form):
+    date = DateTimeField(
+        required=True,
+        input_formats=["%Y-%m-%d %H:%M"],
+        widget=TextInput(
+            attrs={
+                "class": "date-picker form-control w-full",
+                "autocomplete": "off",
+                "placeholder": "Select a Performance date",
+            }
+        ),
+    )
+
+
+PerformanceFormSet = formset_factory(PerformanceForm, extra=0, can_delete=True)

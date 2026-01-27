@@ -8,6 +8,27 @@ we're using and insert it into our final bundled .css
 @source "../../**/templates/**/*.html";
 @source "../../**/templatetags/**/*.py";
 
+@layer components {
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2;
+  }
+}
+
+/* Make flatpickr inherit app typography */
+.flatpickr-calendar,
+.flatpickr-input,
+.flatpickr-input[readonly],
+.flatpickr-weekdays,
+.flatpickr-day,
+.flatpickr-months {
+  font-family: inherit;
+  font-size: inherit;
+}
+
 /* Make the FilePond box bigger and fully clickable */
 .filepond--root {
   width: 100%;

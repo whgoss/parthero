@@ -173,44 +173,36 @@
                 Program
               </th>
               <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Date
+                Date(s)
               </th>
               <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Pieces
-              </th>
-              <th scope="col" class="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <!-- actions -->
               </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
             {% if programs %}
               {% for program in programs %}
-                <tr class="hover:bg-slate-50/60">
+                <tr class="hover:bg-slate-50/60 cursor-pointer" onclick="window.location.href='/program/{{ program.id }}/'"">
                   <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
-                    {{ program.name }}
+                    {{ program.title }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
-                    {{ program.date|date:"M j, Y" }}
+                    {% for performance in program.performances %}
+                      <div>
+                        {{ performance.date|date:"M j, Y H:i T" }}
+                      </div>
+                    {% endfor %}
                   </td>
                   <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
-                    {{ program.pieces_count }} piece{{ program.pieces_count|pluralize }}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-right text-xs">
-                    <a href="#" class="font-medium text-slate-500 hover:text-slate-800">
-                      View
-                    </a>
-                    <span class="text-slate-300 mx-1">•</span>
-                    <a href="#" class="font-medium text-slate-500 hover:text-slate-800">
-                      Edit
-                    </a>
+                    {{ program.piece_count }}
                   </td>
                 </tr>
               {% endfor %}
             {% else %}
               <tr>
                 <td colspan="4" class="px-4 py-8 text-center text-sm text-slate-500">
-                  No programs yet. Create your first concert program to start planning your season.
+                  No programs created.
                 </td>
               </tr>
             {% endif %}

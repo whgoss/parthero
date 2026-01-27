@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
 from core.models.users import UserOrganization
 
@@ -32,3 +33,11 @@ class OrganizationMiddleware(MiddlewareMixin):
             return
 
         request.organization = membership.organization
+        timezone.activate(request.organization.timezone)
+
+    def process_response(self, request, response):
+        timezone.deactivate()
+        return response
+
+    def process_exception(self, request, exception):
+        timezone.deactivate()

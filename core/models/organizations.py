@@ -10,6 +10,7 @@ from core.models.base import UUIDPrimaryKeyModel
 
 class Organization(UUIDPrimaryKeyModel):
     name = CharField(max_length=255)
+    timezone = CharField(default="America/New_York")
     enabled = BooleanField(default=True)
 
     def __str__(self):
