@@ -2,43 +2,44 @@ from django.db.models import (
     CharField,
     DateTimeField,
     ForeignKey,
-    TextField,
     IntegerField,
-    BooleanField,
     CASCADE,
     SET_NULL,
 )
 from core.models.base import UUIDPrimaryKeyModel
-from core.models.music import Piece, Instrument
-from core.models.organizations import Musician
+from core.models.music import Piece, Part
+from core.models.organizations import Organization, Musician
+from core.enum.status import ProgramStatus
 
 
 class Program(UUIDPrimaryKeyModel):
-    name = CharField(max_length=255)
-    date = DateTimeField()
-
-
-class ProgramMusician(UUIDPrimaryKeyModel):
-    instrument = ForeignKey(Instrument, on_delete=CASCADE)
-    chair_number = IntegerField()
+    title = CharField(max_length=255)
+    status = CharField(
+        max_length=50,
+        default=ProgramStatus.DRAFT.value,
+        choices=ProgramStatus.choices(),
+    )
+    organization = ForeignKey(Organization, on_delete=CASCADE)
 
 
 class ProgramPiece(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, on_delete=CASCADE)
-    piece = ForeignKey(Piece, on_delete=CASCADE)
-    instrumentation_override = TextField(null=True, blank=True)
+    piece = ForeignKey(Piece, related_name="pieces", on_delete=CASCADE)
+    concert_order = IntegerField()
 
 
-class ProgramPieceSlot(UUIDPrimaryKeyModel):
-    program_piece = ForeignKey(ProgramPiece, on_delete=CASCADE)
-    musician = ForeignKey(Musician, on_delete=SET_NULL, null=True, blank=True)
-
-
-class ProgramPieceSlotInstrument(UUIDPrimaryKeyModel):
-    program_piece_slot = ForeignKey(
-        ProgramPieceSlot, related_name="instruments", on_delete=CASCADE
+class ProgramPartMusicianSlot(UUIDPrimaryKeyModel):
+    part = ForeignKey(Part, on_delete=CASCADE)
+    musician = ForeignKey(
+        Musician, related_name="musicians", on_delete=SET_NULL, null=True
     )
-    instrument = ForeignKey(Instrument, on_delete=CASCADE)
-    chair_number = IntegerField()
-    principal = BooleanField(default=False)
-    musician = ForeignKey(Musician, on_delete=SET_NULL, null=True, blank=True)
+
+
+class ProgramPerformance(UUIDPrimaryKeyModel):
+    program = ForeignKey(Program, related_name="performances", on_delete=CASCADE)
+    date = DateTimeField()
+
+
+class ProgramRehearsal(UUIDPrimaryKeyModel):
+    program = ForeignKey(Program, related_name="rehearsals", on_delete=CASCADE)
+    date = DateTimeField()

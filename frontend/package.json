@@ -15,9 +15,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
     "@yaireo/tagify": "^4.35.6",
     "filepond": "^4.32.10",
     "filepond-plugin-file-validate-type": "^1.2.9",
-    "htmx.org": "^2.0.8"
+    "flatpickr": "^4.6.13",
+    "htmx.org": "^2.0.8",
+    "tailwindcss": "^4.1.18"
   }
 }

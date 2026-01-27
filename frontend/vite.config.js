@@ -1,17 +1,22 @@
-// frontend/vite.config.js
 import { defineConfig } from "vite";
 import { resolve } from "path";
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   root: __dirname,
+  plugins: [tailwindcss()],
   build: {
     outDir: resolve(__dirname, "../static/frontend"),
     emptyOutDir: true,
+    sourcemap: true,
+    cssCodeSplit: false,
     rollupOptions: {
-      input: resolve(__dirname, "src/main.js"),
+      input: {
+        main: resolve(__dirname, "src/main.js"),
+        programs: resolve(__dirname, "src/programs.js"),
+      },
       output: {
-        // fixed filenames so Django templates don't have to chase hashes yet
-        entryFileNames: "bundle.js",
+        entryFileNames: "[name].js",
         assetFileNames: "bundle.[ext]",
       },
     },

@@ -5,12 +5,13 @@ from core.views.views import (
     get_pieces_view,
     get_parts_view,
     login_view,
-    create_new_piece,
+    create_piece_view,
     select_piece,
     search,
     get_piece_view,
-    programs,
     download_part_asset,
+    get_programs_view,
+    create_program_view,
 )
 from core.views import organizations
 
@@ -18,7 +19,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("login/", login_view, name="login"),
     path("", home, name="home"),
-    path("create_piece/", create_new_piece, name="create_piece"),
+    path("create_piece/", create_piece_view, name="create_piece"),
     path("pieces/", get_pieces_view, name="pieces"),
     path("piece/<str:piece_id>/", get_piece_view, name="piece"),
     path("piece/<str:piece_id>/parts/", get_parts_view, name="get_parts"),
@@ -31,7 +32,8 @@ urlpatterns = [
     path("musician/", organizations.musician, name="musician"),
     path("musician/<str:musician_id>/", organizations.musician, name="musician"),
     path("upload_roster/", organizations.upload_roster, name="upload_roster"),
-    path("programs/", programs, name="programs"),
+    path("programs/", get_programs_view, name="programs"),
+    path("create_program/", create_program_view, name="create_program"),
     path("search/", search, name="search"),
     path(
         "switch-organization/<str:organization_id>/",

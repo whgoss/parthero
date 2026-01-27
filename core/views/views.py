@@ -4,7 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET, require_POST
+from core.enum.status import ProgramStatus
 from core.forms.music import PieceForm
+from core.forms.programs import ProgramForm
 from core.services.music import (
     create_piece,
     get_piece,
@@ -13,6 +15,7 @@ from core.services.music import (
     get_part_assets,
     get_part_asset,
 )
+from core.services.programs import create_program
 from core.services.domo import search_for_piece
 from core.services.s3 import create_download_url
 
@@ -23,7 +26,7 @@ def home(request):
 
 
 @login_required
-def create_new_piece(request):
+def create_piece_view(request):
     if request.method == "POST":
         form = PieceForm(
             request.POST,
@@ -134,12 +137,6 @@ def search(request):
     return render(request, "partials/search_results.html", context)
 
 
-@login_required
-def programs(request):
-    context = {}
-    return render(request, "programs.html", context)
-
-
 def download_part_asset(request, piece_id, part_asset_id):
     part_asset = get_part_asset(part_asset_id)
     if not part_asset:
@@ -149,6 +146,36 @@ def download_part_asset(request, piece_id, part_asset_id):
         str(request.organization.id), part_asset.file_key
     )
     return redirect(download_url)
+
+
+@login_required
+def get_programs_view(request):
+    context = {}
+    return render(request, "programs.html", context)
+
+
+@login_required
+def create_program_view(request):
+    if request.method == "POST":
+        form = ProgramForm(
+            request.POST,
+            organization_id=request.organization.id,
+        )
+        title = form.data["title"]
+        status = ProgramStatus(form.data["status"])
+        organization_id = request.organization.id
+        program = create_program(
+            organization_id,
+            title,
+            status,
+        )
+        return redirect(f"/program/{program.id}/")
+    else:
+        form = ProgramForm(
+            organization_id=request.organization.id,
+        )
+    context = {"form": form}
+    return render(request, "create_program.html", context)
 
 
 def login_view(request):

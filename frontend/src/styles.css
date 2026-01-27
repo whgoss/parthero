@@ -1,3 +1,8 @@
+/* Tailwind */
+@import "tailwindcss";
+@source "../../templates/**/*.html";
+@source "../../**/templates/**/*.html";
+
 /* Make the FilePond box bigger and fully clickable */
 .filepond--root {
   width: 100%;

@@ -13,7 +13,7 @@ from core.services.organizations import (
 )
 from core.services.files import upload_roster as upload_roster_file
 from core.models.users import UserOrganization
-from core.forms.musician import MusicianForm
+from core.forms.musicians import MusicianForm
 
 
 @login_required
