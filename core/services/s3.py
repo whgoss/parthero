@@ -1,9 +1,11 @@
 import boto3
+import logging
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from parthero.settings import DEBUG
 
 s3_client = None
+logger = logging.getLogger()
 
 
 def get_s3_client():
@@ -51,6 +53,22 @@ def create_upload_url(
     try:
         presigned_url = s3_client.generate_presigned_url(
             "put_object",
+            Params={"Bucket": organization_id, "Key": file_key},
+            ExpiresIn=expiration,
+        )
+    except ClientError as error:
+        logger.error(f"Error generating presigned URL: {error}")
+        return None
+    return presigned_url
+
+
+def create_download_url(
+    organization_id: str, file_key: str, expiration: int = 3600
+) -> str:
+    s3_client = get_s3_client()
+    try:
+        presigned_url = s3_client.generate_presigned_url(
+            "get_object",
             Params={"Bucket": organization_id, "Key": file_key},
             ExpiresIn=expiration,
         )

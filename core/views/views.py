@@ -1,4 +1,5 @@
 import json
+from django.http import HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
@@ -10,8 +11,10 @@ from core.services.music import (
     get_parts,
     get_pieces,
     get_part_assets,
+    get_part_asset,
 )
 from core.services.domo import search_for_piece
+from core.services.s3 import create_download_url
 
 
 @login_required
@@ -135,6 +138,17 @@ def search(request):
 def programs(request):
     context = {}
     return render(request, "programs.html", context)
+
+
+def download_part_asset(request, piece_id, part_asset_id):
+    part_asset = get_part_asset(part_asset_id)
+    if not part_asset:
+        return HttpResponseNotFound("Unable to find asset")
+
+    download_url = create_download_url(
+        str(request.organization.id), part_asset.file_key
+    )
+    return redirect(download_url)
 
 
 def login_view(request):

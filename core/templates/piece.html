@@ -22,18 +22,21 @@
     <!-- Parts -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
       <h1 class="text-lg font-bold">Parts</h1>
-      <form method="post" class="space-y-4 items-center">
-        {% csrf_token %}
-        <div class="relative z-10">
-          <input
-            type="file"
-            data-piece-id="{{ piece.id }}"
-            class="filepond w-full"
-            multiple
-          >
-        </div>
-      </form>
 
+      <!-- Upload Form -->
+        <form method="post" class="space-y-4 items-center">
+            {% csrf_token %}
+            <div class="relative z-10">
+            <input
+                type="file"
+                data-piece-id="{{ piece_id }}"
+                class="filepond w-full"
+                multiple
+            >
+            </div>
+        </form>
+      
+      <!-- Parts Partial -->
       <div id="parts"
         class="relative z-0"
         hx-get="{% url 'get_parts' piece.id %}"
@@ -41,23 +44,6 @@
         hx-swap="innerHTML">
       </div>
     </div>
-
-    <!-- Part Upload -->
-    {% comment %} <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
-      <h1 class="text-lg font-bold">Upload Parts</h1>
-      <form method="post" class="space-y-4 items-center">
-        {% csrf_token %}
-        <div>
-          <input
-            type="file"
-            data-piece-id="{{ piece.id }}"
-            class="filepond w-full"
-            multiple
-          >
-        </div>
-      </form>
-    </div> {% endcomment %}
-
   </div>
 </div>
 {% endblock %}

@@ -102,7 +102,8 @@ def get_piece(organization_id: str, piece_id: str) -> PieceDTO:
 
 def get_pieces(organization_id: str) -> List[PieceDTO]:
     piece_models = Piece.objects.filter(organization__id=organization_id).annotate(
-        parts_count=Count("parts"), assets_count=Count("assets")
+        parts_count=Count("parts", distinct=True),
+        assets_count=Count("assets", distinct=True),
     )
     return PieceDTO.from_models(piece_models)
 
@@ -193,6 +194,11 @@ def update_part_asset(
 
 def delete_part_asset(part_asset_id: str) -> None:
     PartAsset.objects.get(id=part_asset_id).delete()
+
+
+def get_part_asset(part_asset_id: str) -> PartAssetDTO:
+    part_asset = PartAsset.objects.get(id=part_asset_id)
+    return PartAssetDTO.from_model(part_asset)
 
 
 def get_part_assets(piece_id: str) -> List[PartAssetDTO]:
@@ -337,7 +343,7 @@ def _parse_bracketable_section(
         "2[1.2/pic] 2[1.2/eh] 2[1.2] 2[1.2]" → positionally: Fl, Ob, Cl, Bn
     """
     out: List[InstrumentEnum] = []
-    tokens = _normalize_woowinds_token(segment)
+    tokens = _normalize_token(segment).split()
 
     # Use the right instrument order based on the section
     if section == "brass":
@@ -460,10 +466,6 @@ def _normalize_token(seg: str) -> str:
     seg = re.sub(r"\bopt\b", "", seg)  # remove standalone "opt"
     seg = re.sub(r"\s+", " ", seg).strip().lower()
     return seg
-
-
-def _normalize_woowinds_token(seg: str) -> list[str]:
-    return seg.strip().lower().split()
 
 
 def _is_no_strings(code: str) -> bool:

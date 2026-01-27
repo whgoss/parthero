@@ -122,7 +122,6 @@ document.addEventListener("htmx:afterSwap", (e) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".instruments").forEach((instrumentElem) => {
-    console.log("Hi!");
     const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
     const initial = JSON.parse(instrumentElem.dataset.initial || "[]");
     console.log(initial);
@@ -142,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   inputs.forEach((input) => {
     const pieceId = input.dataset.pieceId; // <input ... data-piece-id="{{ piece.id }}">
+    console.log("HEllo", pieceId);
 
     FilePond.create(input, {
       allowMultiple: true,

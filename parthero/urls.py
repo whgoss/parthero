@@ -10,6 +10,7 @@ from core.views.views import (
     search,
     get_piece_view,
     programs,
+    download_part_asset,
 )
 from core.views import organizations
 
@@ -21,6 +22,11 @@ urlpatterns = [
     path("pieces/", get_pieces_view, name="pieces"),
     path("piece/<str:piece_id>/", get_piece_view, name="piece"),
     path("piece/<str:piece_id>/parts/", get_parts_view, name="get_parts"),
+    path(
+        "piece/<str:piece_id>/asset/<str:part_asset_id>/download",
+        download_part_asset,
+        name="download_part_asset",
+    ),
     path("roster/", organizations.roster, name="roster"),
     path("musician/", organizations.musician, name="musician"),
     path("musician/<str:musician_id>/", organizations.musician, name="musician"),

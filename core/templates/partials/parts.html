@@ -32,8 +32,11 @@
                     data-initial='{{ part_asset.display_name_json|safe }}'
                     class="part-asset block w-full rounded-xl border border-slate-200 col-span-2 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
-                <span class="text-xs font-bold text-red-600 hover:underline">
-                    <a href="#"
+                <span class="text-xs font-bold ">
+                    <a class="text-blue-600 hover:underline" href="/piece/{{ piece_id }}/asset/{{ part_asset.id }}/download">
+                        View
+                    </a>
+                    <a class="text-xs font-bold text-red-600 hover:underline" href="#"
                         hx-delete="/api/piece/{{ piece_id }}/asset/{{ part_asset.id }}"
                         hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
                         data-scroll-anchor="part-asset-{{ part_asset.id }}"
