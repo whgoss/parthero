@@ -46,15 +46,27 @@ class PieceDTO(BaseDTO):
     organization_id: str
     instrumentation: str
     parts_count: int
+    assets_count: int
     duration: Optional[int] = None
 
     @classmethod
-    def from_model(cls, model: Piece, parts_count: Optional[int] = None):
+    def from_model(
+        cls,
+        model: Piece,
+        parts_count: Optional[int] = None,
+        assets_count: Optional[int] = None,
+    ):
         if parts_count is None:
             parts_count = getattr(model, "parts_count", None)
 
+        if assets_count is None:
+            assets_count = getattr(model, "assets_count", None)
+
         if parts_count is None:
             parts_count = model.parts.count()
+
+        if assets_count is None:
+            assets_count = model.assets.count()
 
         return cls(
             id=str(model.id),
@@ -63,6 +75,7 @@ class PieceDTO(BaseDTO):
             organization_id=str(model.organization.id),
             instrumentation=model.instrumentation,
             parts_count=parts_count,
+            assets_count=assets_count,
             duration=model.duration,
         )
 

@@ -37,3 +37,11 @@ class EnumChoiceField(serializers.ChoiceField):
     def to_internal_value(self, data):
         value = super().to_internal_value(data)
         return self.enum_cls(value)
+
+
+def is_integer(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False

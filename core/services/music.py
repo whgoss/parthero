@@ -22,7 +22,7 @@ from core.models.music import (
     MusicianInstrument,
 )
 from core.services.s3 import create_upload_url
-from core.utils import get_file_extension
+from core.utils import get_file_extension, is_integer
 
 logger = logging.getLogger()
 
@@ -43,7 +43,7 @@ CODE_MAP = {
         InstrumentEnum.CELLO,
         InstrumentEnum.DOUBLE_BASS,
     ],
-    "cbn": InstrumentEnum.CONTRABASSOON,
+    "cbn": [InstrumentEnum.CONTRABASSOON],
     "electronica": [InstrumentEnum.ELECTRONICA],
     "bd": [InstrumentEnum.BASS_DRUM],
     "sd": [InstrumentEnum.SNARE_DRUM],
@@ -102,7 +102,7 @@ def get_piece(organization_id: str, piece_id: str) -> PieceDTO:
 
 def get_pieces(organization_id: str) -> List[PieceDTO]:
     piece_models = Piece.objects.filter(organization__id=organization_id).annotate(
-        parts_count=Count("parts")
+        parts_count=Count("parts"), assets_count=Count("assets")
     )
     return PieceDTO.from_models(piece_models)
 
@@ -244,12 +244,12 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
     result: List[PartDTO] = []
     # 1) Woodwinds: by position
     if segments:
-        winds = _parse_woodwinds(piece_id, segments[0])
+        winds = _parse_bracketable_section(piece_id, segments[0], "woodwinds")
         result.extend(winds)
 
     # 2) Brass: by position
     if len(segments) >= 2:
-        brass = _parse_brass(piece_id, segments[1])
+        brass = _parse_bracketable_section(piece_id, segments[1], "brass")
         result.extend(brass)
 
     # 3) Everything after that can be auxiliary, electronic, perc, strings (hp, cel, pf, str, etc.)
@@ -327,51 +327,83 @@ def looks_like_numbered_part(tail: str) -> bool:
     )
 
 
-def _parse_woodwinds(piece_id: str, segment: str) -> List[PartDTO]:
+def _parse_bracketable_section(
+    piece_id: str, segment: str, section: str
+) -> List[PartDTO]:
     """
+    Certain segments can have brackets that provide greater detail on parts and doublings
+
     Example WW segment:
         "2[1.2/pic] 2[1.2/eh] 2[1.2] 2[1.2]" → positionally: Fl, Ob, Cl, Bn
     """
     out: List[InstrumentEnum] = []
     tokens = _normalize_woowinds_token(segment)
+
+    # Use the right instrument order based on the section
+    if section == "brass":
+        order = BRASS_ORDER
+    elif section == "woodwinds":
+        order = WOODWIND_ORDER
+
     for index, token in enumerate(tokens):
-        if index >= len(WOODWIND_ORDER):
+        if index >= len(order):
             break
 
-        primary_instrument = WOODWIND_ORDER[index]
-
         # Extract leading count and optional bracket
-        m = re.match(r"(?P<woodwinds_count>\d+)(?P<woodwinds_details>.*)", token)
+        m = re.match(r"(?P<instrument_count>\d+)(?P<section_details>.*)", token)
         if not m:
             continue
 
-        woodwinds_count = int(m.group("woodwinds_count"))
-        woodwinds_details = m.group("woodwinds_details")
+        # Determine the number of instruments
+        instrument_count = int(m.group("instrument_count"))
+
+        # Are there instrument details in bracket notation? e.g. [1.2/pic] or [1.2/Eh]
+        # If so grab them and strip brackets
+        section_details = m.group("section_details")
+        if section_details:
+            section_details = section_details.strip("[]()")
 
         # Add base instruments
-        for instrument_number in range(woodwinds_count):
+        for instrument_number in range(instrument_count):
             instruments = []
 
-            # Add the base instrument section
-            instruments.append(primary_instrument)
+            # Determine the details for this instrument number in section details
+            if section_details:
+                instrument_details = section_details.split(".")[instrument_number]
 
-            # Grab the instrument details for this instrument number
-            bracket = re.search(
-                r"\[(?P<instrument_details>[^\]]+)\]", woodwinds_details
-            )
-
-            # Handle doublings: e.g. [1.2/pic] or [1.2/Eh]
-            if bracket:
-                instrument_details = bracket.group("instrument_details")
-                instrument_details = instrument_details.split(".")[instrument_number]
-
+                # Is there a doubling?
                 if "/" in instrument_details:
+                    # Add the base instrument section
+                    primary_instrument = order[index]
+                    instruments.append(primary_instrument)
+
+                    # Figure out and add the doubling
                     _, doubling_code = instrument_details.split("/", 1)
                     doubling_code = doubling_code.strip().lower()
-                    doubling_sections = CODE_MAP.get(doubling_code)
-                    if doubling_sections:
-                        for doubling in doubling_sections:
+                    doubling_instruments = CODE_MAP.get(doubling_code)
+                    if not doubling_instruments:
+                        raise Exception(
+                            f"Unable to find instrument for abbreviation '{instrument_details}'"
+                        )
+                    if doubling_instruments:
+                        for doubling in doubling_instruments:
                             instruments.append(doubling)
+                # Is it just a numeric part that uses only the base instrument?
+                elif is_integer(instrument_details):
+                    primary_instrument = order[index]
+                    instruments.append(primary_instrument)
+                # Is it a dedicated part that uses a different instrument?
+                else:
+                    instruments = CODE_MAP.get(instrument_details)
+                    if not instruments:
+                        raise Exception(
+                            f"Unable to find instrument for abbreviation '{instrument_details}'"
+                        )
+                    primary_instrument = instruments[0]
+                    instruments = [primary_instrument]
+            else:
+                primary_instrument = order[index]
+                instruments = [primary_instrument]
 
             # Create the part
             part = create_part(
@@ -379,27 +411,6 @@ def _parse_woodwinds(piece_id: str, segment: str) -> List[PartDTO]:
             )
             out.append(part)
 
-    return out
-
-
-def _parse_brass(piece_id: str, segment: str) -> List[PartDTO]:
-    """
-    Example Brass segment:
-        "4 2 3 1" → positionally: 4Hn, 2Tpt, 3Tbn, 1Tba
-    """
-    out: List[InstrumentEnum] = []
-    segment = _normalize_token(segment)
-    counts = [int(x) for x in segment.split() if x.isdigit()]
-    for instrument_count, instrument_section in zip(counts, BRASS_ORDER):
-        for instrument_number in range(instrument_count):
-            # Create the part
-            part = create_part(
-                piece_id,
-                instrument_section,
-                [instrument_section],
-                instrument_number + 1,
-            )
-            out.append(part)
     return out
 
 
