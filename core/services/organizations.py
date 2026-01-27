@@ -25,7 +25,9 @@ def get_organizations_for_user(user_id) -> UserOrganizationDTO:
 
 
 def get_roster(organization_id: str) -> List[MusicianDTO]:
-    musicians = Musician.objects.filter(organization__id=organization_id)
+    musicians = Musician.objects.filter(organization__id=organization_id).order_by(
+        "last_name"
+    )
     return MusicianDTO.from_models(musicians)
 
 

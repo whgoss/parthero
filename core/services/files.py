@@ -1,3 +1,4 @@
+import re
 import csv
 import logging
 from rapidfuzz import fuzz
@@ -18,25 +19,50 @@ def upload_roster(file, organization_id: str):
     if not organization:
         return []
     musicians = []
-    reader = csv.DictReader(file)
+
+    # Read first line to get and normalize headers
+    reader = csv.reader(file)
+    raw_headers = next(reader)
+    clean_headers = [_normalize_header(h) for h in raw_headers]
+
+    # Read file and pull out musicians
+    reader = csv.DictReader(file, fieldnames=clean_headers)
     for row in reader:
         musician = None
-        email = row.get("Email", None)
+        email = row.get("email", None)
         if email:
             musician = None
             musician_exists = musician_exists_by_email(email, organization_id)
             if not musician_exists:
                 musician = Musician(
-                    first_name=normalize_text(row.get("First Name")),
-                    last_name=normalize_text(row.get("Last Name")),
-                    email=normalize_text(email),
-                    principal=True if row.get("Principal") else False,
-                    core_member=True if row.get("Core") else False,
                     organization_id=organization_id,
+                    first_name=_normalize_text(row.get("firstname")),
+                    last_name=_normalize_text(row.get("lastname")),
+                    email=_normalize_text(email),
+                    principal=True
+                    if _normalize_text(row.get("principal")) == "Yes"
+                    else False,
+                    core_member=True
+                    if _normalize_text(row.get("core")) == "Yes"
+                    else False,
+                    address=row.get("address", None),
                 )
                 musician.save()
 
-                instrument_section_string = row.get("Instrument", None)
+                # Determine primary instrument
+                instrument_section_string = row.get("instrument", None)
+                instrument = determine_instrument_section(
+                    _strip_non_alphanumeric_re(instrument_section_string)
+                )
+                if instrument:
+                    musician_instrument = MusicianInstrument(
+                        musician_id=musician.id,
+                        instrument_id=instrument.id,
+                    )
+                    musician_instrument.save()
+
+                # Determine secondary instrument
+                instrument_section_string = row.get("secondaryinstrument", None)
                 instrument = determine_instrument_section(instrument_section_string)
                 if instrument:
                     musician_instrument = MusicianInstrument(
@@ -59,7 +85,8 @@ def determine_instrument_section(
 ) -> InstrumentDTO | None:
     for instrument in InstrumentEnum:
         score = fuzz.ratio(
-            instrument_string.strip().casefold(), instrument.value.strip().casefold()
+            instrument_string.replace(" ", "").casefold(),
+            instrument.value.replace(" ", "").casefold(),
         )
         if score > 95.0:
             return get_instrument(instrument)
@@ -67,5 +94,20 @@ def determine_instrument_section(
     return None
 
 
-def normalize_text(name: str) -> str:
+def _normalize_text(name: str) -> str:
+    if name is None:
+        return None
     return name.strip()
+
+
+def _normalize_header(header: str) -> str:
+    header = header.strip().lower()
+    header = _strip_non_alphanumeric_re(header)
+    return header
+
+
+def _strip_non_alphanumeric_re(text):
+    # The pattern '[^a-zA-Z0-9]' matches any character NOT (^) in the specified ranges.
+    # The '\W+' pattern can also be used but includes the underscore character,
+    # so '[^a-zA-Z0-9]' gives more precise control for this case.
+    return re.sub(r"[^a-zA-Z0-9]", "", text)

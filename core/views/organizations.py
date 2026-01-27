@@ -103,7 +103,7 @@ def musician(request, musician_id: str | None = None):
         "musician": musician,
         "form": form,
         "instruments": json.dumps(instruments),
-        "instrument_options": json.dumps(InstrumentEnum.values()),
+        "instrument_options": InstrumentEnum.values(),
     }
     return render(request, "musician.html", context)
 

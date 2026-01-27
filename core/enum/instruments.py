@@ -61,6 +61,7 @@ class InstrumentEnum(Enum):
     FIFE = "Fife"
     FLUTE = "Flute"
     FLAGEOLET = "Flageolet"
+    FRENCH_HORN = "French Horn"
     GLASS_HARMONIC = "Glass harmonica"
     GLOCKENSPIEL = "Glockenspiel"
     GUITAR = "Guitar"
@@ -69,7 +70,6 @@ class InstrumentEnum(Enum):
     HARMONIUM = "Harmonium"
     HARMONICA = "Harmonica"
     HECKELPHONE = "Heckelphone"
-    HORN = "Horn"
     LUTE = "Lute"
     LYRE = "Lyre"
     MANDOLIN = "Mandolin"
@@ -166,7 +166,7 @@ INSTRUMENT_FAMILIES = {
         InstrumentEnum.TENOR_SAXOPHONE,
     ],
     InstrumentFamily.BRASS: [
-        InstrumentEnum.HORN,
+        InstrumentEnum.FRENCH_HORN,
         InstrumentEnum.TRUMPET,
         InstrumentEnum.TROMBONE,
         InstrumentEnum.BASS_TROMBONE,

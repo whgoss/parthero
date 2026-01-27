@@ -52,6 +52,11 @@ CODE_MAP = {
     "tri": [InstrumentEnum.TRIANGLE],
 }
 
+ALIAS_MAP = {
+    InstrumentEnum.FRENCH_HORN: ["horn"],
+    InstrumentEnum.ENGLISH_HORN: ["cor anglais"],
+}
+
 WOODWIND_ORDER = [
     InstrumentEnum.FLUTE,
     InstrumentEnum.OBOE,
@@ -60,7 +65,7 @@ WOODWIND_ORDER = [
 ]
 
 BRASS_ORDER = [
-    InstrumentEnum.HORN,
+    InstrumentEnum.FRENCH_HORN,
     InstrumentEnum.TRUMPET,
     InstrumentEnum.TROMBONE,
     InstrumentEnum.TUBA,
@@ -149,7 +154,12 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
 
                 for part_instrument in part.instruments.all():
                     # TODO: Figure out how to handle seat number!
-                    if instrument.value in part_instrument.instrument.name:
+                    if instrument.value in part_instrument.instrument.name or any(
+                        instrument.value in instrument_alias
+                        for instrument_alias in ALIAS_MAP.get(
+                            part_instrument.instrument.name
+                        )
+                    ):
                         part_asset.parts.add(part)
 
     # Generate a pre-signed URL for upload

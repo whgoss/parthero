@@ -1,7 +1,12 @@
-/* Tailwind */
+/* Tailwind 
+NOTE: Tailwind only generates based on the tailwind strings it identifies in your code
+So we have to pass it both Django templates AND templatetags so that it can see what 
+we're using and insert it into our final bundled .css
+*/
 @import "tailwindcss";
 @source "../../templates/**/*.html";
 @source "../../**/templates/**/*.html";
+@source "../../**/templatetags/**/*.py";
 
 /* Make the FilePond box bigger and fully clickable */
 .filepond--root {

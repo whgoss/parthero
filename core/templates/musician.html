@@ -151,12 +151,14 @@
           Assign one or more sections. Hover a pill to remove it; use the + pill to add more.
         </p>
 
+        {{ instruments|json_script:"instruments" }}
+        {{ instrument_options|json_script:"instrument-options" }}
         <input
           id="instruments"
           name="instruments"
           type="text"
-          data-options='{{ instrument_options|safe }}'
-          data-initial='{{ instruments|safe }}'
+          data-options-id="instrument-options"
+          data-initial-id="instruments"
           class="instruments block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
       </div>
@@ -168,7 +170,7 @@
           Cancel
         </a>
         <button type="submit" form="musician-edit-form"
-                class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                class="cursor-pointer inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 20 20"
                fill="none"
