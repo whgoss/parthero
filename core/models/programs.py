@@ -25,7 +25,7 @@ class Program(UUIDPrimaryKeyModel):
 class ProgramPiece(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, related_name="pieces", on_delete=CASCADE)
     piece = ForeignKey(Piece, on_delete=CASCADE)
-    concert_order = IntegerField()
+    concert_order = IntegerField(null=True, blank=True)
 
 
 class ProgramPartMusicianSlot(UUIDPrimaryKeyModel):

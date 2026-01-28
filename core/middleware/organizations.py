@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
+from core.dtos.organizations import OrganizationDTO
 from core.models.users import UserOrganization
 
 
@@ -32,7 +33,7 @@ class OrganizationMiddleware(MiddlewareMixin):
             request.session.pop("organization_id", None)
             return
 
-        request.organization = membership.organization
+        request.organization = OrganizationDTO.from_model(membership.organization)
         timezone.activate(request.organization.timezone)
 
     def process_response(self, request, response):

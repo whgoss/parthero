@@ -10,7 +10,10 @@ from core.services.music import (
     create_part_asset,
     update_part_asset,
     delete_part_asset,
+    search_for_piece,
 )
+from core.services.programs import add_piece_to_program, remove_piece_from_program
+from core.models.programs import Program
 from core.api.permissions import IsInOrganization
 
 
@@ -47,3 +50,40 @@ class PartAssetViewSet(
     def delete(self, request, part_asset_id, *args, **kwargs):
         delete_part_asset(part_asset_id)
         return Response(status=status.HTTP_200_OK)
+
+
+class PieceSearchViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsInOrganization]
+
+    def list(self, request, *args, **kwargs):
+        title = request.query_params.get("title")
+        composer = request.query_params.get("composer")
+
+        results = []
+        if title or composer:
+            results = search_for_piece(
+                title=title,
+                composer=composer,
+                organization_id=request.organization.id,
+            )
+
+        response_data = [result.model_dump(mode="json") for result in results]
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ProgramPieceViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsInOrganization]
+
+    @transaction.atomic
+    def update(self, request, program_id, piece_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        pieces = add_piece_to_program(program_id, piece_id)
+        response_data = [piece.model_dump(mode="json") for piece in pieces]
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def delete(self, request, program_id, piece_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        pieces = remove_piece_from_program(program_id, piece_id)
+        response_data = [piece.model_dump(mode="json") for piece in pieces]
+        return Response(response_data, status=status.HTTP_200_OK)

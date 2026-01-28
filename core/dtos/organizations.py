@@ -9,17 +9,24 @@ from core.models.organizations import Organization, Musician
 class OrganizationDTO(BaseDTO):
     name: str
     enabled: bool
+    timezone: str
 
     def to_model(self, model: Organization):
         return model(
             id=UUID(self.id),
             name=self.name,
             enabled=self.enabled,
+            time=self.timezone,
         )
 
     @classmethod
     def from_model(cls, model: Organization):
-        return cls(id=str(model.id), name=model.name, enabled=model.enabled)
+        return cls(
+            id=str(model.id),
+            name=model.name,
+            enabled=model.enabled,
+            timezone=model.timezone,
+        )
 
 
 class MusicianDTO(BaseDTO):

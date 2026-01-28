@@ -3,7 +3,7 @@ import uuid
 import logging
 from typing import List, Optional
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from core.dtos.music import (
     PieceDTO,
     PartDTO,
@@ -102,15 +102,44 @@ def create_piece(
 
 def get_piece(organization_id: str, piece_id: str) -> PieceDTO:
     piece = Piece.objects.get(id=piece_id, organization__id=organization_id)
-    return PieceDTO.from_model(piece)
+    completed_parts = (
+        Part.objects.filter(
+            piece_id=piece_id, assets__status=UploadStatus.UPLOADED.value
+        )
+        .distinct()
+        .count()
+    )
+    return PieceDTO.from_model(piece, completed_parts=completed_parts)
 
 
 def get_pieces(organization_id: str) -> List[PieceDTO]:
-    piece_models = Piece.objects.filter(organization__id=organization_id).annotate(
+    query = Q(organization__id=organization_id)
+    piece_models = Piece.objects.filter(query).annotate(
         parts_count=Count("parts", distinct=True),
-        assets_count=Count("assets", distinct=True),
+        completed_parts=Count(
+            "parts",
+            filter=Q(parts__assets__status=UploadStatus.UPLOADED.value),
+            distinct=True,
+        ),
     )
     return PieceDTO.from_models(piece_models)
+
+
+def search_for_piece(
+    title: Optional[str] = None,
+    composer: Optional[str] = None,
+    organization_id: Optional[str] = None,
+) -> List[PieceDTO]:
+    search_query = Q()
+    if title:
+        search_query |= Q(title__icontains=title)
+    if composer:
+        search_query |= Q(composer__icontains=composer)
+
+    pieces = Piece.objects.filter(search_query)
+    if organization_id:
+        pieces = pieces.filter(organization__id=organization_id)
+    return PieceDTO.from_models(pieces)
 
 
 def create_part(

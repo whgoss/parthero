@@ -14,7 +14,12 @@ from core.services.music import (
     get_part_assets,
     get_part_asset,
 )
-from core.services.programs import create_program, get_program, get_programs
+from core.services.programs import (
+    create_program,
+    get_program,
+    get_programs,
+    get_pieces_for_program,
+)
 from core.services.domo import search_for_piece
 from core.services.s3 import create_download_url
 
@@ -150,8 +155,12 @@ def download_part_asset(request, piece_id, part_asset_id):
 @login_required
 def get_program_view(request, program_id):
     program = get_program(program_id)
+    pieces = get_pieces_for_program(program_id)
+    pieces_json = [piece.model_dump(mode="json") for piece in pieces]
     context = {
         "program": program,
+        "pieces": pieces,
+        "pieces_json": pieces_json,
     }
     return render(request, "program.html", context)
 
@@ -177,7 +186,7 @@ def create_program_view(request):
                 performance_dates.append(subform.cleaned_data["date"])
 
             create_program(
-                organization_id=str(request.organization.id),
+                organization_id=request.organization.id,
                 name=form.data["name"],
                 performance_dates=performance_dates,
             )

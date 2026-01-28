@@ -76,4 +76,123 @@ window.performanceDates = function performanceDates() {
   }
 }
 
+window.programPieceSearch = function programPieceSearch(programId, initialPieces = []) {
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+  return {
+    programId,
+    title: "",
+    composer: "",
+    results: [],
+    selectedPieces: initialPieces,
+    loading: false,
+    error: null,
+    hasSearched: false,
+    saving: false,
+    saveError: null,
+    async search() {
+      this.loading = true;
+      this.error = null;
+      this.hasSearched = false;
+
+      const params = new URLSearchParams();
+      if (this.title.trim()) {
+        params.append("title", this.title.trim());
+      }
+      if (this.composer.trim()) {
+        params.append("composer", this.composer.trim());
+      }
+
+      if (!params.toString()) {
+        this.results = [];
+        this.loading = false;
+        return;
+      }
+
+      const url = `/api/pieces/search?${params.toString()}`;
+      try {
+        const response = await fetch(url, {
+          headers: { "Accept": "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to search pieces");
+        }
+        this.results = await response.json();
+      } catch (error) {
+        this.error = "Unable to fetch pieces right now.";
+        this.results = [];
+      } finally {
+        this.loading = false;
+        this.hasSearched = true;
+      }
+    },
+    isSelected(piece) {
+      return this.selectedPieces.some((selected) => selected.id === piece.id);
+    },
+    async addPiece(piece) {
+      if (this.isSelected(piece)) {
+        this.scrollToSelected();
+        return;
+      }
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/program/${this.programId}/pieces/${piece.id}`,
+          {
+            method: "PUT",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to add piece");
+        }
+        this.selectedPieces = await response.json();
+        this.scrollToSelected();
+      } catch (error) {
+        this.saveError = "Unable to add piece right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async removePiece(piece) {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/program/${this.programId}/pieces/${piece.id}`,
+          {
+            method: "DELETE",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to remove piece");
+        }
+        this.selectedPieces = await response.json();
+      } catch (error) {
+        this.saveError = "Unable to remove piece right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    scrollToSelected() {
+      this.$nextTick(() => {
+        this.$refs.selectedPieces?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    },
+  };
+};
+
 Alpine.start()

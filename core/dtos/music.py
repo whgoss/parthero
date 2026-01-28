@@ -46,7 +46,7 @@ class PieceDTO(BaseDTO):
     organization_id: str
     instrumentation: str
     parts_count: int
-    assets_count: int
+    completed_parts: int
     duration: Optional[int] = None
 
     @classmethod
@@ -54,19 +54,25 @@ class PieceDTO(BaseDTO):
         cls,
         model: Piece,
         parts_count: Optional[int] = None,
-        assets_count: Optional[int] = None,
+        completed_parts: Optional[int] = None,
     ):
         if parts_count is None:
             parts_count = getattr(model, "parts_count", None)
 
-        if assets_count is None:
-            assets_count = getattr(model, "assets_count", None)
+        if completed_parts is None:
+            completed_parts = getattr(model, "completed_parts", None)
 
         if parts_count is None:
             parts_count = model.parts.count()
 
-        if assets_count is None:
-            assets_count = model.assets.count()
+        if completed_parts is None:
+            completed_parts = (
+                Part.objects.filter(
+                    piece_id=str(model.id), assets__status=UploadStatus.UPLOADED.value
+                )
+                .distinct()
+                .count()
+            )
 
         return cls(
             id=str(model.id),
@@ -75,7 +81,7 @@ class PieceDTO(BaseDTO):
             organization_id=str(model.organization.id),
             instrumentation=model.instrumentation,
             parts_count=parts_count,
-            assets_count=assets_count,
+            completed_parts=completed_parts,
             duration=model.duration,
         )
 
