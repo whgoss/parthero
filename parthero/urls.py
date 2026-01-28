@@ -10,8 +10,9 @@ from core.views.views import (
     search,
     get_piece_view,
     download_part_asset,
-    get_programs_view,
     create_program_view,
+    get_program_view,
+    get_programs_view,
 )
 from core.views import organizations
 
@@ -33,6 +34,7 @@ urlpatterns = [
     path("musician/<str:musician_id>/", organizations.musician, name="musician"),
     path("upload_roster/", organizations.upload_roster, name="upload_roster"),
     path("programs/", get_programs_view, name="programs"),
+    path("program/<str:program_id>/", get_program_view, name="program"),
     path("create_program/", create_program_view, name="create_program"),
     path("search/", search, name="search"),
     path(

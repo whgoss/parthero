@@ -16,6 +16,7 @@ def create_instrument_metadata(apps, schema_editor):
 def create_organizations_and_users(apps, schema_editor):
     User = apps.get_model("core", "User")
     Organization = apps.get_model("core", "Organization")
+    UserOrganization = apps.get_model("core", "UserOrganization")
     summerville_orchestra = Organization(
         name="Summerville Orchestra", enabled=True, timezone="America/New_York"
     )
@@ -43,6 +44,14 @@ def create_organizations_and_users(apps, schema_editor):
     # This makes it impossible to log in until both users set a password
     User.objects.filter(pk=will_user.pk).update(password=make_password(None))
     User.objects.filter(pk=wojciech_user.pk).update(password=make_password(None))
+
+    # Add users to Summerville organization
+    UserOrganization(
+        user_id=will_user.id, organization_id=summerville_orchestra.id
+    ).save()
+    UserOrganization(
+        user_id=wojciech_user.id, organization_id=summerville_orchestra.id
+    ).save()
 
 
 class Migration(migrations.Migration):

@@ -16,7 +16,7 @@ class Program(UUIDPrimaryKeyModel):
     name = CharField(max_length=255)
     status = CharField(
         max_length=50,
-        default=ProgramStatus.DRAFT.value,
+        default=ProgramStatus.CREATED.value,
         choices=ProgramStatus.choices(),
     )
     organization = ForeignKey(Organization, on_delete=CASCADE)

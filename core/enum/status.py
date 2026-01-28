@@ -13,7 +13,10 @@ class UploadStatus(Enum):
 
 
 class ProgramStatus(Enum):
-    DRAFT = "Draft"
+    CREATED = "Created"
+    PIECES = "Pieces"
+    ROSTER = "Roster"
+    READY = "Ready"
     PUBLISHED = "Published"
 
     def choices():

@@ -2,6 +2,7 @@ import pytz
 from datetime import datetime
 from typing import Optional, List
 from django.db import transaction
+from django.db.models import Min, F
 from django.utils import timezone
 from core.dtos.programs import ProgramDTO
 from core.enum.status import ProgramStatus
@@ -13,7 +14,7 @@ from core.models.programs import Program, ProgramPerformance
 def create_program(
     organization_id: str,
     name: str,
-    status: Optional[ProgramStatus] = ProgramStatus.DRAFT,
+    status: Optional[ProgramStatus] = ProgramStatus.CREATED,
     performance_dates: Optional[List[datetime]] = None,
 ) -> ProgramDTO:
     organization = Organization.objects.get(id=organization_id)
@@ -38,6 +39,15 @@ def create_program(
     return ProgramDTO.from_model(program)
 
 
+def get_program(piece_id: str) -> ProgramDTO:
+    program = Program.objects.get(id=piece_id)
+    return ProgramDTO.from_model(program)
+
+
 def get_programs(organization_id: str) -> List[ProgramDTO]:
-    programs = Program.objects.filter(organization_id=organization_id)
+    programs = (
+        Program.objects.filter(organization_id=organization_id)
+        .annotate(first_performance=Min("performances__date"))
+        .order_by(F("first_performance").asc(nulls_last=True))
+    )
     return ProgramDTO.from_models(programs)

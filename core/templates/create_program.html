@@ -1,11 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
+    <!-- Top nav / breadcrumb -->
+    <div class="flex items-center justify-between gap-4 mb-2">
+      <a href="{% url 'programs' %}"
+         class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 20 20"
+             fill="none"
+             stroke="currentColor"
+             class="mr-1 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
+                d="M12.5 4.5 7 10l5.5 5.5" />
+        </svg>
+        Back to Programs
+      </a>
+    </div>
+
     <!-- Header + primary actions -->
     <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 class="text-2xl font-semibold text-slate-900">Create a New Program</h1>
-        <p class="mt-2 text-sm text-slate-500">
-            Add the basic details for this program.
+        <h1 class="page-header">Create a Program</h1>
+        <p class="page-subheader">
+            Step 1: Add the basic details for this program.
         </p>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
@@ -18,14 +34,14 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             {{ form.name.required }}
-            <label for="{{ form.name.id_for_label }}" class="mb-1 block text-sm font-medium">
+            <label for="{{ form.name.id_for_label }}" class="form-label">
               Program Name
             </label>
             {{ form.name }}
             {% if form.name.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.name.errors|striptags }}</p>{% endif %}
           </div>
           <div>
-            <label for="{{ form.instrumentation.id_for_label }}" class="mb-1 block text-sm font-medium">
+            <label for="{{ form.instrumentation.id_for_label }}" class="form-label">
               Performance Dates
             </label>
 
@@ -52,7 +68,7 @@
 
               <!-- Hidden template for new rows -->
               <template x-ref="emptyRow">
-          <div class="perf-row flex items-center gap-2" x-data="{ removed: false }" x-show="!removed" x-transition>
+                <div class="perf-row flex items-center gap-2" x-data="{ removed: false }" x-show="!removed" x-transition>
                   <div class="flex-1">
                     {{ formset.empty_form.date }}
                   </div>
@@ -69,7 +85,7 @@
 
               
             </div>
-            <button type="button" class="btn-secondary mt-1" @click="add()">
+              <button type="button" class="btn-secondary mt-1" @click="add()">
                 + Add performance date
               </button>
           </div>
@@ -78,7 +94,7 @@
         <div class="flex items-center justify-end gap-3">
           <button
             type="submit"
-            class="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            class="btn-primary"
           >
             Save &amp; Continue
           </button>

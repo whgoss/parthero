@@ -8,7 +8,7 @@ from core.models.programs import Program, ProgramPerformance
 class ProgramDTO(BaseDTO):
     organization_id: str
     name: str
-    status: ProgramStatus = ProgramStatus.DRAFT
+    status: ProgramStatus = ProgramStatus.CREATED
     piece_count: int
     performances: Optional[List["ProgramPerformanceDTO"]] = None
 

@@ -14,7 +14,7 @@ from core.services.music import (
     get_part_assets,
     get_part_asset,
 )
-from core.services.programs import create_program, get_programs
+from core.services.programs import create_program, get_program, get_programs
 from core.services.domo import search_for_piece
 from core.services.s3 import create_download_url
 
@@ -145,6 +145,15 @@ def download_part_asset(request, piece_id, part_asset_id):
         str(request.organization.id), part_asset.file_key
     )
     return redirect(download_url)
+
+
+@login_required
+def get_program_view(request, program_id):
+    program = get_program(program_id)
+    context = {
+        "program": program,
+    }
+    return render(request, "program.html", context)
 
 
 @login_required
