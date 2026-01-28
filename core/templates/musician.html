@@ -17,7 +17,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
                 d="M12.5 4.5 7 10l5.5 5.5" />
         </svg>
-        Back to roster
+        Back to Roster
       </a>
     </div>
 
@@ -25,25 +25,25 @@
     <div class="mb-6 flex items-center justify-between gap-4">
       <div class="flex items-center gap-4">
         {% if musician %}
-        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
-          {{ musician.first_name|first }}{{ musician.last_name|first }}
-        </div>
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+            {{ musician.first_name|first }}{{ musician.last_name|first }}
+          </div>
         {% endif %}
         <div>
           {% if musician %}
-          <h1 class="text-xl font-semibold text-slate-900">
-            Edit Musician
-          </h1>
-          <p class="text-sm text-slate-500">
-            Update contact info and section assignments.
-          </p>
+            <h1 class="page-header">
+              Edit Musician
+            </h1>
+            <p class="page-subheader">
+              Update contact info and section assignments.
+            </p>
           {% else %}
-          <h1 class="text-xl font-semibold text-slate-900">
-            Create Musician
-          </h1>
-          <p class="text-sm text-slate-500">
-            Create contact info and section assignments.
-          </p>
+            <h1 class="page-header">
+              Create Musician
+            </h1>
+            <p class="page-subheader">
+              Create contact info and section assignments.
+            </p>
           {% endif %}
         </div>
       </div>
@@ -56,9 +56,9 @@
       {% csrf_token %}
 
       <!-- Basic info -->
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3 p-2">
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">
+          <label class="form-label">
             First Name
           </label>
           {{ form.first_name }}
@@ -66,7 +66,7 @@
         </div>
 
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">
+          <label class="form-label">
             Last Name
           </label>
           {{ form.last_name }}
@@ -74,7 +74,7 @@
         </div>
 
         <div class="md:col-span-2">
-          <label for="{{ form.email.id_for_label }}" class="mb-1 block text-sm font-medium">
+          <label for="{{ form.email.id_for_label }}" class="form-label">
             Email
           </label>
           {{ form.email }}
@@ -83,9 +83,9 @@
       </div>
 
       <!-- Principal toggle -->
-      <div class="flex items-start justify-between gap-4 rounded-2xl bg-slate-50 py-3">
+      <div class="flex items-start justify-between gap-4 rounded-2xl p-2">
         <div>
-          <p class="text-sm font-medium text-slate-800">
+          <p class="form-label">
             Principal
           </p>
           <p class="text-xs text-slate-500">
@@ -113,10 +113,10 @@
       </div>
 
       <!-- Core member toggle -->
-      <div class="flex items-start justify-between gap-4 rounded-2xl bg-slate-50 py-3">
+      <div class="flex items-start justify-between gap-4 rounded-2xl p-2">
         <div>
-          <p class="text-sm font-medium text-slate-800">
-            Core member
+          <p class="form-label">
+            Core Member
           </p>
           <p class="text-xs text-slate-500">
             Core members are a subset of the master roster that are frequently featured in programs.
@@ -142,14 +142,17 @@
         </label>
       </div>
 
-      <!-- Section pills -->
-      <div class="bg-slate-50/60">
-        <label for="instruments" class="mb-1 block text-sm font-medium">
-          Instruments
-        </label>
-        <p class="text-xs text-slate-500">
-          Assign one or more sections. Hover a pill to remove it; use the + pill to add more.
-        </p>
+      <!-- Instruments Section -->
+      <div class="grid grid-cols-5 items-start justify-between gap-4 rounded-2xl p-2">
+        <div class="col-span-2">
+          <label for="instruments"
+            class="form-label">
+            Instruments
+          </label>
+          <p class="text-xs text-slate-500">
+            Type to assign one or more instruments/sections.
+          </p>
+        </div>
 
         {{ instruments|json_script:"instruments" }}
         {{ instrument_options|json_script:"instrument-options" }}
@@ -159,18 +162,18 @@
           type="text"
           data-options-id="instrument-options"
           data-initial-id="instruments"
-          class="instruments block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          class="col-span-3 instruments block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
       </div>
 
       <!-- Primary actions -->
-      <div class="flex justify-end gap-3">
+      <div class="flex justify-end gap-3 mb-4">
         <a href="{% url 'roster' %}"
-           class="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50">
+           class="btn-secondary">
           Cancel
         </a>
         <button type="submit" form="musician-edit-form"
-                class="cursor-pointer inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                class="btn-primary">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 20 20"
                fill="none"
@@ -179,7 +182,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
                   d="M5 10.5 8.5 14 15 6" />
           </svg>
-          Save changes
+          Save Changes
         </button>
       </div>
     </form>
