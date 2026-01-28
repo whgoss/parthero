@@ -15,7 +15,7 @@
       <div class="flex flex-wrap gap-2 lg:justify-end">
         <!-- Primary: create new program -->
         <a href="/create_program"
-           class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+           class="btn-primary"
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 20 20"
                fill="none"
@@ -29,7 +29,7 @@
 
         <!-- Secondary: maybe view pieces library -->
         <a href="/pieces"
-           class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+           class="btn-secondary">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 20 20"
                fill="none"
@@ -44,7 +44,7 @@
     </div>
 
     <!-- Upcoming concert highlight -->
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)] items-start mb-8">
+    <div class="grid gap-6 items-start mb-8">
       <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between gap-2">
           <h2 class="text-sm font-semibold tracking-wide text-slate-700 uppercase">
@@ -183,14 +183,14 @@
           <tbody class="divide-y divide-slate-100 bg-white">
             {% if programs %}
               {% for program in programs %}
-                <tr class="hover:bg-slate-50/60 cursor-pointer" onclick="window.location.href='/program/{{ program.id }}/'"">
+                <tr class="hover:bg-slate-50/60 cursor-pointer" onclick="window.location.href='/program/{{ program.id }}/'">
                   <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
-                    {{ program.title }}
+                    {{ program.name }}
                   </td>
                   <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
                     {% for performance in program.performances %}
                       <div>
-                        {{ performance.date|date:"M j, Y H:i T" }}
+                        {{ performance.date|date:"M j, Y h:i a" }}
                       </div>
                     {% endfor %}
                   </td>

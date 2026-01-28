@@ -169,7 +169,7 @@ def create_program_view(request):
 
             create_program(
                 organization_id=str(request.organization.id),
-                title=form.data["title"],
+                name=form.data["name"],
                 performance_dates=performance_dates,
             )
 

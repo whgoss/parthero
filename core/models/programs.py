@@ -13,7 +13,7 @@ from core.enum.status import ProgramStatus
 
 
 class Program(UUIDPrimaryKeyModel):
-    title = CharField(max_length=255)
+    name = CharField(max_length=255)
     status = CharField(
         max_length=50,
         default=ProgramStatus.DRAFT.value,

@@ -12,7 +12,7 @@ class ProgramForm(Form):
     organization_id: UUID = None
     class_attribute = "block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
 
-    title = CharField(
+    name = CharField(
         max_length=255,
         widget=TextInput(attrs={"class": class_attribute}),
         required=True,
@@ -35,7 +35,7 @@ class PerformanceForm(Form):
             attrs={
                 "class": "date-picker form-control w-full",
                 "autocomplete": "off",
-                "placeholder": "Select a Performance date",
+                "placeholder": "Select a Date/Time",
             }
         ),
     )

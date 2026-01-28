@@ -12,14 +12,14 @@ from core.models.programs import Program, ProgramPerformance
 @transaction.atomic
 def create_program(
     organization_id: str,
-    title: str,
+    name: str,
     status: Optional[ProgramStatus] = ProgramStatus.DRAFT,
     performance_dates: Optional[List[datetime]] = None,
 ) -> ProgramDTO:
     organization = Organization.objects.get(id=organization_id)
     program = Program(
         organization_id=organization.id,
-        title=title,
+        name=name,
         status=status.value,
     )
     program.save()

@@ -14,15 +14,15 @@
         class="space-y-6">
         {% csrf_token %}
 
-        <!-- Title and Performance Dates -->
+        <!-- Name & Performance Dates -->
         <div class="grid grid-cols-2 gap-4">
           <div>
-            {{ form.title.required }}
-            <label for="{{ form.title.id_for_label }}" class="mb-1 block text-sm font-medium">
-              Title
+            {{ form.name.required }}
+            <label for="{{ form.name.id_for_label }}" class="mb-1 block text-sm font-medium">
+              Program Name
             </label>
-            {{ form.title }}
-            {% if form.title.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.title.errors|striptags }}</p>{% endif %}
+            {{ form.name }}
+            {% if form.name.errors %}<p class="text-red-600 text-xs mt-1 font-bold">{{ form.name.errors|striptags }}</p>{% endif %}
           </div>
           <div>
             <label for="{{ form.instrumentation.id_for_label }}" class="mb-1 block text-sm font-medium">
