@@ -1,6 +1,6 @@
 import json
 from typing import Optional, List
-from pydantic import computed_field
+from pydantic import computed_field, Field
 from core.dtos.base import BaseDTO
 from core.dtos.organizations import MusicianDTO
 from core.models.music import (
@@ -156,8 +156,8 @@ class PartAssetDTO(BaseDTO):
     status: UploadStatus
     parts: Optional[List[PartDTO]] = None
     upload_filename: Optional[str] = None
-    upload_url: Optional[str] = None
-    file_key: Optional[str] = None
+    upload_url: Optional[str] = Field(default=None, exclude=True)
+    file_key: Optional[str] = Field(default=None, exclude=True)
 
     def display_name(self) -> str:
         return [part.display_name for part in self.parts]
@@ -178,7 +178,16 @@ class PartAssetDTO(BaseDTO):
         )
 
 
+class PartAssetUploadDTO(PartAssetDTO):
+    upload_url: Optional[str] = None
+    file_key: Optional[str] = None
+
+
+class PartOptionDTO(BaseDTO):
+    value: str
+
+
 class PartAssetsPayloadDTO(BaseDTO):
     part_assets: List[PartAssetDTO]
     missing_parts: List[PartDTO]
-    part_options: List[PartDTO]
+    part_options: List[PartOptionDTO]

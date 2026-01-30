@@ -67,7 +67,9 @@ window.partAssets = function partAssets(pieceId) {
     error: null,
     tagifyInstances: new Map(),
     refreshTimer: null,
+    rootEl: null,
     init() {
+      this.rootEl = this.$el;
       this.requestRefresh(true);
       if (!this._refreshHandler) {
         this._refreshHandler = () => this.requestRefresh(false);
@@ -120,7 +122,9 @@ window.partAssets = function partAssets(pieceId) {
       this.tagifyInstances.clear();
     },
     initTagify() {
-      this.$el.querySelectorAll(".part-asset").forEach((input) => {
+      const scope = this.rootEl || this.$root || this.$el;
+      if (!scope) return;
+      scope.querySelectorAll(".part-asset").forEach((input) => {
         if (input._tagify || input.dataset.tagifyInitialized === "true") return;
         const initial = JSON.parse(input.dataset.initial || "[]").map((part) => ({
           value: part.display_name,
@@ -182,9 +186,11 @@ window.partAssets = function partAssets(pieceId) {
         if (!response.ok) {
           throw new Error("Failed to delete part asset");
         }
-        this.fetchAssets();
+        
       } catch (error) {
         this.error = "Unable to delete that part asset.";
+      } finally {
+        this.fetchAssets();
       }
     },
   };

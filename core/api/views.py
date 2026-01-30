@@ -18,7 +18,7 @@ from core.services.domo import search_for_piece as search_for_domo_piece
 from core.services.programs import add_piece_to_program, remove_piece_from_program
 from core.models.programs import Program
 from core.api.permissions import IsInOrganization
-from core.dtos.music import PartAssetsPayloadDTO, PartAssetDTO
+from core.dtos.music import PartAssetsPayloadDTO, PartOptionDTO
 
 
 class PartAssetViewSet(
@@ -31,7 +31,6 @@ class PartAssetViewSet(
             return PartAssetCreateSerializer(data=data)
         return PartAssetPatchSerializer(data=data)
 
-    @transaction.atomic
     def create(self, request, piece_id, *args, **kwargs):
         serializer = self.get_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -40,7 +39,6 @@ class PartAssetViewSet(
         response_data = part_asset.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)
 
-    @transaction.atomic
     def partial_update(self, request, piece_id, part_asset_id, *args, **kwargs):
         serializer = self.get_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -65,17 +63,10 @@ class PartAssetViewSet(
         missing_parts = [part for part in parts if part.id not in completed_parts]
 
         # Find all unassigned parts
-        part_options = parts
-
-        part_assets_response = [
-            part_asset.model_copy(update={"parts": part_asset.parts or []})
-            if isinstance(part_asset, PartAssetDTO)
-            else part_asset
-            for part_asset in part_assets
-        ]
+        part_options = [PartOptionDTO(value=part.display_name) for part in parts]
 
         payload = PartAssetsPayloadDTO(
-            part_assets=part_assets_response,
+            part_assets=part_assets,
             missing_parts=missing_parts,
             part_options=part_options,
         )

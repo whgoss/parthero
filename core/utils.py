@@ -1,4 +1,5 @@
 import os
+import re
 from rest_framework import serializers
 from email_validator import validate_email, EmailNotValidError
 
@@ -45,3 +46,8 @@ def is_integer(s):
         return True
     except ValueError:
         return False
+
+
+def precise_string_match(needle: str, haystack: str):
+    """Match whole word/phrase boundaries, so "horn" won't match inside "english horn"""
+    return re.search(rf"\b{re.escape(needle)}\b", haystack) is not None

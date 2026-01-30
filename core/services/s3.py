@@ -31,8 +31,7 @@ def get_s3_client():
 def create_bucket_for_organization(organization_id: str):
     try:
         s3_client = get_s3_client()
-        response = s3_client.head_bucket(Bucket=organization_id)
-        print(response)
+        s3_client.head_bucket(Bucket=organization_id)
     except ClientError as error:
         error_code = error.response["Error"]["Code"]
         if error_code == "404":
@@ -44,6 +43,14 @@ def create_bucket_for_organization(organization_id: str):
 def upload_file(file_buffer, organization_id: str, file_key: str):
     s3_client = get_s3_client()
     s3_client.upload_fileobj(file_buffer, Bucket=organization_id, Key=file_key)
+
+
+def delete_file(organization_id: str, file_key: str):
+    s3_client = get_s3_client()
+    s3_client.delete_object(
+        Bucket=organization_id,
+        Key=file_key,
+    )
 
 
 def create_upload_url(

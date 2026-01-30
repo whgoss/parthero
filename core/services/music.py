@@ -8,6 +8,7 @@ from core.dtos.music import (
     PieceDTO,
     PartDTO,
     PartAssetDTO,
+    PartAssetUploadDTO,
     InstrumentDTO,
 )
 from core.enum.instruments import InstrumentEnum
@@ -22,7 +23,7 @@ from core.models.music import (
     MusicianInstrument,
 )
 from core.services.s3 import create_upload_url
-from core.utils import get_file_extension, is_integer
+from core.utils import get_file_extension, is_integer, precise_string_match
 
 logger = logging.getLogger()
 
@@ -55,6 +56,7 @@ CODE_MAP = {
 ALIAS_MAP = {
     InstrumentEnum.FRENCH_HORN: ["horn"],
     InstrumentEnum.ENGLISH_HORN: ["cor anglais"],
+    InstrumentEnum.DOUBLE_BASS: ["bass"],
 }
 
 WOODWIND_ORDER = [
@@ -162,7 +164,8 @@ def create_part(
     return PartDTO.from_model(part)
 
 
-def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
+@transaction.atomic
+def create_part_asset(piece_id: str, filename: str) -> PartAssetUploadDTO:
     piece = Piece.objects.get(id=piece_id)
     parts = Part.objects.filter(piece_id=piece_id)
     part_asset = PartAsset(id=uuid.uuid4(), piece_id=piece_id)
@@ -170,30 +173,15 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
     normalized_filename = _normalize_filename(filename)
 
     # Determine the corresponding part for the filename
-    for instrument in InstrumentEnum:
-        instrument_name = instrument.value.lower()
-        if not _contains_word(normalized_filename, instrument_name):
+    # TODO: Figure out how to handle seat number!
+    instruments = get_instruments_in_filename(normalized_filename)
+    for part in parts:
+        if part.assets.exists():
             continue
-        tail = normalized_filename
 
-        if not looks_like_numbered_part(tail):
-            for part in parts:
-                if part.assets.exists():
-                    continue
-
-                for part_instrument in part.instruments.all():
-                    # TODO: Figure out how to handle seat number!
-                    try:
-                        alias_key = InstrumentEnum(part_instrument.instrument.name)
-                    except ValueError:
-                        alias_key = None
-
-                    aliases = ALIAS_MAP.get(alias_key, [])
-                    if instrument.value in part_instrument.instrument.name or any(
-                        instrument.value in instrument_alias
-                        for instrument_alias in aliases
-                    ):
-                        part_asset.parts.add(part)
+        for part_instrument in part.instruments.all():
+            if InstrumentEnum(part_instrument.instrument.name) in instruments:
+                part_asset.parts.add(part)
 
     # Generate a pre-signed URL for upload (expires in 10 minutes)
     file_key = (
@@ -214,9 +202,10 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
     part_asset.status = UploadStatus.PENDING.value
     part_asset.save()
 
-    return PartAssetDTO.from_model(part_asset)
+    return PartAssetUploadDTO.from_model(part_asset)
 
 
+@transaction.atomic
 def update_part_asset(
     part_asset_id: str,
     part_ids: Optional[List[str]] = None,
@@ -265,6 +254,22 @@ def get_instrument(
         return InstrumentDTO.from_model(instrument_model)
     else:
         return None
+
+
+def get_instruments_in_filename(filename: str) -> List[InstrumentEnum]:
+    instruments = []
+    for instrument in InstrumentEnum:
+        needle = instrument.value.lower()
+
+        # Look for the instrument name inside the filename
+        matches_phrase = precise_string_match(needle, filename)
+
+        # Look for any instrument aliases inside the filename (if there are any)
+        aliases = ALIAS_MAP.get(instrument, [])
+        matches_alias = any(precise_string_match(alias, filename) for alias in aliases)
+        if matches_phrase or matches_alias:
+            instruments.append(instrument)
+    return instruments
 
 
 @transaction.atomic
@@ -525,8 +530,3 @@ def _normalize_filename(name: str) -> str:
     name = re.sub(r"[-_]+", " ", name)  # violin-1, violin_1 -> violin 1
     name = re.sub(r"\s+", " ", name).strip()
     return name
-
-
-def _contains_word(haystack: str, needle: str) -> bool:
-    # match whole word/phrase boundaries, so "horn" won't match inside "english horn" unless you decide it should
-    return re.search(rf"\b{re.escape(needle)}\b", haystack) is not None
