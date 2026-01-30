@@ -23,6 +23,7 @@ def get_program_view(request, program_id):
 @login_required
 def get_programs_view(request):
     upcoming_program = None
+    upcoming_pieces = []
     programs = get_programs(request.organization.id)
     if programs:
         upcoming_program = programs[0]

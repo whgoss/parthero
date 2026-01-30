@@ -36,7 +36,10 @@
     </div>
 
     <!-- Parts -->
-    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+    <div
+      class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4"
+      x-data="partAssets('{{ piece.id }}')"
+    >
       <h1 class="text-lg font-medium">Parts</h1>
 
       <!-- Upload Form -->
@@ -45,19 +48,79 @@
             <div class="relative z-10">
             <input
                 type="file"
-                data-piece-id="{{ piece_id }}"
+                data-piece-id="{{ piece.id }}"
                 class="filepond w-full"
                 multiple
             >
             </div>
         </form>
       
-      <!-- Parts Partial -->
-      <div id="parts"
-        class="relative z-0"
-        hx-get="{% url 'get_parts' piece.id %}"
-        hx-trigger="load, refreshParts from:body"
-        hx-swap="innerHTML">
+      <!-- Parts List -->
+      <div class="relative z-0">
+        <div class="py-2">
+          <template x-if="missingParts.length">
+            <div>
+              <h1 class="text-md font-bold text-red-600">
+                <span x-text="`⚠️ ${missingParts.length} Missing Parts`"></span>
+              </h1>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <template x-for="part in missingParts" :key="part.id">
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-500 text-white" x-text="part.display_name"></span>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="!missingParts.length && !loading">
+            <div class="flex">
+              <h1 class="text-md font-bold text-green-600">
+                <span class="items-center justify-beginning px-1">✅ All Parts Uploaded</span>
+              </h1>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="loading" class="flex items-center gap-2 text-sm text-slate-500">
+          <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
+          Loading parts...
+        </div>
+        <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
+
+        <template x-if="!loading && partAssets.length === 0">
+          <span class="font-light">No parts uploaded.</span>
+        </template>
+
+        <div class="mt-2 space-y-2">
+          <template x-for="partAsset in partAssets" :key="partAsset.id">
+            <div class="part-asset-row grid grid-cols-6 gap-1" :id="`part-asset-${partAsset.id}`">
+              <span
+                class="font-light col-span-3 text-sm"
+                :class="partAsset.parts.length ? '' : 'text-red-600'"
+                x-text="partAsset.upload_filename"
+              ></span>
+              <input
+                name="sections"
+                type="text"
+                class="part-asset block w-full rounded-xl border border-slate-200 col-span-2 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                :data-piece-id="pieceId"
+                :data-part-asset-id="partAsset.id"
+                :data-options="JSON.stringify(partOptions)"
+                :data-initial="JSON.stringify(partAsset.parts)"
+              />
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <a class="btn-view" :href="`/piece/${pieceId}/asset/${partAsset.id}/download`">
+                  View
+                </a>
+                <button
+                  type="button"
+                  class="btn-danger"
+                  @click="deletePartAsset(partAsset.id)"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
   </div>

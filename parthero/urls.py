@@ -3,7 +3,6 @@ from django.urls import path, include
 from core.views.views import (
     home,
     get_pieces_view,
-    get_parts_view,
     login_view,
     create_piece_view,
     select_piece,
@@ -21,7 +20,6 @@ urlpatterns = [
     path("create_piece/", create_piece_view, name="create_piece"),
     path("pieces/", get_pieces_view, name="pieces"),
     path("piece/<str:piece_id>/", get_piece_view, name="piece"),
-    path("piece/<str:piece_id>/parts/", get_parts_view, name="get_parts"),
     path(
         "piece/<str:piece_id>/asset/<str:part_asset_id>/download",
         download_part_asset,

@@ -183,15 +183,19 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
 
                 for part_instrument in part.instruments.all():
                     # TODO: Figure out how to handle seat number!
+                    try:
+                        alias_key = InstrumentEnum(part_instrument.instrument.name)
+                    except ValueError:
+                        alias_key = None
+
+                    aliases = ALIAS_MAP.get(alias_key, [])
                     if instrument.value in part_instrument.instrument.name or any(
                         instrument.value in instrument_alias
-                        for instrument_alias in ALIAS_MAP.get(
-                            part_instrument.instrument.name
-                        )
+                        for instrument_alias in aliases
                     ):
                         part_asset.parts.add(part)
 
-    # Generate a pre-signed URL for upload
+    # Generate a pre-signed URL for upload (expires in 10 minutes)
     file_key = (
         str(piece_id)
         + "/"
@@ -201,7 +205,7 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetDTO:
     presigned_url = create_upload_url(
         organization_id=str(piece.organization.id),
         file_key=file_key,
-        expiration=3600,
+        expiration=600,
     )
 
     part_asset.file_key = file_key

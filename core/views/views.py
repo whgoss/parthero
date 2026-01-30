@@ -1,16 +1,13 @@
-import json
 from django.http import HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_POST
 from core.forms.music import PieceForm
 from core.services.music import (
     create_piece,
     get_piece,
-    get_parts,
     get_pieces,
-    get_part_assets,
     get_part_asset,
 )
 from core.services.domo import search_for_piece
@@ -80,42 +77,6 @@ def get_pieces_view(request):
 @login_required
 def select_piece(request):
     return render(request, "select_piece.html")
-
-
-@require_GET
-@login_required
-def get_parts_view(request, piece_id):
-    parts = get_parts(piece_id)
-    part_assets = get_part_assets(piece_id)
-
-    # Find all parts that don't have an asset
-    completed_parts = []
-    for part_asset in part_assets:
-        if part_asset.parts is not None:
-            for part in part_asset.parts:
-                completed_parts.append(part)
-    missing_parts = []
-    for part in parts:
-        if part not in completed_parts:
-            missing_parts.append(part)
-
-    # Collect all unassigned part assets
-    unassigned_part_assets = []
-    for part_asset in part_assets:
-        if not part_asset.parts:
-            unassigned_part_assets.append(part_asset)
-
-    context = {
-        "piece_id": piece_id,
-        "part_assets": part_assets,
-        "missing_parts": missing_parts,
-        "unassigned_part_assets": unassigned_part_assets,
-        "part_options_json": json.dumps(
-            [{"value": part.display_name, "id": part.id} for part in parts]
-        ),
-    }
-
-    return render(request, "partials/parts.html", context)
 
 
 @require_POST

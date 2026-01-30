@@ -1,5 +1,6 @@
 import json
 from typing import Optional, List
+from pydantic import computed_field
 from core.dtos.base import BaseDTO
 from core.dtos.organizations import MusicianDTO
 from core.models.music import (
@@ -95,6 +96,7 @@ class PartDTO(BaseDTO):
     def is_doubling(self) -> bool:
         return len(self.instruments) > 1
 
+    @computed_field
     @property
     def display_name(self) -> str:
         names = [
@@ -153,12 +155,15 @@ class PartAssetDTO(BaseDTO):
     piece_id: str
     status: UploadStatus
     parts: Optional[List[PartDTO]] = None
-    upload_url: Optional[str] = None
     upload_filename: Optional[str] = None
+    upload_url: Optional[str] = None
     file_key: Optional[str] = None
 
+    def display_name(self) -> str:
+        return [part.display_name for part in self.parts]
+
     def display_name_json(self) -> str:
-        return json.dumps([part.display_name for part in self.parts])
+        return json.dumps(self.display_name)
 
     @classmethod
     def from_model(cls, model: PartAsset):
@@ -171,3 +176,9 @@ class PartAssetDTO(BaseDTO):
             upload_filename=model.upload_filename,
             file_key=model.file_key,
         )
+
+
+class PartAssetsPayloadDTO(BaseDTO):
+    part_assets: List[PartAssetDTO]
+    missing_parts: List[PartDTO]
+    part_options: List[PartDTO]

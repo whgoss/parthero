@@ -8,9 +8,11 @@ from core.api.views import (
 
 part_asset_create = PartAssetViewSet.as_view({"post": "create"})
 part_asset_patch = PartAssetViewSet.as_view({"patch": "partial_update"})
+part_assets_list = PartAssetViewSet.as_view({"get": "list"})
 piece_search = PieceSearchViewSet.as_view({"get": "list"})
 program_piece = ProgramPieceViewSet.as_view({"put": "update", "delete": "delete"})
 domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
+
 
 urlpatterns = [
     path(
@@ -32,6 +34,11 @@ urlpatterns = [
         "program/<str:program_id>/pieces/<str:piece_id>",
         program_piece,
         name="api_program_piece_update",
+    ),
+    path(
+        "piece/<str:piece_id>/assets",
+        part_assets_list,
+        name="api_piece_part_assets",
     ),
     path(
         "domo/search",
