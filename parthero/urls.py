@@ -10,10 +10,8 @@ from core.views.views import (
     search,
     get_piece_view,
     download_part_asset,
-    create_program_view,
-    get_program_view,
-    get_programs_view,
 )
+from core.views.programs import create_program_view, get_program_view, get_programs_view
 from core.views import organizations
 
 urlpatterns = [

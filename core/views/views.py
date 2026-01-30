@@ -5,7 +5,6 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET, require_POST
 from core.forms.music import PieceForm
-from core.forms.programs import ProgramForm, PerformanceFormSet
 from core.services.music import (
     create_piece,
     get_piece,
@@ -13,12 +12,6 @@ from core.services.music import (
     get_pieces,
     get_part_assets,
     get_part_asset,
-)
-from core.services.programs import (
-    create_program,
-    get_program,
-    get_programs,
-    get_pieces_for_program,
 )
 from core.services.domo import search_for_piece
 from core.services.s3 import create_download_url
@@ -150,53 +143,6 @@ def download_part_asset(request, piece_id, part_asset_id):
         str(request.organization.id), part_asset.file_key
     )
     return redirect(download_url)
-
-
-@login_required
-def get_program_view(request, program_id):
-    program = get_program(program_id)
-    pieces = get_pieces_for_program(program_id)
-    pieces_json = [piece.model_dump(mode="json") for piece in pieces]
-    context = {
-        "program": program,
-        "pieces": pieces,
-        "pieces_json": pieces_json,
-    }
-    return render(request, "program.html", context)
-
-
-@login_required
-def get_programs_view(request):
-    programs = get_programs(request.organization.id)
-    context = {
-        "programs": programs,
-    }
-    return render(request, "programs.html", context)
-
-
-@login_required
-def create_program_view(request):
-    if request.method == "POST":
-        form = ProgramForm(request.POST)
-        formset = PerformanceFormSet(request.POST, prefix="perf")
-
-        if form.is_valid() and formset.is_valid():
-            performance_dates = []
-            for subform in formset:
-                performance_dates.append(subform.cleaned_data["date"])
-
-            create_program(
-                organization_id=request.organization.id,
-                name=form.data["name"],
-                performance_dates=performance_dates,
-            )
-
-            return redirect("programs")
-    else:
-        form = ProgramForm(organization_id=request.organization.id)
-        formset = PerformanceFormSet(prefix="perf")
-    context = {"form": form, "formset": formset}
-    return render(request, "create_program.html", context)
 
 
 def login_view(request):

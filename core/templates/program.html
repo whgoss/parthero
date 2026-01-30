@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load roster %}
+{% load pydantic_json %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
     <!-- Top nav / breadcrumb -->
@@ -23,9 +24,9 @@
     <div class="grid grid-cols-5 w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
       <div class="col-span-4">
         <span class="page-header">
-          {{ program.name }} [{{ program.status.value }}]
+          {{ program.name }}
         </span>
-        <h3 class="page-subheader">Step 2: Add Pieces to your Program.</h3>
+        <h3 class="page-subheader">Add Pieces to your Program.</h3>
       </div>
     </div>
 
@@ -43,7 +44,7 @@
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
       <!-- Selected Pieces -->
       <h1 class="text-lg font-medium">Pieces</h1>
-      {{ pieces_json|json_script:"selected-pieces-data" }}
+      {{ pieces|pydantic_json_script:"selected-pieces-data" }}
       <div class="mt-4" x-data="programPieceSearch('{{ program.id }}', JSON.parse(document.getElementById('selected-pieces-data').textContent))">
         <div class="rounded-lg border border-slate-200 bg-slate-50/60 p-4" x-ref="selectedPieces">
           <div class="flex items-center justify-between">
@@ -85,9 +86,9 @@
         <!-- Searching/Adding Pieces -->
         <hr class="my-6 border-slate-200">
         <div class="flex flex-wrap items-center mb-4">
-            <h2 class="text-sm font-semibold text-slate-800">Add Pieces to the Program</h2>
+            <h2 class="text-lg font-medium">Add Pieces to the Program</h2>
             <a href="/select_piece"
-                class="btn-primary ml-auto">
+                class="btn-secondary ml-auto">
                 <svg xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="none"
@@ -163,6 +164,14 @@
             </template>
           </ul>
         </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 mt-4">
+        <button
+          class="btn-primary"
+        >
+          Save &amp; Create Roster
+        </button>
       </div>
     </div>
   </div>

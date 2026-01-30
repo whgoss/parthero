@@ -126,9 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const whitelistScriptId = instrumentElem.dataset.optionsId;
     const whitelist = JSON.parse(document.getElementById(whitelistScriptId).textContent);
     const initial = JSON.parse(document.getElementById(initialScriptId).textContent);
-    // const whitelist = JSON.parse(instrumentElem.dataset.options || "[]");
-    // const initial = JSON.parse(instrumentElem.dataset.initial || "[]");
-    console.log(initial);
 
     const tagify = new Tagify(instrumentElem, {
       whitelist,

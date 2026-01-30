@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <!-- Upcoming concert highlight -->
+    <!-- Upcoming Program Highlight -->
     <div class="grid gap-6 items-start mb-8">
       <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between gap-2">
@@ -60,29 +60,31 @@
           <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <!-- Date block -->
             <div class="flex items-center gap-4">
+              {% for performance_date in upcoming_program.performances %}
               <div class="flex h-14 w-14 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50">
+                
                 <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  {{ upcoming_program.date|date:"M" }}
+                  {{ performance_date.date|date:"M" }}
                 </span>
                 <span class="text-xl font-semibold text-slate-900 leading-none">
-                  {{ upcoming_program.date|date:"j" }}
+                  {{ performance_date.date|date:"j" }}
                 </span>
+                
               </div>
+              {% endfor %}
               <div>
                 <p class="text-sm font-semibold text-slate-900">
                   {{ upcoming_program.name }}
                 </p>
                 <p class="mt-0.5 text-xs text-slate-500">
                   {{ upcoming_program.date|date:"l, F j, Y" }}
-                  {% if upcoming_program.time %}
-                    · {{ upcoming_program.time|time:"g:i A" }}
+                  {% if upcoming_program.date %}
+                    · {{ upcoming_program.date|time:"g:i A" }}
                   {% endif %}
                 </p>
-                {% if upcoming_program.location %}
-                  <p class="mt-0.5 text-xs text-slate-500">
-                    {{ upcoming_program.location }}
-                  </p>
-                {% endif %}
+                <p class="mt-0.5 text-xs text-slate-500">
+                  1800 N Carolina Ave
+                </p>
               </div>
             </div>
 
@@ -92,19 +94,12 @@
                 Program summary
               </p>
               <p class="mt-1 text-sm text-slate-800">
-                {{ upcoming_program.pieces_count }} piece{{ upcoming_program.pieces_count|pluralize }}
-              </p>
-              <p class="mt-0.5 text-xs text-slate-500">
-                Make sure all parts are uploaded and assigned before sharing with musicians.
+                {{ upcoming_program|length }} piece{{ upcoming_pieces|pluralize }}
               </p>
               <div class="mt-3 flex flex-wrap gap-2 sm:justify-end">
-                <a href="#"
-                   class="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+                <a href="/program/{{ upcoming_program.id }}/"
+                   class="btn-secondary text-sm">
                   View program
-                </a>
-                <a href="#"
-                   class="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50">
-                  Share with principals
                 </a>
               </div>
             </div>
@@ -116,10 +111,9 @@
               Pieces in this concert
             </p>
             <ul class="space-y-1.5">
-              {% for piece in upcoming_program.pieces %}
+              {% for piece in upcoming_pieces %}
                 <li class="flex items-baseline justify-between gap-3 text-xs sm:text-sm">
                   <div class="flex items-baseline gap-2">
-                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-slate-300 mt-1"></span>
                     <span class="font-medium text-slate-800">
                       {{ piece.title }}
                     </span>
@@ -131,7 +125,7 @@
                   </div>
                   {% if piece.duration %}
                     <span class="text-[11px] text-slate-400">
-                      {{ piece.duration }}
+                      {{ piece.duration }}'
                     </span>
                   {% endif %}
                 </li>
