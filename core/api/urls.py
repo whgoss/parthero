@@ -1,10 +1,16 @@
 from django.urls import path
-from core.api.views import PartAssetViewSet, PieceSearchViewSet, ProgramPieceViewSet
+from core.api.views import (
+    PartAssetViewSet,
+    PieceSearchViewSet,
+    ProgramPieceViewSet,
+    DomoWorkSearchViewSet,
+)
 
 part_asset_create = PartAssetViewSet.as_view({"post": "create"})
 part_asset_patch = PartAssetViewSet.as_view({"patch": "partial_update"})
 piece_search = PieceSearchViewSet.as_view({"get": "list"})
 program_piece = ProgramPieceViewSet.as_view({"put": "update", "delete": "delete"})
+domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
 
 urlpatterns = [
     path(
@@ -26,5 +32,10 @@ urlpatterns = [
         "program/<str:program_id>/pieces/<str:piece_id>",
         program_piece,
         name="api_program_piece_update",
+    ),
+    path(
+        "domo/search",
+        domo_search,
+        name="api_domo_search",
     ),
 ]

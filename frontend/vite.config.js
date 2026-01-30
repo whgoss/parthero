@@ -14,6 +14,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "src/main.js"),
         programs: resolve(__dirname, "src/programs.js"),
+        pieces: resolve(__dirname, "src/pieces.js"),
       },
       output: {
         entryFileNames: "[name].js",

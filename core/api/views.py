@@ -12,6 +12,7 @@ from core.services.music import (
     delete_part_asset,
     search_for_piece,
 )
+from core.services.domo import search_for_piece as search_for_domo_piece
 from core.services.programs import add_piece_to_program, remove_piece_from_program
 from core.models.programs import Program
 from core.api.permissions import IsInOrganization
@@ -86,4 +87,19 @@ class ProgramPieceViewSet(viewsets.GenericViewSet):
         Program.objects.get(id=program_id, organization_id=request.organization.id)
         pieces = remove_piece_from_program(program_id, piece_id)
         response_data = [piece.model_dump(mode="json") for piece in pieces]
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class DomoWorkSearchViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsInOrganization]
+
+    def list(self, request, *args, **kwargs):
+        title = request.query_params.get("title")
+        composer = request.query_params.get("composer")
+
+        domo_results = []
+        if title or composer:
+            domo_results = search_for_domo_piece(title=title, composer=composer)
+
+        response_data = [work.model_dump(mode="json") for work in domo_results]
         return Response(response_data, status=status.HTTP_200_OK)

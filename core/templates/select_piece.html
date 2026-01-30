@@ -1,42 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-5xl mx-auto">
+<div class="max-w-5xl mx-auto" x-data="domoPieceSearch()">
     <!-- Header + primary actions -->
     <div class="w-full gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 class="text-2xl font-semibold text-slate-900">Search for a Piece</h1>
-        <p class="mt-2 text-sm text-slate-500">
+        <h1 class="page-header">Search for a Piece</h1>
+        <p class="page-subheader">
             Search our catalog of over 22,000 works.
         </p>
     </div>
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6">
-      <form method="post"
-            class="space-y-6"
-            hx-post="/search/"
-            hx-trigger="input delay:400ms from:#title, input delay:400ms from:#composer"
-            hx-target="#search-results"
-            hx-swap="innerHTML"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        {% csrf_token %}
-
-        <div class="grid grid-cols-2">
-          <div>
-            <label for="title" class="mb-1 block text-sm font-medium">Title</label>
-            <input type="text" name="title" id="title" required class="w-full border rounded px-3 py-2 mt-1" />
-          </div>
-
-          <div class="ml-4">
-            <label for="composer" class="mb-1 block text-sm font-medium">Composer</label>
-            <input type="text" name="composer" id="composer" class="w-full border rounded px-3 py-2 mt-1" />
-          </div>
-
-          <div class="flex col-span-2 text-xs mt-4 justify-end">
-            <span class="text-gray-500">Can't find what you're looking for?&nbsp;</span>
-            <a class="font-bold text-blue-600 hover:underline" href="/create_piece">Create the Piece Manually</a>
-          </div>
+      <!-- Search Form -->
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="title" class="form-label">Title</label>
+          <input
+            type="text"
+            id="title"
+            class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            placeholder="Search by title"
+            x-model="title"
+            @input.debounce.400ms="search()"
+          />
         </div>
-      </form>
+
+        <div>
+          <label for="composer" class="form-label">Composer</label>
+          <input
+            type="text"
+            id="composer"
+            class="block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            placeholder="Search by composer"
+            x-model="composer"
+            @input.debounce.400ms="search()"
+          />
+        </div>
+
+        <div class="flex col-span-2 text-xs mt-1 justify-end">
+          <span class="text-gray-500">Can't find what you're looking for?&nbsp;</span>
+          <a class="font-bold text-blue-600 hover:underline" href="/create_piece">Create the Piece Manually</a>
+        </div>
+      </div>
+
+      <!-- Search Results -->
+      <div class="mt-6">
+        <div x-show="loading" class="flex items-center gap-2 text-sm text-slate-500">
+          <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
+          Searching...
+        </div>
+        <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
+
+        <template x-if="!loading && hasSearched && results.length === 0">
+          <div class="text-sm text-slate-500">No pieces found.</div>
+        </template>
+
+        <ul class="mt-3 space-y-2">
+          <template x-for="piece in results" :key="piece.id">
+            <li>
+              <a
+                class="block rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50 cursor-pointer"
+                :href="resultHref(piece)"
+              >
+                <div class="">
+                    <div class="text-base font-medium text-slate-900" x-text="piece.title"></div>
+                    <div class="text-sm text-slate-500" x-text="piece.composer || ''"></div>
+                </div>
+              </a>
+            </li>
+          </template>
+        </ul>
+      </div>
     </div>
-    <div id="search-results">{% include "partials/search_results.html" with composer=composer title=title %}</div>
   </div>
 </div>
 {% endblock %}
