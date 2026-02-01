@@ -63,7 +63,9 @@ class PartAssetViewSet(
         missing_parts = [part for part in parts if part.id not in completed_parts]
 
         # Find all unassigned parts
-        part_options = [PartOptionDTO(value=part.display_name) for part in parts]
+        part_options = [
+            PartOptionDTO(value=part.display_name, id=str(part.id)) for part in parts
+        ]
 
         payload = PartAssetsPayloadDTO(
             part_assets=part_assets,

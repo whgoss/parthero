@@ -185,6 +185,7 @@ class PartAssetUploadDTO(PartAssetDTO):
 
 class PartOptionDTO(BaseDTO):
     value: str
+    id: str
 
 
 class PartAssetsPayloadDTO(BaseDTO):

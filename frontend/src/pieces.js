@@ -152,7 +152,9 @@ window.partAssets = function partAssets(pieceId) {
         let timeoutId = null;
         const save = () => {
           if (!pieceId || !partAssetId) return;
-          const partIds = tagify.value.map((tag) => tag.id);
+          const partIds = tagify.value
+            .map((tag) => tag.id)
+            .filter((id) => id != null);
           fetch(`/api/piece/${pieceId}/asset/${partAssetId}`, {
             method: "PATCH",
             credentials: "same-origin",
@@ -161,7 +163,13 @@ window.partAssets = function partAssets(pieceId) {
               "X-CSRFToken": csrfToken(),
             },
             body: JSON.stringify({ part_ids: partIds }),
-          });
+          })
+            .catch(() => {
+              this.error = "Unable to update that part asset.";
+            })
+            .finally(() => {
+              this.fetchAssets();
+            });
         };
 
         tagify.on("change", () => {
