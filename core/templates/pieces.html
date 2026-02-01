@@ -89,12 +89,8 @@
                                 Composer
                             </th>
                             <th scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Parts
-                            </th>
-                            <th scope="col"
                                 class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Last updated
+                                Parts
                             </th>
                         </tr>
                     </thead>
@@ -106,14 +102,10 @@
                                         <span class="font">{{ piece.title }}</span>
                                     </td>
                                     <td class="px-4 py-3 align-center text-xs font-light">{{ piece.composer }}</td>
-                                    <td class="px-4 py-3 align-center">
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 py-0.5 text-xs font-light">
+                                    <td class="px-4 py-3 align-center text-right">
+                                        <span class="inline-flex items-center rounded-full py-0.5 text-xs font-light">
                                             {{ piece.completed_parts }} / {{ piece.parts_count }}
                                         </span>
-                                    </td>
-                                    <td class="px-4 py-3 align-center text-right text-xs font-light">
-                                        Nov 10, 2025
-                                        <div>by Alice K.</div>
                                     </td>
                                 </tr>
                             {% endfor %}
