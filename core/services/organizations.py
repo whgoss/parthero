@@ -1,4 +1,5 @@
 from typing import List, Optional
+from django.db.models import Q
 from core.dtos.organizations import OrganizationDTO, MusicianDTO
 from core.dtos.users import UserOrganizationDTO
 from core.enum.instruments import InstrumentEnum
@@ -109,3 +110,18 @@ def update_musician(
 
     musician.save()
     return MusicianDTO.from_model(musician)
+
+
+def search_for_musician(
+    organization_id: str,
+    name: Optional[str] = None,
+    instrument: Optional[str] = None,
+) -> List[MusicianDTO]:
+    search_query = Q(organization_id=organization_id)
+    if name:
+        search_query &= Q(Q(first_name__icontains=name) | Q(last_name__icontains=name))
+    if instrument:
+        search_query &= Q(instruments__instrument__name__icontains=instrument)
+
+    musicians = Musician.objects.filter(search_query).distinct()
+    return MusicianDTO.from_models(musicians)

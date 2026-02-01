@@ -1,8 +1,6 @@
 from enum import Enum
 
 
-# This really represents an instrument or instrument section (Harp v. Violin 1)
-# But we're calling it an instrument for simplicity
 class InstrumentEnum(Enum):
     ACCORDION = "Accordion"
     ALTO = "Alto"
@@ -141,7 +139,7 @@ class InstrumentEnum(Enum):
         return [instrument.value for instrument in InstrumentEnum]
 
 
-class InstrumentFamily(Enum):
+class InstrumentSectionEnum(Enum):
     STRINGS = "Strings"
     BRASS = "Brass"
     WOODWINDS = "Woodwinds"
@@ -151,28 +149,30 @@ class InstrumentFamily(Enum):
     OTHER = "Other"
 
 
-INSTRUMENT_FAMILIES = {
-    InstrumentFamily.WOODWINDS: [
+INSTRUMENT_SECTIONS = {
+    InstrumentSectionEnum.WOODWINDS: [
         InstrumentEnum.FLUTE,
         InstrumentEnum.PICCOLO,
         InstrumentEnum.OBOE,
         InstrumentEnum.ENGLISH_HORN,
         InstrumentEnum.CLARINET,
         InstrumentEnum.BASS_CLARINET,
+        InstrumentEnum.CONTRABASS_CLARINET,
         InstrumentEnum.BASSOON,
         InstrumentEnum.CONTRABASSOON,
         InstrumentEnum.SOPRANO_SAXOPHONE,
         InstrumentEnum.ALTO_SAXOPHONE,
         InstrumentEnum.TENOR_SAXOPHONE,
     ],
-    InstrumentFamily.BRASS: [
+    InstrumentSectionEnum.BRASS: [
         InstrumentEnum.FRENCH_HORN,
         InstrumentEnum.TRUMPET,
         InstrumentEnum.TROMBONE,
         InstrumentEnum.BASS_TROMBONE,
         InstrumentEnum.TUBA,
     ],
-    InstrumentFamily.PERCUSSION: [
+    InstrumentSectionEnum.PERCUSSION: [
+        InstrumentEnum.BELL,
         InstrumentEnum.TIMPANI,
         InstrumentEnum.BASS_DRUM,
         InstrumentEnum.PERCUSSION,
@@ -182,7 +182,7 @@ INSTRUMENT_FAMILIES = {
         InstrumentEnum.TRIANGLE,
         InstrumentEnum.TOMS,
     ],
-    InstrumentFamily.AUXILIARY: [
+    InstrumentSectionEnum.AUXILIARY: [
         InstrumentEnum.HARP,
         InstrumentEnum.PIANO,
         InstrumentEnum.CELESTA,
@@ -191,39 +191,19 @@ INSTRUMENT_FAMILIES = {
         InstrumentEnum.BASS_GUITAR,
         InstrumentEnum.ELECTRONICA,
     ],
-    InstrumentFamily.STRINGS: [
+    InstrumentSectionEnum.STRINGS: [
         InstrumentEnum.VIOLIN_1,
         InstrumentEnum.VIOLIN_2,
         InstrumentEnum.VIOLA,
         InstrumentEnum.CELLO,
         InstrumentEnum.DOUBLE_BASS,
     ],
-    InstrumentFamily.VOICE: [
+    InstrumentSectionEnum.VOICE: [
         InstrumentEnum.SOPRANO,
+        InstrumentEnum.MEZZO_SOPRANO,
         InstrumentEnum.ALTO,
         InstrumentEnum.TENOR,
+        InstrumentEnum.BARITONE,
         InstrumentEnum.BASS,
     ],
 }
-
-
-def get_instrument_family(
-    instrument_section: InstrumentEnum,
-) -> InstrumentFamily:
-    instrument_family = None
-    if instrument_section in INSTRUMENT_FAMILIES[InstrumentFamily.WOODWINDS]:
-        instrument_family = InstrumentFamily.WOODWINDS
-    elif instrument_section in INSTRUMENT_FAMILIES[InstrumentFamily.BRASS]:
-        instrument_family = InstrumentFamily.BRASS
-    elif instrument_section in INSTRUMENT_FAMILIES[InstrumentFamily.PERCUSSION]:
-        instrument_family = InstrumentFamily.PERCUSSION
-    elif instrument_section in INSTRUMENT_FAMILIES[InstrumentFamily.AUXILIARY]:
-        instrument_family = InstrumentFamily.AUXILIARY
-    elif instrument_section in INSTRUMENT_FAMILIES[InstrumentFamily.STRINGS]:
-        instrument_family = InstrumentFamily.STRINGS
-    elif instrument_section in INSTRUMENT_FAMILIES[InstrumentFamily.VOICE]:
-        instrument_family = InstrumentFamily.VOICE
-    else:
-        instrument_family = InstrumentFamily.OTHER
-
-    return instrument_family

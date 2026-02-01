@@ -37,6 +37,14 @@ class PartPatchSerializer(serializers.Serializer):
     )
 
 
+class ProgramMusicianCreateSerializer(serializers.Serializer):
+    musician_id = serializers.CharField(required=True)
+
+
+class ProgramMusicianInstrumentSerializer(serializers.Serializer):
+    instrument = EnumChoiceField(InstrumentEnum, required=True)
+
+
 class PartDTOWrapperSerializer(serializers.Serializer):
     def validate(self, attrs):
         # attrs is empty because we’re not declaring explicit fields,

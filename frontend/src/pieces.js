@@ -163,13 +163,7 @@ window.partAssets = function partAssets(pieceId) {
               "X-CSRFToken": csrfToken(),
             },
             body: JSON.stringify({ part_ids: partIds }),
-          })
-            .catch(() => {
-              this.error = "Unable to update that part asset.";
-            })
-            .finally(() => {
-              this.fetchAssets();
-            });
+          });
         };
 
         tagify.on("change", () => {

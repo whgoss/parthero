@@ -5,11 +5,18 @@ from django.db import transaction
 from django.db.models import Min, F, Count
 from django.utils import timezone
 from core.dtos.music import PieceDTO
-from core.dtos.programs import ProgramDTO
+from core.dtos.programs import ProgramDTO, ProgramMusicianDTO
 from core.enum.status import ProgramStatus
-from core.models.music import Piece
-from core.models.organizations import Organization
-from core.models.programs import Program, ProgramPerformance, ProgramPiece
+from core.models.music import Piece, MusicianInstrument, Instrument
+from core.models.organizations import Organization, Musician
+from core.models.programs import (
+    Program,
+    ProgramPerformance,
+    ProgramPiece,
+    ProgramMusician,
+    ProgramMusicianInstrument,
+)
+from core.enum.instruments import InstrumentEnum
 
 
 @transaction.atomic
@@ -89,3 +96,92 @@ def remove_piece_from_program(
     if program_piece:
         program_piece.delete()
     return get_pieces_for_program(program.id)
+
+
+def get_musicians_for_program(program_id: str) -> List[ProgramMusicianDTO]:
+    program_musicians = ProgramMusician.objects.filter(
+        program_id=program_id
+    ).select_related("program", "musician", "musician__organization")
+    return ProgramMusicianDTO.from_models(program_musicians)
+
+
+def add_musician_to_program(
+    program_id: str,
+    musician_id: str,
+) -> List[ProgramMusicianDTO]:
+    program = Program.objects.get(id=program_id)
+    musician = Musician.objects.get(id=musician_id)
+    program_musician = ProgramMusician.objects.filter(
+        program=program, musician=musician
+    ).first()
+    if not program_musician:
+        program_musician = ProgramMusician(program=program, musician=musician)
+        program_musician.save()
+
+    musician_instrument = (
+        MusicianInstrument.objects.filter(musician=musician)
+        .select_related("instrument")
+        .first()
+    )
+    if musician_instrument and musician_instrument.instrument:
+        ProgramMusicianInstrument.objects.get_or_create(
+            program_musician=program_musician,
+            instrument=musician_instrument.instrument,
+        )
+    return get_musicians_for_program(program.id)
+
+
+def remove_musician_from_program(
+    program_id: str,
+    program_musician_id: str,
+) -> List[ProgramMusicianDTO]:
+    program = Program.objects.get(id=program_id)
+    program_musician = ProgramMusician.objects.filter(
+        id=program_musician_id, program=program
+    ).first()
+    if program_musician:
+        ProgramMusicianInstrument.objects.filter(
+            program_musician=program_musician
+        ).delete()
+        program_musician.delete()
+    return get_musicians_for_program(program.id)
+
+
+def add_program_musician_instrument(
+    program_id: str,
+    program_musician_id: str,
+    instrument: InstrumentEnum,
+) -> List[ProgramMusicianDTO]:
+    program = Program.objects.get(id=program_id)
+    program_musician = ProgramMusician.objects.filter(
+        id=program_musician_id, program=program
+    ).first()
+    if not program_musician:
+        return get_musicians_for_program(program.id)
+    instrument_model = Instrument.objects.filter(name=instrument.value).first()
+    if instrument_model:
+        ProgramMusicianInstrument.objects.get_or_create(
+            program_musician=program_musician,
+            instrument=instrument_model,
+        )
+    return get_musicians_for_program(program.id)
+
+
+def remove_program_musician_instrument(
+    program_id: str,
+    program_musician_id: str,
+    instrument: InstrumentEnum,
+) -> List[ProgramMusicianDTO]:
+    program = Program.objects.get(id=program_id)
+    program_musician = ProgramMusician.objects.filter(
+        id=program_musician_id, program=program
+    ).first()
+    if not program_musician:
+        return get_musicians_for_program(program.id)
+    instrument_model = Instrument.objects.filter(name=instrument.value).first()
+    if instrument_model:
+        ProgramMusicianInstrument.objects.filter(
+            program_musician=program_musician,
+            instrument=instrument_model,
+        ).delete()
+    return get_musicians_for_program(program.id)

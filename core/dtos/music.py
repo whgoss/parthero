@@ -8,23 +8,33 @@ from core.models.music import (
     Part,
     PartAsset,
     Instrument,
+    InstrumentSection,
     PartInstrument,
     MusicianInstrument,
 )
 from core.enum.status import UploadStatus
-from core.enum.instruments import InstrumentEnum, InstrumentFamily
+from core.enum.instruments import InstrumentEnum, InstrumentSectionEnum
 
 
 class InstrumentDTO(BaseDTO):
     name: InstrumentEnum
-    family: InstrumentFamily
 
     @classmethod
     def from_model(cls, model: Instrument):
         return cls(
             id=str(model.id),
             name=InstrumentEnum(model.name),
-            family=InstrumentFamily(model.family),
+        )
+
+
+class InstrumentSectionDTO(BaseDTO):
+    name: InstrumentSectionEnum
+
+    @classmethod
+    def from_model(cls, model: InstrumentSection):
+        return cls(
+            id=str(model.id),
+            name=InstrumentSectionEnum(model.name),
         )
 
 

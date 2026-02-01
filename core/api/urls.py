@@ -3,6 +3,9 @@ from core.api.views import (
     PartAssetViewSet,
     PieceSearchViewSet,
     ProgramPieceViewSet,
+    ProgramMusicianViewSet,
+    ProgramMusicianInstrumentViewSet,
+    MusicianSearchViewSet,
     DomoWorkSearchViewSet,
 )
 
@@ -11,6 +14,14 @@ part_asset_patch = PartAssetViewSet.as_view({"patch": "partial_update"})
 part_assets_list = PartAssetViewSet.as_view({"get": "list"})
 piece_search = PieceSearchViewSet.as_view({"get": "list"})
 program_piece = ProgramPieceViewSet.as_view({"put": "update", "delete": "delete"})
+program_musicians_list = ProgramMusicianViewSet.as_view(
+    {"get": "list", "post": "create"}
+)
+program_musicians_delete = ProgramMusicianViewSet.as_view({"delete": "delete"})
+program_musician_instrument_update = ProgramMusicianInstrumentViewSet.as_view(
+    {"put": "update", "delete": "delete"}
+)
+musicians_search = MusicianSearchViewSet.as_view({"get": "list"})
 domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
 
 
@@ -39,6 +50,26 @@ urlpatterns = [
         "piece/<str:piece_id>/assets",
         part_assets_list,
         name="api_piece_part_assets",
+    ),
+    path(
+        "programs/<str:program_id>/musicians",
+        program_musicians_list,
+        name="api_program_musicians",
+    ),
+    path(
+        "programs/<str:program_id>/musicians/<str:program_musician_id>",
+        program_musicians_delete,
+        name="api_program_musicians_delete",
+    ),
+    path(
+        "programs/<str:program_id>/musicians/<str:program_musician_id>/instruments",
+        program_musician_instrument_update,
+        name="api_program_musician_instrument_update",
+    ),
+    path(
+        "musicians/search",
+        musicians_search,
+        name="api_musicians_search",
     ),
     path(
         "domo/search",

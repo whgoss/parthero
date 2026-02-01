@@ -4,10 +4,9 @@ from django.db.models import (
     ForeignKey,
     IntegerField,
     CASCADE,
-    SET_NULL,
 )
 from core.models.base import UUIDPrimaryKeyModel
-from core.models.music import Piece, Part
+from core.models.music import Piece, Part, Instrument
 from core.models.organizations import Organization, Musician
 from core.enum.status import ProgramStatus
 
@@ -28,11 +27,21 @@ class ProgramPiece(UUIDPrimaryKeyModel):
     concert_order = IntegerField(null=True, blank=True)
 
 
-class ProgramPartMusicianSlot(UUIDPrimaryKeyModel):
-    part = ForeignKey(Part, on_delete=CASCADE)
-    musician = ForeignKey(
-        Musician, related_name="musicians", on_delete=SET_NULL, null=True
+class ProgramMusician(UUIDPrimaryKeyModel):
+    program = ForeignKey(Program, related_name="musicians", on_delete=CASCADE)
+    musician = ForeignKey(Musician, on_delete=CASCADE)
+
+
+class ProgramMusicianInstrument(UUIDPrimaryKeyModel):
+    program_musician = ForeignKey(
+        ProgramMusician, related_name="instruments", on_delete=CASCADE
     )
+    instrument = ForeignKey(Instrument, on_delete=CASCADE)
+
+
+class ProgramPartMusician(UUIDPrimaryKeyModel):
+    part = ForeignKey(Part, on_delete=CASCADE)
+    musician = ForeignKey(Musician, on_delete=CASCADE)
 
 
 class ProgramPerformance(UUIDPrimaryKeyModel):

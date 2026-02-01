@@ -1,6 +1,8 @@
 import "./styles.css";
+import "@yaireo/tagify/dist/tagify.css";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
+import Tagify from "@yaireo/tagify";
 
 const buildPickerOptions = (input) => ({
   enableTime: true,
@@ -188,6 +190,252 @@ window.programPieceSearch = function programPieceSearch(programId, initialPieces
           block: "start",
         });
       });
+    },
+  };
+};
+
+window.programRosterSearch = function programRosterSearch(programId) {
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+  return {
+    programId,
+    name: "",
+    instrument: "",
+    results: [],
+    roster: [],
+    rosterInstruments: {},
+    tagifyInstances: new Map(),
+    loading: false,
+    error: null,
+    hasSearched: false,
+    saving: false,
+    saveError: null,
+    init() {
+      if (!this._rosterTabListener) {
+        this._rosterTabListener = () => this.resetRosterTagify();
+        window.addEventListener("roster-tab:show", this._rosterTabListener);
+      }
+      this.fetchRoster();
+    },
+    async fetchRoster() {
+      if (this.loading) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/musicians`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch program roster");
+        }
+        this.roster = await response.json();
+      } catch (error) {
+        this.error = "Unable to load program roster.";
+      } finally {
+        this.loading = false;
+        this.resetRosterTagify();
+      }
+    },
+    resetRosterTagify() {
+      this.destroyTagify();
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          if (this.isRosterVisible()) {
+            this.initRosterTagify();
+          }
+        });
+      });
+    },
+    isRosterVisible() {
+      return this.$el && this.$el.offsetParent !== null;
+    },
+    destroyTagify() {
+      this.tagifyInstances.forEach((instance, input) => {
+        instance.destroy();
+        if (input?.dataset) {
+          delete input.dataset.tagifyInitialized;
+        }
+      });
+      this.tagifyInstances.clear();
+    },
+    initRosterTagify() {
+      console.log("Init-ing Tagify");
+      const scope = this.$el || this.$root;
+      if (!scope) return;
+      const optionsEl = document.getElementById("instrument-options");
+      const whitelist = optionsEl ? JSON.parse(optionsEl.textContent) : [];
+      const normalizedWhitelist = whitelist.map((value) => ({ value }));
+
+      this.tagifyInstances.forEach((instance, input) => {
+        if (!document.body.contains(input)) {
+          instance.destroy();
+          this.tagifyInstances.delete(input);
+        }
+      });
+      scope.querySelectorAll(".roster-instruments").forEach((input) => {
+        if (input._tagify || input.dataset.tagifyInitialized === "true") return;
+        if (input.offsetParent === null) return;
+        const tagify = new Tagify(input, {
+          whitelist: normalizedWhitelist,
+          enforceWhitelist: true,
+          dropdown: { enabled: 0, closeOnSelect: false },
+          originalInputValueFormat: (valuesArr) =>
+            valuesArr.map((tag) => tag.value).join(","),
+        });
+
+        const initial = (input.dataset.initial || "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+          .map((value) => ({ value }));
+        if (initial.length) {
+          tagify.addTags(initial, true, true);
+        }
+
+        input.dataset.tagifyInitialized = "true";
+        this.tagifyInstances.set(input, tagify);
+
+        const programMusicianId = input.dataset.programMusicianId;
+        if (!programMusicianId) return;
+
+        const onTagChange = (event, method) => {
+          const instrument = event?.detail?.data?.value;
+          if (instrument) {
+            this.updateMusicianInstrument(programMusicianId, instrument, method);
+          }
+        };
+
+        tagify.on("add", (event) => onTagChange(event, "PUT"));
+        tagify.on("remove", (event) => onTagChange(event, "DELETE"));
+      });
+    },
+    async updateMusicianInstrument(programMusicianId, instrument, method) {
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/musicians/${programMusicianId}/instruments`,
+          {
+            method,
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify({ instrument }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to update musician instrument");
+        }
+        this.roster = await response.json();
+        this.resetRosterTagify();
+      } catch (error) {
+        this.saveError = "Unable to update musician instruments.";
+      }
+    },
+    async search() {
+      this.loading = true;
+      this.error = null;
+      this.hasSearched = false;
+
+      const params = new URLSearchParams();
+      if (this.name.trim()) {
+        params.append("name", this.name.trim());
+      }
+      if (this.instrument.trim()) {
+        params.append("instrument", this.instrument.trim());
+      }
+
+      if (!params.toString()) {
+        this.results = [];
+        this.loading = false;
+        return;
+      }
+
+      const url = `/api/musicians/search?${params.toString()}`;
+      try {
+        const response = await fetch(url, {
+          headers: { "Accept": "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to search musicians");
+        }
+        this.results = await response.json();
+      } catch (error) {
+        this.error = "Unable to fetch musicians right now.";
+        this.results = [];
+      } finally {
+        this.loading = false;
+        this.hasSearched = true;
+      }
+    },
+    formatInstrumentList(musician) {
+      if (!musician?.instruments?.length) {
+        return "";
+      }
+      return musician.instruments
+        .map((entry) => entry.instrument)
+        .filter(Boolean)
+        .join(", ");
+    },
+    isInRoster(musician) {
+      return this.roster.some((member) => member.musician_id === musician.id);
+    },
+    async addMusician(musician) {
+      if (this.isInRoster(musician)) {
+        return;
+      }
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/musicians`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ musician_id: musician.id }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to add musician");
+        }
+        this.roster = await response.json();
+        this.resetRosterTagify();
+      } catch (error) {
+        this.saveError = "Unable to add musician right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async removeMusician(musician) {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/musicians/${musician.id}`,
+          {
+            method: "DELETE",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to remove musician");
+        }
+        this.roster = await response.json();
+        this.resetRosterTagify();
+      } catch (error) {
+        this.saveError = "Unable to remove musician right now.";
+      } finally {
+        this.saving = false;
+      }
     },
   };
 };

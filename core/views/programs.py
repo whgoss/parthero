@@ -7,6 +7,7 @@ from core.services.programs import (
     get_programs,
     get_pieces_for_program,
 )
+from core.enum.instruments import InstrumentEnum
 
 
 @login_required
@@ -16,6 +17,7 @@ def get_program_view(request, program_id):
     context = {
         "program": program,
         "pieces": pieces,
+        "instrument_options": InstrumentEnum.values(),
     }
     return render(request, "program.html", context)
 

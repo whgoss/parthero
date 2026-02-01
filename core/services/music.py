@@ -10,8 +10,13 @@ from core.dtos.music import (
     PartAssetDTO,
     PartAssetUploadDTO,
     InstrumentDTO,
+    InstrumentSectionDTO,
 )
-from core.enum.instruments import InstrumentEnum
+from core.enum.instruments import (
+    InstrumentEnum,
+    InstrumentSectionEnum,
+    INSTRUMENT_SECTIONS,
+)
 from core.enum.status import UploadStatus
 from core.models.organizations import Musician
 from core.models.music import (
@@ -20,6 +25,7 @@ from core.models.music import (
     PartAsset,
     PartInstrument,
     Instrument,
+    InstrumentSection,
     MusicianInstrument,
 )
 from core.services.s3 import create_upload_url
@@ -426,6 +432,31 @@ def looks_like_numbered_part(tail: str) -> bool:
     return bool(PART_NUMBER_REGEX.search(tail)) and not any(
         unnumbered_part in tail for unnumbered_part in unnumbered_parts
     )
+
+
+def get_instrument_section(
+    instrument: InstrumentEnum,
+) -> InstrumentSectionDTO:
+    instrument_section = None
+    if instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.WOODWINDS]:
+        instrument_section = InstrumentSectionEnum.WOODWINDS
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.BRASS]:
+        instrument_section = InstrumentSectionEnum.BRASS
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.PERCUSSION]:
+        instrument_section = InstrumentSectionEnum.PERCUSSION
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.AUXILIARY]:
+        instrument_section = InstrumentSectionEnum.AUXILIARY
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS]:
+        instrument_section = InstrumentSectionEnum.STRINGS
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.VOICE]:
+        instrument_section = InstrumentSectionEnum.VOICE
+    else:
+        instrument_section = InstrumentSectionEnum.OTHER
+
+    instrument_section_model = InstrumentSection.objects.get(
+        name=instrument_section.value
+    )
+    return InstrumentSectionDTO.from_model(instrument_section_model)
 
 
 def _parse_bracketable_section(
