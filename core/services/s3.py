@@ -28,7 +28,7 @@ def get_s3_client():
     return s3_client
 
 
-def create_bucket_for_organization(organization_id: str):
+def upsert_bucket_for_organization(organization_id: str):
     try:
         s3_client = get_s3_client()
         s3_client.head_bucket(Bucket=organization_id)

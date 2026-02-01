@@ -23,10 +23,11 @@ from core.models.music import (
     MusicianInstrument,
 )
 from core.services.s3 import create_upload_url
-from core.utils import get_file_extension, is_integer, precise_string_match
+from core.utils import get_file_extension, is_integer
 
 logger = logging.getLogger()
 
+# Codes used in parsing instrumentation notation
 CODE_MAP = {
     "pic": [InstrumentEnum.PICCOLO],
     "picc": [InstrumentEnum.PICCOLO],
@@ -53,10 +54,12 @@ CODE_MAP = {
     "tri": [InstrumentEnum.TRIANGLE],
 }
 
+# Aliases used in parsing part filenames
 ALIAS_MAP = {
     InstrumentEnum.FRENCH_HORN: ["horn"],
     InstrumentEnum.ENGLISH_HORN: ["cor anglais"],
     InstrumentEnum.DOUBLE_BASS: ["bass"],
+    InstrumentEnum.PERCUSSION: ["perc"],
 }
 
 WOODWIND_ORDER = [
@@ -173,15 +176,22 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetUploadDTO:
     normalized_filename = _normalize_filename(filename)
 
     # Determine the corresponding part for the filename
-    # TODO: Figure out how to handle seat number!
-    instruments = get_instruments_in_filename(normalized_filename)
+    instruments = get_instruments_in_string(normalized_filename)
+    numbered_instruments = _extract_numbered_instruments(
+        normalized_filename, instruments
+    )
     for part in parts:
         if part.assets.exists():
             continue
 
         for part_instrument in part.instruments.all():
-            if InstrumentEnum(part_instrument.instrument.name) in instruments:
+            instrument_enum = InstrumentEnum(part_instrument.instrument.name)
+            if instrument_enum in instruments:
+                numbers = numbered_instruments.get(instrument_enum)
+                if numbers and part.number not in numbers:
+                    continue
                 part_asset.parts.add(part)
+                break
 
     # Generate a pre-signed URL for upload (expires in 10 minutes)
     file_key = (
@@ -256,20 +266,57 @@ def get_instrument(
         return None
 
 
-def get_instruments_in_filename(filename: str) -> List[InstrumentEnum]:
+def get_instruments_in_string(token: str) -> List[InstrumentEnum]:
     instruments = []
+    normalized_token = _normalize_filename_token(token)
     for instrument in InstrumentEnum:
-        needle = instrument.value.lower()
+        needle = _normalize_filename_token(instrument.value)
 
         # Look for the instrument name inside the filename
-        matches_phrase = precise_string_match(needle, filename)
+        matches_phrase = _instrument_token_match(needle, normalized_token)
 
         # Look for any instrument aliases inside the filename (if there are any)
-        aliases = ALIAS_MAP.get(instrument, [])
-        matches_alias = any(precise_string_match(alias, filename) for alias in aliases)
+        aliases = [
+            _normalize_filename_token(alias) for alias in ALIAS_MAP.get(instrument, [])
+        ]
+        matches_alias = any(
+            _instrument_token_match(alias, normalized_token) for alias in aliases
+        )
         if matches_phrase or matches_alias:
             instruments.append(instrument)
     return instruments
+
+
+def _extract_numbered_instruments(
+    token: str, instruments: List[InstrumentEnum]
+) -> dict[InstrumentEnum, set[int]]:
+    normalized_token = _normalize_filename_token(token)
+    out: dict[InstrumentEnum, set[int]] = {}
+    for instrument in instruments:
+        needles = [_normalize_filename_token(instrument.value)] + [
+            _normalize_filename_token(alias) for alias in ALIAS_MAP.get(instrument, [])
+        ]
+        for needle in needles:
+            numbers = _extract_numbers_after_instrument(normalized_token, needle)
+            if numbers:
+                out[instrument] = numbers
+                break
+    return out
+
+
+def _extract_numbers_after_instrument(token: str, needle: str) -> Optional[set[int]]:
+    match = re.search(rf"(?<![a-z]){re.escape(needle)}(?P<num>\d+)", token)
+    if not match:
+        return None
+    number_string = match.group("num")
+    if len(number_string) == 1:
+        return {int(number_string)}
+    numbers = {int(char) for char in number_string if char.isdigit() and char != "0"}
+    return numbers or None
+
+
+def _instrument_token_match(needle: str, token: str) -> bool:
+    return re.search(rf"(?<![a-z]){re.escape(needle)}(?:(?=\d)|\b)", token) is not None
 
 
 @transaction.atomic
@@ -308,7 +355,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
 
     # 3) Everything after that can be auxiliary, electronic, perc, strings (hp, cel, pf, str, etc.)
     for seg in segments[2:]:
-        code = _normalize_token(seg)
+        code = _normalize_filename_token(seg)
         if not code or _is_no_strings(code):
             continue
 
@@ -323,7 +370,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
             primary_code, doubling_code = code.split("/", 1)
 
             # Figure out the primary instrument
-            primary_code = _normalize_token(primary_code)
+            primary_code = _normalize_filename_token(primary_code)
             primary_instrument = CODE_MAP.get(primary_code)
             if not primary_instrument:
                 logger.warning(f"Unknown instrument code {code}")
@@ -332,7 +379,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
             instruments.append(primary_instrument)
 
             # Figure out the doubling
-            doubling_code = _normalize_token(doubling_code)
+            doubling_code = _normalize_filename_token(doubling_code)
             doubling_sections = CODE_MAP.get(doubling_code)
             if doubling_sections:
                 for doubling in doubling_sections:
@@ -391,7 +438,7 @@ def _parse_bracketable_section(
         "2[1.2/pic] 2[1.2/eh] 2[1.2] 2[1.2]" → positionally: Fl, Ob, Cl, Bn
     """
     out: List[InstrumentEnum] = []
-    tokens = _normalize_token(segment).split()
+    tokens = _normalize_instrumentation_token(segment).split()
 
     # Use the right instrument order based on the section
     if section == "brass":
@@ -474,7 +521,7 @@ def _parse_percussion(piece_id: str, segment: str) -> List[PartDTO]:
         "tmp+1" → positionally: 1 Timpani, 1 Percussion
     """
     out: List[InstrumentEnum] = []
-    segment = _normalize_token(segment)
+    segment = _normalize_filename_token(segment)
     if not segment:
         return
 
@@ -510,9 +557,38 @@ def _parse_percussion(piece_id: str, segment: str) -> List[PartDTO]:
     return out
 
 
-def _normalize_token(seg: str) -> str:
-    seg = re.sub(r"\bopt\b", "", seg)  # remove standalone "opt"
+def _normalize_instrumentation_token(seg: str) -> str:
+    """
+    Normalizes tokens in instrumentation by stripping words like "opt" along with all dash types and converting to lower.
+    (Violin 1 -> violin1)
+
+    :param name: Token to normalize
+    :type name: str
+    :return: Normalized Token
+    :rtype: str
+    """
+    # Remove tokens like "opt"
+    seg = re.sub(r"\bopt\b", "", seg)
+    seg = re.sub(r"[-_]+", " ", seg)  # violin-1, violin_1 -> violin 1
+    seg = re.sub(r"\s+", " ", seg).lower()
+    return seg
+
+
+def _normalize_filename_token(seg: str) -> str:
+    """
+    Normalizes tokens in filenames by stripping words like "opt" along with all dash types, whitespace, and converting to lower.
+    (Violin 1 -> violin1)
+
+    :param name: Token to normalize
+    :type name: str
+    :return: Normalized Token
+    :rtype: str
+    """
+    # Remove tokens like "opt"
+    seg = re.sub(r"\bopt\b", "", seg)
+    seg = re.sub(r"[-_]+", " ", seg)  # violin-1, violin_1 -> violin 1
     seg = re.sub(r"\s+", " ", seg).strip().lower()
+    seg = seg.replace(" ", "")
     return seg
 
 
@@ -526,6 +602,15 @@ def _is_percussion_segment(seg: str) -> bool:
 
 
 def _normalize_filename(name: str) -> str:
+    """
+    Normalizes filenames by stripping all dash types, whitespace, and converting to lower.
+    (Violin 1 -> violin1)
+
+    :param name: Token to normalize
+    :type name: str
+    :return: Normalized Token
+    :rtype: str
+    """
     name = name.lower()
     name = re.sub(r"[-_]+", " ", name)  # violin-1, violin_1 -> violin 1
     name = re.sub(r"\s+", " ", name).strip()

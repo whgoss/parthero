@@ -50,9 +50,9 @@ def upload_roster(file, organization_id: str):
                 musician.save()
 
                 # Determine primary instrument
-                instrument_section_string = row.get("instrument", None)
+                instrument_string = row.get("instrument", None)
                 instrument = determine_instrument_section(
-                    _strip_non_alphanumeric_re(instrument_section_string)
+                    _strip_non_alphanumeric_re(instrument_string)
                 )
                 if instrument:
                     musician_instrument = MusicianInstrument(
@@ -62,14 +62,17 @@ def upload_roster(file, organization_id: str):
                     musician_instrument.save()
 
                 # Determine secondary instrument
-                instrument_section_string = row.get("secondaryinstrument", None)
-                instrument = determine_instrument_section(instrument_section_string)
-                if instrument:
-                    musician_instrument = MusicianInstrument(
-                        musician_id=musician.id,
-                        instrument_id=instrument.id,
+                secondary_instrument_string = row.get("secondaryinstrument", None)
+                if secondary_instrument_string:
+                    secondary_instrument = determine_instrument_section(
+                        secondary_instrument_string
                     )
-                    musician_instrument.save()
+                    if secondary_instrument:
+                        musician_secondary_instrument = MusicianInstrument(
+                            musician_id=musician.id,
+                            instrument_id=secondary_instrument.id,
+                        )
+                        musician_secondary_instrument.save()
             else:
                 musician = Musician.objects.filter(
                     email=email, organization_id=organization_id
