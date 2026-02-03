@@ -282,6 +282,26 @@ def get_instruments_in_string(filename: str) -> List[InstrumentEnum]:
             _instrument_token_match(needle, token) for token in normalized_tokens
         )
 
+        # Handle Violin 1 and 2 edge cases since the number is part of the instrument/section name
+        if not matches_phrase and instrument in {
+            InstrumentEnum.VIOLIN_1,
+            InstrumentEnum.VIOLIN_2,
+        }:
+            for index, token in enumerate(normalized_tokens):
+                if token != "violin":
+                    continue
+                next_token = (
+                    normalized_tokens[index + 1]
+                    if index + 1 < len(normalized_tokens)
+                    else ""
+                )
+                if next_token == "1" and instrument == InstrumentEnum.VIOLIN_1:
+                    matches_phrase = True
+                    break
+                if next_token == "2" and instrument == InstrumentEnum.VIOLIN_2:
+                    matches_phrase = True
+                    break
+
         # Look for any instrument aliases inside the filename (if there are any)
         aliases = [
             _normalize_instrument_name(alias) for alias in ALIAS_MAP.get(instrument, [])
@@ -582,6 +602,8 @@ def _extract_numbered_instruments(
     normalized_filename = _normalize_instrument_name(filename)
     out: dict[InstrumentEnum, set[int]] = {}
     for instrument in instruments:
+        if instrument in {InstrumentEnum.VIOLIN_1, InstrumentEnum.VIOLIN_2}:
+            continue
         needles = [_normalize_instrument_name(instrument.value)] + [
             _normalize_instrument_name(alias) for alias in ALIAS_MAP.get(instrument, [])
         ]

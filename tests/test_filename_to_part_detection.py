@@ -331,3 +331,37 @@ def test_percussion_count():
         4,
         5,
     }
+
+
+@mock_aws
+def test_string_part():
+    organization = create_organization()
+    instrumentation = "2 2 2 2 — 2 2 0 0 — 2perc — str"
+    piece = create_piece(
+        organization_id=str(organization.id),
+        title="String Test",
+        composer="Test",
+        instrumentation=instrumentation,
+        duration=None,
+        domo_id=None,
+        composer_domo_id=None,
+    )
+    parts = get_parts(piece.id)
+
+    # Violin 1
+    violin_1 = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP959361-PMLP1360993-Violin-1.pdf",
+    )
+    assert len(violin_1.parts) == 1
+    violin_1_parts = _parts_for_primary_instrument(parts, InstrumentEnum.VIOLIN_1)
+    assert len(violin_1_parts) == 1
+
+    # Violin 2
+    violin_2 = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP959361-PMLP1360993-Violin-2.pdf",
+    )
+    assert len(violin_2.parts) == 1
+    violin_2_parts = _parts_for_primary_instrument(parts, InstrumentEnum.VIOLIN_2)
+    assert len(violin_2_parts) == 1
