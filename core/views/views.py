@@ -10,13 +10,18 @@ from core.services.music import (
     get_pieces,
     get_part_asset,
 )
+from core.services.organizations import get_setup_checklist
 from core.services.domo import search_for_piece
 from core.services.s3 import create_download_url
 
 
 @login_required
 def home(request):
-    return render(request, "home.html")
+    setup_checklist = get_setup_checklist(request.organization.id)
+    context = {
+        "setup_checklist": setup_checklist,
+    }
+    return render(request, "home.html", context)
 
 
 @login_required

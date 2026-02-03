@@ -1,9 +1,10 @@
 from typing import Optional, List
 from uuid import UUID
+from datetime import datetime
 from core.dtos.base import BaseDTO
 from core.enum.instruments import InstrumentEnum
 from core.models.music import MusicianInstrument
-from core.models.organizations import Organization, Musician
+from core.models.organizations import Organization, Musician, SetupChecklist
 
 
 class OrganizationDTO(BaseDTO):
@@ -68,4 +69,25 @@ class MusicianInstrumentDTO(BaseDTO):
             id=str(model.id),
             musician_id=str(model.musician.id),
             instrument=InstrumentEnum(model.instrument.name),
+        )
+
+
+class SetupChecklistDTO(BaseDTO):
+    organization_id: str
+    roster_uploaded: bool
+    program_created: bool
+    piece_completed: bool
+    completed: bool
+    completed_date: Optional[datetime] = None
+
+    @classmethod
+    def from_model(cls, model: SetupChecklist):
+        return cls(
+            id=str(model.id),
+            organization_id=str(model.organization.id),
+            roster_uploaded=model.roster_uploaded,
+            program_created=model.program_created,
+            piece_completed=model.piece_completed,
+            completed=model.completed,
+            completed_date=model.completed_date,
         )

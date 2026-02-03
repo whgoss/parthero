@@ -1,6 +1,7 @@
 import re
 import uuid
 import logging
+from datetime import datetime
 from typing import List, Optional
 from django.db import transaction
 from django.db.models import Count, Q
@@ -18,7 +19,7 @@ from core.enum.instruments import (
     INSTRUMENT_SECTIONS,
 )
 from core.enum.status import UploadStatus
-from core.models.organizations import Musician
+from core.models.organizations import Musician, SetupChecklist
 from core.models.music import (
     Piece,
     Part,
@@ -107,6 +108,13 @@ def create_piece(
     piece.save()
 
     create_parts_from_instrumentation(piece.id, piece.instrumentation)
+
+    setup_checklist = SetupChecklist.objects.get(organization_id=organization_id)
+    if not setup_checklist.completed:
+        setup_checklist.piece_completed = True
+        setup_checklist.completed = True
+        setup_checklist.completed_date = datetime.now()
+        setup_checklist.save()
 
     return PieceDTO.from_model(piece)
 

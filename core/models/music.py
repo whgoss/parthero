@@ -57,7 +57,7 @@ class PartAsset(UUIDPrimaryKeyModel):
     upload_filename = CharField(max_length=255, null=True, blank=True)
     file_key = CharField(max_length=255, null=True, blank=True)
     status = CharField(
-        max_length=50,
+        max_length=255,
         default=UploadStatus.NONE.value,
         choices=UploadStatus.choices(),
     )

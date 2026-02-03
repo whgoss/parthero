@@ -1,17 +1,18 @@
 from typing import List, Optional
 from django.db.models import Q
-from core.dtos.organizations import OrganizationDTO, MusicianDTO
 from core.dtos.users import UserOrganizationDTO
 from core.enum.instruments import InstrumentEnum
-from core.models.organizations import Organization, Musician
 from core.models.users import UserOrganization
+from core.models.organizations import Organization, Musician, SetupChecklist
 from core.services.music import update_musician_instruments
+from core.dtos.organizations import OrganizationDTO, MusicianDTO, SetupChecklistDTO
 
 
 def create_organization(name: str) -> OrganizationDTO:
     organization = Organization(name=name)
     organization.save()
-    organization
+    setup_checklist = SetupChecklist(organization=organization)
+    setup_checklist.save()
     return OrganizationDTO.from_model(organization)
 
 
@@ -20,9 +21,16 @@ def get_organization(organization_id: str) -> OrganizationDTO:
     return OrganizationDTO.from_model(organization)
 
 
-def get_organizations_for_user(user_id) -> UserOrganizationDTO:
+def get_organizations_for_user(user_id: str) -> UserOrganizationDTO:
     user_organizations = UserOrganization.objects.filter(user__id=user_id)
     return UserOrganizationDTO.from_models(user_organizations)
+
+
+def get_setup_checklist(organization_id: str) -> SetupChecklistDTO:
+    setup_checklist, _ = SetupChecklist.objects.get_or_create(
+        organization_id=organization_id
+    )
+    return SetupChecklistDTO.from_model(setup_checklist)
 
 
 def get_roster(organization_id: str) -> List[MusicianDTO]:

@@ -6,7 +6,7 @@ from django.db import transaction
 from core.dtos.music import MusicianDTO, InstrumentDTO
 from core.enum.instruments import InstrumentEnum
 from core.models.music import MusicianInstrument
-from core.models.organizations import Musician
+from core.models.organizations import Musician, SetupChecklist
 from core.services.music import get_instrument
 from core.services.organizations import get_organization, musician_exists_by_email
 
@@ -80,6 +80,11 @@ def upload_roster(file, organization_id: str):
 
             if musician:
                 musicians.append(musician)
+
+    setup_checklist = SetupChecklist.objects.get(organization_id=organization_id)
+    if not setup_checklist.completed:
+        setup_checklist.roster_uploaded = True
+        setup_checklist.save()
     return MusicianDTO.from_models(musicians)
 
 

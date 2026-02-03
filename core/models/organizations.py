@@ -2,6 +2,8 @@ from django.db.models import (
     CharField,
     BooleanField,
     ForeignKey,
+    DateTimeField,
+    OneToOneField,
     CASCADE,
     Index,
 )
@@ -43,3 +45,12 @@ class Musician(UUIDPrimaryKeyModel):
                 fields=["organization", "core_member"],
             ),
         ]
+
+
+class SetupChecklist(UUIDPrimaryKeyModel):
+    organization = OneToOneField(Organization, on_delete=CASCADE)
+    roster_uploaded = BooleanField(default=False)
+    program_created = BooleanField(default=False)
+    piece_completed = BooleanField(default=False)
+    completed_date = DateTimeField(null=True, blank=True)
+    completed = BooleanField(default=False)

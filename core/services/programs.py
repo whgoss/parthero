@@ -8,7 +8,7 @@ from core.dtos.music import PieceDTO
 from core.dtos.programs import ProgramDTO, ProgramMusicianDTO
 from core.enum.status import ProgramStatus
 from core.models.music import Piece, MusicianInstrument, Instrument
-from core.models.organizations import Organization, Musician
+from core.models.organizations import Organization, Musician, SetupChecklist
 from core.models.programs import (
     Program,
     ProgramPerformance,
@@ -45,6 +45,12 @@ def create_program(
             program_id=program.id, date=performance_date
         )
         program_performance.save()
+
+    setup_checklist = SetupChecklist.objects.get(organization_id=organization_id)
+    if not setup_checklist.completed:
+        setup_checklist.program_created = True
+        setup_checklist.save()
+
     return ProgramDTO.from_model(program)
 
 

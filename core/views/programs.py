@@ -49,13 +49,13 @@ def create_program_view(request):
             for subform in formset:
                 performance_dates.append(subform.cleaned_data["date"])
 
-            create_program(
+            program = create_program(
                 organization_id=request.organization.id,
                 name=form.data["name"],
                 performance_dates=performance_dates,
             )
 
-            return redirect("programs")
+            return redirect(f"/program/{program.id}")
     else:
         form = ProgramForm(organization_id=request.organization.id)
         formset = PerformanceFormSet(prefix="perf")
