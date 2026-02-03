@@ -35,7 +35,7 @@
                                 class="flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
                             {% for organization in user_organizations %}
                                 <option value="{% url 'switch_organization' organization.id %}{% if request.path %}?next={{ request.path }}{% endif %}"
-                                        {% if current_organization and current_organization.id == organization.id %}selected{% endif %}>
+                                        {% if current_organization and current_organization.id|stringformat:"s" == organization.id|stringformat:"s" %}selected{% endif %}>
                                     {{ organization.name }}
                                 </option>
                             {% endfor %}

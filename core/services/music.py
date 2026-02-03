@@ -182,18 +182,16 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetUploadDTO:
     normalized_filename = _normalize_filename(filename)
 
     # Determine the corresponding part for the filename
-    instruments = get_instruments_in_string(normalized_filename)
-    numbered_instruments = _extract_numbered_instruments(
-        normalized_filename, instruments
-    )
+    instruments = get_instruments_in_string(filename)
+    numbered_instruments = _extract_numbered_instruments(filename, instruments)
     for part in parts:
-        if part.assets.exists():
-            continue
-
         for part_instrument in part.instruments.all():
             instrument_enum = InstrumentEnum(part_instrument.instrument.name)
             if instrument_enum in instruments:
                 numbers = numbered_instruments.get(instrument_enum)
+                is_combined_part = not numbers
+                if part.assets.exists() and not is_combined_part:
+                    continue
                 if numbers and part.number not in numbers:
                     continue
                 part_asset.parts.add(part)
@@ -272,57 +270,30 @@ def get_instrument(
         return None
 
 
-def get_instruments_in_string(token: str) -> List[InstrumentEnum]:
+def get_instruments_in_string(filename: str) -> List[InstrumentEnum]:
     instruments = []
-    normalized_token = _normalize_filename_token(token)
+    tokens = _split_filename_tokens(filename)
+    normalized_tokens = [re.sub(r"[^a-z0-9]", "", t.lower()) for t in tokens]
     for instrument in InstrumentEnum:
-        needle = _normalize_filename_token(instrument.value)
+        needle = _normalize_instrument_name(instrument.value)
 
-        # Look for the instrument name inside the filename
-        matches_phrase = _instrument_token_match(needle, normalized_token)
+        # Look for the instrument name inside filename tokens
+        matches_phrase = any(
+            _instrument_token_match(needle, token) for token in normalized_tokens
+        )
 
         # Look for any instrument aliases inside the filename (if there are any)
         aliases = [
-            _normalize_filename_token(alias) for alias in ALIAS_MAP.get(instrument, [])
+            _normalize_instrument_name(alias) for alias in ALIAS_MAP.get(instrument, [])
         ]
         matches_alias = any(
-            _instrument_token_match(alias, normalized_token) for alias in aliases
+            _instrument_token_match(alias, token)
+            for alias in aliases
+            for token in normalized_tokens
         )
         if matches_phrase or matches_alias:
             instruments.append(instrument)
     return instruments
-
-
-def _extract_numbered_instruments(
-    token: str, instruments: List[InstrumentEnum]
-) -> dict[InstrumentEnum, set[int]]:
-    normalized_token = _normalize_filename_token(token)
-    out: dict[InstrumentEnum, set[int]] = {}
-    for instrument in instruments:
-        needles = [_normalize_filename_token(instrument.value)] + [
-            _normalize_filename_token(alias) for alias in ALIAS_MAP.get(instrument, [])
-        ]
-        for needle in needles:
-            numbers = _extract_numbers_after_instrument(normalized_token, needle)
-            if numbers:
-                out[instrument] = numbers
-                break
-    return out
-
-
-def _extract_numbers_after_instrument(token: str, needle: str) -> Optional[set[int]]:
-    match = re.search(rf"(?<![a-z]){re.escape(needle)}(?P<num>\d+)", token)
-    if not match:
-        return None
-    number_string = match.group("num")
-    if len(number_string) == 1:
-        return {int(number_string)}
-    numbers = {int(char) for char in number_string if char.isdigit() and char != "0"}
-    return numbers or None
-
-
-def _instrument_token_match(needle: str, token: str) -> bool:
-    return re.search(rf"(?<![a-z]){re.escape(needle)}(?:(?=\d)|\b)", token) is not None
 
 
 @transaction.atomic
@@ -369,6 +340,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
         if _is_percussion_segment(seg):
             percussion = _parse_percussion(piece_id, seg)
             result.extend(percussion)
+            continue
 
         # Is there a doubling of some kind? (pf/cel)
         if "/" in code:
@@ -463,10 +435,12 @@ def _parse_bracketable_section(
     piece_id: str, segment: str, section: str
 ) -> List[PartDTO]:
     """
-    Certain segments can have brackets that provide greater detail on parts and doublings
+    Parse a bracketable section (woodwinds or brass) and create parts.
 
-    Example WW segment:
-        "2[1.2/pic] 2[1.2/eh] 2[1.2] 2[1.2]" → positionally: Fl, Ob, Cl, Bn
+    The segment uses positional counts with optional bracket details:
+        "2[1.2/pic] 2[1.2/eh] 2[1.2] 2[1.2]" → Fl, Ob, Cl, Bn
+
+    Bracket details can specify doublings (e.g. "/pic") or direct instrument codes.
     """
     out: List[InstrumentEnum] = []
     tokens = _normalize_instrumentation_token(segment).split()
@@ -482,16 +456,16 @@ def _parse_bracketable_section(
             break
 
         # Extract leading count and optional bracket
-        m = re.match(r"(?P<instrument_count>\d+)(?P<section_details>.*)", token)
-        if not m:
+        match = re.match(r"(?P<instrument_count>\d+)(?P<section_details>.*)", token)
+        if not match:
             continue
 
         # Determine the number of instruments
-        instrument_count = int(m.group("instrument_count"))
+        instrument_count = int(match.group("instrument_count"))
 
         # Are there instrument details in bracket notation? e.g. [1.2/pic] or [1.2/Eh]
         # If so grab them and strip brackets
-        section_details = m.group("section_details")
+        section_details = match.group("section_details")
         if section_details:
             section_details = section_details.strip("[]()")
 
@@ -548,22 +522,21 @@ def _parse_bracketable_section(
 
 def _parse_percussion(piece_id: str, segment: str) -> List[PartDTO]:
     """
-    Example perc segment:
-        "tmp+1" → positionally: 1 Timpani, 1 Percussion
+    Parse percussion segments and create timpani/percussion parts.
+
+    Examples:
+        "tmp+1"  -> 1 Timpani, 1 Percussion
+        "timp+5" -> 1 Timpani, 5 Percussion
+        "5perc"  -> 5 Percussion
     """
     out: List[InstrumentEnum] = []
     segment = _normalize_filename_token(segment)
     if not segment:
         return
 
-    m = re.match(r"(?P<code>[a-zA-Z]+)(?:\+(?P<percussion_count>\d+))?", segment)
-    if not m:
-        return
-
-    code = m.group("code").lower()
-    percussion_count = int(m.group("percussion_count") or 0)
-
-    if code == "tmp":
+    match = re.match(r"^(?P<code>timp|tmp)(?:\+(?P<percussion_count>\d+))?$", segment)
+    if match:
+        percussion_count = int(match.group("percussion_count") or 0)
         # Create the part
         part = create_part(
             piece_id=piece_id,
@@ -581,22 +554,86 @@ def _parse_percussion(piece_id: str, segment: str) -> List[PartDTO]:
                     number=percussion_number + 1,
                 )
                 out.append(part)
-    else:
-        # TODO: Figure this out
-        pass
+        return out
+
+    match = re.match(r"^(?P<count>\d+)?perc$", segment)
+    if match:
+        percussion_count = int(match.group("count") or 1)
+        for percussion_number in range(percussion_count):
+            part = create_part(
+                piece_id=piece_id,
+                primary=InstrumentEnum.PERCUSSION,
+                instruments=[InstrumentEnum.PERCUSSION],
+                number=percussion_number + 1,
+            )
+            out.append(part)
+        return out
 
     return out
 
 
+def _extract_numbered_instruments(
+    filename: str, instruments: List[InstrumentEnum]
+) -> dict[InstrumentEnum, set[int]]:
+    """
+    For each instrument found in a filename, extract the set of part numbers
+    that immediately follow that instrument name.
+    """
+    normalized_filename = _normalize_instrument_name(filename)
+    out: dict[InstrumentEnum, set[int]] = {}
+    for instrument in instruments:
+        needles = [_normalize_instrument_name(instrument.value)] + [
+            _normalize_instrument_name(alias) for alias in ALIAS_MAP.get(instrument, [])
+        ]
+        for needle in needles:
+            numbers = _extract_numbers_after_instrument(normalized_filename, needle)
+            if numbers:
+                out[instrument] = numbers
+                break
+    return out
+
+
+def _extract_numbers_after_instrument(token: str, needle: str) -> Optional[set[int]]:
+    """
+    Extracts part numbers that immediately follow an instrument token.
+
+    Examples:
+        token="...flute1.pdf", needle="flute" -> {1}
+        token="...trombone-1-2.pdf", needle="trombone" -> {1, 2}
+
+    Notes:
+        - Treats concatenated digits as separate part numbers (e.g., "12" -> {1, 2}).
+        - Ignores zeros.
+    """
+    match = re.search(rf"{re.escape(needle)}(?P<num>[\d\-]+)", token)
+    if not match:
+        return None
+    number_string = match.group("num")
+    digits = [int(char) for char in number_string if char.isdigit() and char != "0"]
+    if len(digits) == 1:
+        return {digits[0]}
+    numbers = set(digits)
+    return numbers or None
+
+
+def _instrument_token_match(needle: str, token: str) -> bool:
+    """
+    Return True if the normalized instrument name appears in a filename token.
+
+    Ensures the match starts at a token boundary or before digits.
+    """
+    return re.search(rf"(?<![a-z]){re.escape(needle)}(?:(?=\d)|\b)", token) is not None
+
+
 def _normalize_instrumentation_token(seg: str) -> str:
     """
-    Normalizes tokens in instrumentation by stripping words like "opt" along with all dash types and converting to lower.
-    (Violin 1 -> violin1)
+    Normalize instrumentation notation tokens.
 
-    :param name: Token to normalize
-    :type name: str
-    :return: Normalized Token
-    :rtype: str
+    - Removes "opt"
+    - Normalizes dash/underscore to spaces
+    - Collapses whitespace
+    - Lowercases
+    Example: "Violin-1" -> "violin 1"
     """
     # Remove tokens like "opt"
     seg = re.sub(r"\bopt\b", "", seg)
@@ -607,42 +644,53 @@ def _normalize_instrumentation_token(seg: str) -> str:
 
 def _normalize_filename_token(seg: str) -> str:
     """
-    Normalizes tokens in filenames by stripping words like "opt" along with all dash types, whitespace, and converting to lower.
-    (Violin 1 -> violin1)
+    Normalize filename tokens for instrument matching.
 
-    :param name: Token to normalize
-    :type name: str
-    :return: Normalized Token
-    :rtype: str
+    - Removes "opt"
+    - Strips separators between letters/digits (e.g., "violin-1" -> "violin1")
+    - Lowercases
     """
     # Remove tokens like "opt"
     seg = re.sub(r"\bopt\b", "", seg)
-    seg = re.sub(r"[-_]+", " ", seg)  # violin-1, violin_1 -> violin 1
+    seg = re.sub(r"[-_]+", "", seg)  # violin-1, violin_1 -> violin1
     seg = re.sub(r"\s+", " ", seg).strip().lower()
-    seg = seg.replace(" ", "")
     return seg
 
 
 def _is_no_strings(code: str) -> bool:
+    """Return True if the token indicates strings are explicitly omitted."""
     return code in {"[no str]", "no str", "[nostr]", "nostr"}
 
 
 def _is_percussion_segment(seg: str) -> bool:
+    """Return True if a segment represents percussion/timpani notation."""
     seg = seg.strip().lower()
-    return seg.startswith("tmp")  # TODO: extend later if you add other perc codes
+    return bool(re.match(r"^(timp|tmp)(?:\+\d+)?$", seg) or re.match(r"^\d*perc$", seg))
 
 
 def _normalize_filename(name: str) -> str:
     """
-    Normalizes filenames by stripping all dash types, whitespace, and converting to lower.
-    (Violin 1 -> violin1)
+    Normalize full filenames for number extraction.
 
-    :param name: Token to normalize
-    :type name: str
-    :return: Normalized Token
-    :rtype: str
+    - Lowercases
+    - Converts separators to spaces
+    - Collapses whitespace
     """
     name = name.lower()
     name = re.sub(r"[-_]+", " ", name)  # violin-1, violin_1 -> violin 1
     name = re.sub(r"\s+", " ", name).strip()
     return name
+
+
+def _split_filename_tokens(name: str) -> List[str]:
+    """
+    Split a filename into tokens on separators, keeping digits attached to words.
+    """
+    return [token for token in re.split(r"[\s._-]+", name) if token]
+
+
+def _normalize_instrument_name(name: str) -> str:
+    """
+    Normalize an instrument name by removing all non-alphanumeric characters.
+    """
+    return re.sub(r"[^a-zA-Z0-9]", "", name).lower()

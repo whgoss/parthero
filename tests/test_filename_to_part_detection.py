@@ -60,7 +60,7 @@ def _has_primary_with_doubling(
 
 
 @mock_aws
-def test_numbered_horn_and_english_horn_detection():
+def test_no_instrument_collisions():
     organization = create_organization()
     instrumentation = "3[1.2/pic.pic] 2[1.2/Eh] 2 2 — 4 2 3 1 — tmp+5 — hp — str"
     piece = create_piece(
@@ -147,7 +147,7 @@ def test_numbered_horn_and_english_horn_detection():
 
 
 @mock_aws
-def test_hyphenated_numbered_part_detection():
+def test_doubling_detection():
     organization = create_organization()
     instrumentation = (
         "2[1.2/pic] 2[1.2/Eh] 2 2 — 4 2 3 1 — tmp+3 — hp — pf/opt cel — str"
@@ -216,10 +216,118 @@ def test_hyphenated_numbered_part_detection():
         assert len(string_parts) == 1
         assert string_parts[0].number is None
 
-    horn_asset = create_part_asset(
-        piece_id=str(piece.id),
-        filename="Firebird.Horn-1.pdf",
+
+@mock_aws
+def test_combined_part():
+    organization = create_organization()
+    instrumentation = "2 2 2 2 — 2 2 0 0 — tmp+1 — str"
+    piece = create_piece(
+        organization_id=str(organization.id),
+        title="Combined Parts Test",
+        composer="Test",
+        instrumentation=instrumentation,
+        duration=None,
+        domo_id=None,
+        composer_domo_id=None,
     )
-    horn_numbers = _numbers_for_instrument(horn_asset.parts, InstrumentEnum.FRENCH_HORN)
-    assert horn_numbers == {1}
-    assert len(horn_asset.parts) == 1
+
+    combined_flute = create_part_asset(
+        piece_id=str(piece.id),
+        filename="Flute.pdf",
+    )
+    flute_numbers = _numbers_for_instrument(combined_flute.parts, InstrumentEnum.FLUTE)
+    assert flute_numbers == {1, 2}
+    assert len(combined_flute.parts) == 2
+
+
+@mock_aws
+def test_numbered_part():
+    organization = create_organization()
+    instrumentation = "2 2 2 2 — 2 2 0 0 — tmp+1 — str"
+    piece = create_piece(
+        organization_id=str(organization.id),
+        title="Tokenization Test",
+        composer="Test",
+        instrumentation=instrumentation,
+        duration=None,
+        domo_id=None,
+        composer_domo_id=None,
+    )
+
+    # Hyphenated numbered part detection
+    numbered_flute = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP959361-PMLP1360993-Firebird-OBOE-1.pdf",
+    )
+    numbered_numbers = _numbers_for_instrument(
+        numbered_flute.parts, InstrumentEnum.OBOE
+    )
+    assert numbered_numbers == {1}
+
+    # Underscore numbered part detection
+    numbered_flute = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP959361-PMLP1360993-Firebird-FLUTE_1.pdf",
+    )
+    numbered_numbers = _numbers_for_instrument(
+        numbered_flute.parts, InstrumentEnum.FLUTE
+    )
+    assert numbered_numbers == {1}
+
+    # Space-based numbered part detection
+    numbered_flute = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP959361-PMLP1360993-Firebird-TRUMPET 1 2.pdf",
+    )
+    numbered_numbers = _numbers_for_instrument(
+        numbered_flute.parts, InstrumentEnum.TRUMPET
+    )
+    assert numbered_numbers == {1, 2}
+
+    # No-space numbered part detection
+    numbered_flute = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP959361-PMLP1360993-Firebird-HORN12.pdf",
+    )
+    numbered_numbers = _numbers_for_instrument(
+        numbered_flute.parts, InstrumentEnum.FRENCH_HORN
+    )
+    assert numbered_numbers == {1, 2}
+
+
+@mock_aws
+def test_percussion_count():
+    organization = create_organization()
+    instrumentation = "2 2 2 2 — 2 2 0 0 — 2perc — str"
+    piece = create_piece(
+        organization_id=str(organization.id),
+        title="Perc Test",
+        composer="Test",
+        instrumentation=instrumentation,
+        duration=None,
+        domo_id=None,
+        composer_domo_id=None,
+    )
+
+    parts = get_parts(piece.id)
+    assert _numbers_for_primary_instrument(parts, InstrumentEnum.PERCUSSION) == {1, 2}
+
+    instrumentation = "2 2 2 2 — 2 2 0 0 — timp+5 — str"
+    piece = create_piece(
+        organization_id=str(organization.id),
+        title="Perc Test 2",
+        composer="Test",
+        instrumentation=instrumentation,
+        duration=None,
+        domo_id=None,
+        composer_domo_id=None,
+    )
+    parts = get_parts(piece.id)
+    assert _numbers_for_primary_instrument(parts, InstrumentEnum.TIMPANI) == {1}
+    assert _numbers_for_primary_instrument(parts, InstrumentEnum.PERCUSSION) == {
+        1,
+        2,
+        3,
+        4,
+        5,
+    }
