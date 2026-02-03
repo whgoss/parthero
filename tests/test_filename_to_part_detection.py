@@ -334,7 +334,7 @@ def test_percussion_count():
 
 
 @mock_aws
-def test_string_part():
+def test_violin_parts():
     organization = create_organization()
     instrumentation = "2 2 2 2 — 2 2 0 0 — 2perc — str"
     piece = create_piece(

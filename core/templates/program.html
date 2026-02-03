@@ -40,14 +40,17 @@
       {% endfor %}
     </div>
 
-    <!-- Pieces + Roster Tabs -->
-    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4" x-data="{ activeTab: 'pieces' }">
+    <div
+      class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4"
+      x-data="programTabs()"
+      x-init="init()"
+    >
       <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
         <button
           type="button"
           class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition"
           :class="activeTab === 'pieces' ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'"
-          @click="activeTab = 'pieces'"
+          @click="setTab('pieces')"
         >
           Pieces
         </button>
@@ -55,15 +58,20 @@
           type="button"
           class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition"
           :class="activeTab === 'roster' ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'"
-          @click="activeTab = 'roster'; window.dispatchEvent(new Event('roster-tab:show'))"
+          @click="setTab('roster')"
         >
           Roster
         </button>
       </div>
 
+        <!-- Pieces Tab -->
         <div class="mt-5" data-tab-panel="pieces" x-show="activeTab === 'pieces'">
+
           <!-- Selected Pieces -->
           <h1 class="text-lg font-medium">Pieces</h1>
+          <p class="mt-1 text-sm text-slate-500">
+            Select pieces from your score library to add to this program.
+          </p>
           {{ pieces|pydantic_json_script:"selected-pieces-data" }}
           <div class="mt-4" x-data="programPieceSearch('{{ program.id }}', JSON.parse(document.getElementById('selected-pieces-data').textContent))">
           <div class="rounded-lg border border-slate-200 bg-slate-50/60 p-4" x-ref="selectedPieces">
@@ -187,6 +195,7 @@
         </div>
       </div>
 
+      <!-- Roster Tab -->
       <div
         class="mt-5"
         data-tab-panel="roster"
@@ -199,7 +208,8 @@
           Build a program-specific roster by assigning musicians to sections.
         </p>
 
-        <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60">
+        <!-- Program Roster Table -->
+        <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
               <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -261,6 +271,7 @@
           </button>
         </div>
 
+        <!-- Musician Search -->
         <div class="grid gap-3 sm:grid-cols-2">
           <div>
             <input

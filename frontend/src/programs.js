@@ -75,6 +75,46 @@ window.performanceDates = function performanceDates() {
   }
 }
 
+window.programTabs = function programTabs() {
+  return {
+    activeTab: "pieces",
+    init() {
+      const saved = window.sessionStorage.getItem("program-active-tab");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const isValidTab = parsed?.tab === "pieces" || parsed?.tab === "roster";
+          const isFresh = parsed?.ts && Date.now() - parsed.ts < 10 * 60 * 1000;
+          if (isValidTab && isFresh) {
+            this.activeTab = parsed.tab;
+          } else {
+            window.sessionStorage.removeItem("program-active-tab");
+          }
+        } catch (error) {
+          window.sessionStorage.removeItem("program-active-tab");
+        }
+      }
+      if (this.activeTab === "roster") {
+        setTimeout(() => {
+          window.dispatchEvent(new Event("roster-tab:show"));
+        }, 0);
+      }
+    },
+    setTab(tab) {
+      this.activeTab = tab;
+      window.sessionStorage.setItem(
+        "program-active-tab",
+        JSON.stringify({ tab, ts: Date.now() })
+      );
+      if (tab === "roster") {
+        setTimeout(() => {
+          window.dispatchEvent(new Event("roster-tab:show"));
+        }, 0);
+      }
+    },
+  };
+};
+
 window.programPieceSearch = function programPieceSearch(programId, initialPieces = []) {
   const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -205,16 +245,23 @@ window.programRosterSearch = function programRosterSearch(programId) {
     roster: [],
     rosterInstruments: {},
     tagifyInstances: new Map(),
+    isActive: false,
+    rootEl: null,
     loading: false,
     error: null,
     hasSearched: false,
     saving: false,
     saveError: null,
     init() {
+      this.rootEl = this.$el;
       if (!this._rosterTabListener) {
-        this._rosterTabListener = () => this.resetRosterTagify();
+        this._rosterTabListener = () => {
+          this.isActive = true;
+          this.resetRosterTagify();
+        };
         window.addEventListener("roster-tab:show", this._rosterTabListener);
       }
+      this.isActive = this.$el && this.$el.offsetParent !== null;
       this.fetchRoster();
     },
     async fetchRoster() {
@@ -234,21 +281,14 @@ window.programRosterSearch = function programRosterSearch(programId) {
         this.error = "Unable to load program roster.";
       } finally {
         this.loading = false;
-        this.resetRosterTagify();
+        if (this.isActive) {
+          this.resetRosterTagify();
+        }
       }
     },
     resetRosterTagify() {
       this.destroyTagify();
-      this.$nextTick(() => {
-        requestAnimationFrame(() => {
-          if (this.isRosterVisible()) {
-            this.initRosterTagify();
-          }
-        });
-      });
-    },
-    isRosterVisible() {
-      return this.$el && this.$el.offsetParent !== null;
+      this.$nextTick(() => this.initRosterTagify());
     },
     destroyTagify() {
       this.tagifyInstances.forEach((instance, input) => {
@@ -260,22 +300,14 @@ window.programRosterSearch = function programRosterSearch(programId) {
       this.tagifyInstances.clear();
     },
     initRosterTagify() {
-      console.log("Init-ing Tagify");
-      const scope = this.$el || this.$root;
-      if (!scope) return;
+      const scope = this.rootEl || this.$el || document;
+      const inputs = scope.querySelectorAll?.(".roster-instruments") || [];
       const optionsEl = document.getElementById("instrument-options");
       const whitelist = optionsEl ? JSON.parse(optionsEl.textContent) : [];
       const normalizedWhitelist = whitelist.map((value) => ({ value }));
 
-      this.tagifyInstances.forEach((instance, input) => {
-        if (!document.body.contains(input)) {
-          instance.destroy();
-          this.tagifyInstances.delete(input);
-        }
-      });
-      scope.querySelectorAll(".roster-instruments").forEach((input) => {
+      inputs.forEach((input) => {
         if (input._tagify || input.dataset.tagifyInitialized === "true") return;
-        if (input.offsetParent === null) return;
         const tagify = new Tagify(input, {
           whitelist: normalizedWhitelist,
           enforceWhitelist: true,
