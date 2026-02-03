@@ -129,7 +129,7 @@
           </div>
 
           <div class="grid gap-3 sm:grid-cols-2">
-            <div>
+            <div class="relative">
               <input
                 type="text"
                 class="form-input"
@@ -137,15 +137,33 @@
                 x-model="title"
                 @input.debounce.400ms="search()"
               />
+              <button
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+                x-show="title"
+                @click="clearSearch()"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
             </div>
-            <div>
+            <div class="relative">
               <input
                 type="text"
-                class="form-input"
+                class="form-input pr-10"
                 placeholder="Search by composer"
                 x-model="composer"
                 @input.debounce.400ms="search()"
               />
+              <button
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+                x-show="composer"
+                @click="clearSearch()"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
@@ -273,7 +291,7 @@
 
         <!-- Musician Search -->
         <div class="grid gap-3 sm:grid-cols-2">
-          <div>
+          <div class="relative">
             <input
               type="text"
               class="form-input"
@@ -281,15 +299,33 @@
               x-model="name"
               @input.debounce.400ms="search()"
             />
+            <button
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+              x-show="name"
+              @click="clearSearch()"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
           </div>
-          <div>
+          <div class="relative">
             <input
               type="text"
-              class="form-input"
+              class="form-input pr-10"
               placeholder="Search by instrument or section"
               x-model="instrument"
               @input.debounce.400ms="search()"
             />
+            <button
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+              x-show="instrument"
+              @click="clearSearch()"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
           </div>
         </div>
 

@@ -165,6 +165,13 @@ window.programPieceSearch = function programPieceSearch(programId, initialPieces
         this.hasSearched = true;
       }
     },
+    clearSearch() {
+      this.title = "";
+      this.composer = "";
+      this.results = [];
+      this.error = null;
+      this.hasSearched = false;
+    },
     isSelected(piece) {
       return this.selectedPieces.some((selected) => selected.id === piece.id);
     },
@@ -401,6 +408,14 @@ window.programRosterSearch = function programRosterSearch(programId) {
         this.loading = false;
         this.hasSearched = true;
       }
+    },
+    clearSearch() {
+      this.name = "";
+      this.instrument = "";
+      this.results = [];
+      this.error = null;
+      this.hasSearched = false;
+      this.saveError = null;
     },
     formatInstrumentList(musician) {
       if (!musician?.instruments?.length) {
