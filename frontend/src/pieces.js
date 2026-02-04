@@ -64,6 +64,7 @@ window.partAssets = function partAssets(pieceId) {
     missingParts: [],
     partOptions: [],
     loading: false,
+    validationLoading: false,
     error: null,
     tagifyInstances: new Map(),
     refreshTimer: null,
@@ -112,6 +113,26 @@ window.partAssets = function partAssets(pieceId) {
         this.$nextTick(() => this.initTagify());
       }
     },
+    async fetchValidation() {
+      if (this.validationLoading) {
+        return;
+      }
+      this.validationLoading = true;
+      try {
+        const response = await fetch(`/api/piece/${this.pieceId}/assets`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch part validation");
+        }
+        const data = await response.json();
+        this.missingParts = data.missing_parts || [];
+      } catch (error) {
+        this.error = "Unable to refresh part validation.";
+      } finally {
+        this.validationLoading = false;
+      }
+    },
     destroyTagify() {
       this.tagifyInstances.forEach((instance, input) => {
         instance.destroy();
@@ -150,6 +171,23 @@ window.partAssets = function partAssets(pieceId) {
         this.tagifyInstances.set(input, tagify);
 
         let timeoutId = null;
+        const updatePartAssetRow = (updatedPartAsset) => {
+          const index = this.partAssets.findIndex((asset) => asset.id === partAssetId);
+          if (index === -1) return;
+          const nextParts =
+            updatedPartAsset?.parts ??
+            tagify.value
+              .map((tag) =>
+                this.partOptions.find((option) => option.id === tag.id)
+                  ? { id: tag.id, display_name: tag.value }
+                  : null
+              )
+              .filter(Boolean);
+          this.partAssets[index] = {
+            ...this.partAssets[index],
+            parts: nextParts,
+          };
+        };
         const save = () => {
           if (!pieceId || !partAssetId) return;
           const partIds = tagify.value
@@ -163,7 +201,20 @@ window.partAssets = function partAssets(pieceId) {
               "X-CSRFToken": csrfToken(),
             },
             body: JSON.stringify({ part_ids: partIds }),
-          });
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Failed to update part asset");
+              }
+              return response.json();
+            })
+            .then((updatedPartAsset) => {
+              updatePartAssetRow(updatedPartAsset);
+              this.fetchValidation();
+            })
+            .catch(() => {
+              this.error = "Unable to update part asset.";
+            });
         };
 
         tagify.on("change", () => {
