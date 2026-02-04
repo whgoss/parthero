@@ -200,6 +200,7 @@ def test_doubling_detection():
     assert _has_primary_with_doubling(
         parts, InstrumentEnum.FLUTE, InstrumentEnum.PICCOLO, 2
     )
+
     assert _has_primary_with_doubling(
         parts, InstrumentEnum.OBOE, InstrumentEnum.ENGLISH_HORN, 2
     )
@@ -293,6 +294,39 @@ def test_numbered_part():
         numbered_flute.parts, InstrumentEnum.FRENCH_HORN
     )
     assert numbered_numbers == {1, 2}
+
+
+@mock_aws
+def test_doubled_part():
+    organization = create_organization()
+    instrumentation = "3[1.2/pic.pic] 2[1.2/Eh] 2 2 — 4 2 3 1 — tmp+5 — hp — str"
+    piece = create_piece(
+        organization_id=str(organization.id),
+        title="Doubled Part Test",
+        composer="Test",
+        instrumentation=instrumentation,
+        duration=None,
+        domo_id=None,
+        composer_domo_id=None,
+    )
+
+    piccolo_asset = create_part_asset(
+        piece_id=str(piece.id),
+        filename="IMSLP40967-PMLP04406-Rimsky-Op35.Piccolo.pdf",
+    )
+    piccolo_primary_number = _numbers_for_primary_instrument(
+        piccolo_asset.parts, InstrumentEnum.PICCOLO
+    )
+    assert piccolo_primary_number == {3}
+    piccolo_numbers = _numbers_for_instrument(
+        piccolo_asset.parts, InstrumentEnum.PICCOLO
+    )
+    assert piccolo_numbers == {2, 3}
+    assert len(piccolo_asset.parts) == 2
+    assert all(
+        _part_has_instrument(part, InstrumentEnum.PICCOLO)
+        for part in piccolo_asset.parts
+    )
 
 
 @mock_aws
