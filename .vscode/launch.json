@@ -8,6 +8,7 @@
       "program": "${workspaceFolder}/manage.py",
       "args": ["runserver"],
       "console": "integratedTerminal",
+      "django": true,
       "justMyCode": false,
     },
     {
