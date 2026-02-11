@@ -207,3 +207,12 @@ INSTRUMENT_SECTIONS = {
         InstrumentEnum.BASS,
     ],
 }
+
+
+INSTRUMENT_PRIMARIES = {
+    InstrumentEnum.PICCOLO: InstrumentEnum.FLUTE,
+    InstrumentEnum.ENGLISH_HORN: InstrumentEnum.OBOE,
+    InstrumentEnum.BASS_CLARINET: InstrumentEnum.CLARINET,
+    InstrumentEnum.CONTRABASS_CLARINET: InstrumentEnum.CLARINET,
+    InstrumentEnum.CONTRABASSOON: InstrumentEnum.BASSOON,
+}

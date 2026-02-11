@@ -84,10 +84,12 @@
         </div>
         <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
 
+        <!-- No Parts Uploaded -->
         <template x-if="!loading && partAssets.length === 0">
           <span class="font-light">No parts uploaded.</span>
         </template>
 
+        <!-- Part Asset List -->
         <div class="mt-2 space-y-2">
           <template x-for="partAsset in partAssets" :key="partAsset.id">
             <div class="part-asset-row grid grid-cols-6 gap-1" :id="`part-asset-${partAsset.id}`">

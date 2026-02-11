@@ -13,7 +13,11 @@ from core.models.music import (
     MusicianInstrument,
 )
 from core.enum.status import UploadStatus
-from core.enum.instruments import InstrumentEnum, InstrumentSectionEnum
+from core.enum.instruments import (
+    InstrumentEnum,
+    InstrumentSectionEnum,
+    INSTRUMENT_PRIMARIES,
+)
 
 
 class InstrumentDTO(BaseDTO):
@@ -113,18 +117,28 @@ class PartDTO(BaseDTO):
             part_instrument.instrument.name.value
             for part_instrument in self.instruments
         ]
+
+        # Determine the primary instrument
+        primary = None
+        primary_name = None
+        for part_instrument in self.instruments:
+            if part_instrument.primary:
+                primary = part_instrument
+                primary_name = primary.instrument.name.value
+
+        # If there's only 1 instrument
         if len(names) == 1:
+            # Is this a part for non-primary woodwind instrument?
+            if primary.instrument.name in INSTRUMENT_PRIMARIES.keys():
+                return f"{primary_name} ({INSTRUMENT_PRIMARIES[primary.instrument.name].value} {self.number})"
+            # Is there a chair number?
             if self.number:
                 return f"{names[0]} {self.number}"
             else:
                 return f"{names[0]}"
 
-        primary = None
-        for part_instrument in self.instruments:
-            if part_instrument.primary:
-                primary = part_instrument
+        # If there's multiple instruments it's a doubled part and we need to display all instruments
         if self.number and primary:
-            primary_name = primary.instrument.name.value
             if self.is_doubling:
                 extras = [n for n in names if n != primary_name]
                 return f"{primary_name} {self.number} / {' + '.join(extras)}"
