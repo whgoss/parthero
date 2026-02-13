@@ -1,6 +1,6 @@
 import pytest
 from moto import mock_aws
-
+from core.enum.music import PartAssetType
 from core.enum.instruments import InstrumentEnum
 from core.services.music import create_part_asset, create_piece, get_parts
 from tests.mocks import create_organization
@@ -126,6 +126,7 @@ def test_no_instrument_collisions():
     horn_asset = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP40972-PMLP04406-Rimsky-Op35.Horn12.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     horn_numbers = _numbers_for_instrument(horn_asset.parts, InstrumentEnum.FRENCH_HORN)
     assert horn_numbers == {1, 2}
@@ -134,6 +135,7 @@ def test_no_instrument_collisions():
     english_horn_asset = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP40972-PMLP04406-Rimsky-Op35.EnglishHorn12.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     english_horn_numbers = _numbers_for_instrument(
         english_horn_asset.parts, InstrumentEnum.ENGLISH_HORN
@@ -235,6 +237,7 @@ def test_combined_part():
     combined_flute = create_part_asset(
         piece_id=str(piece.id),
         filename="Flute.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     flute_numbers = _numbers_for_instrument(combined_flute.parts, InstrumentEnum.FLUTE)
     assert flute_numbers == {1, 2}
@@ -259,6 +262,7 @@ def test_numbered_part():
     numbered_flute = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP959361-PMLP1360993-Firebird-OBOE-1.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     numbered_numbers = _numbers_for_instrument(
         numbered_flute.parts, InstrumentEnum.OBOE
@@ -269,6 +273,7 @@ def test_numbered_part():
     numbered_flute = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP959361-PMLP1360993-Firebird-FLUTE_1.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     numbered_numbers = _numbers_for_instrument(
         numbered_flute.parts, InstrumentEnum.FLUTE
@@ -279,6 +284,7 @@ def test_numbered_part():
     numbered_flute = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP959361-PMLP1360993-Firebird-TRUMPET 1 2.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     numbered_numbers = _numbers_for_instrument(
         numbered_flute.parts, InstrumentEnum.TRUMPET
@@ -289,6 +295,7 @@ def test_numbered_part():
     numbered_flute = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP959361-PMLP1360993-Firebird-HORN12.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     numbered_numbers = _numbers_for_instrument(
         numbered_flute.parts, InstrumentEnum.FRENCH_HORN
@@ -313,6 +320,7 @@ def test_doubled_part():
     piccolo_asset = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP40967-PMLP04406-Rimsky-Op35.Piccolo.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     piccolo_primary_number = _numbers_for_primary_instrument(
         piccolo_asset.parts, InstrumentEnum.PICCOLO
@@ -386,6 +394,7 @@ def test_violin_parts():
     violin_1 = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP959361-PMLP1360993-Violin-1.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     assert len(violin_1.parts) == 1
     violin_1_parts = _parts_for_primary_instrument(parts, InstrumentEnum.VIOLIN_1)
@@ -395,6 +404,7 @@ def test_violin_parts():
     violin_2 = create_part_asset(
         piece_id=str(piece.id),
         filename="IMSLP959361-PMLP1360993-Violin-2.pdf",
+        asset_type=PartAssetType.CLEAN,
     )
     assert len(violin_2.parts) == 1
     violin_2_parts = _parts_for_primary_instrument(parts, InstrumentEnum.VIOLIN_2)
