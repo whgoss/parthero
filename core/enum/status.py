@@ -1,23 +1,17 @@
-from enum import Enum
+from core.enum.base import BaseEnum
 
 
-class UploadStatus(Enum):
+class UploadStatus(BaseEnum):
     PENDING = "Pending"
     FAILED = "Failed"
     UPLOADED = "Uploaded"
     ABORTED = "Aborted"
     NONE = "None"
 
-    def choices():
-        return [(status.value, status.value) for status in UploadStatus]
 
-
-class ProgramStatus(Enum):
+class ProgramStatus(BaseEnum):
     CREATED = "Created"
     PIECES = "Pieces"
     ROSTER = "Roster"
-    READY = "Ready"
-    PUBLISHED = "Published"
-
-    def choices():
-        return [(status.value, status.value) for status in ProgramStatus]
+    ASSIGNMENT = "Assignment"
+    DELIVERED = "Delivered"

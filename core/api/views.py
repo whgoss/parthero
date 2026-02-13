@@ -30,6 +30,7 @@ from core.services.organizations import search_for_musician
 from core.models.programs import Program
 from core.api.permissions import IsInOrganization
 from core.dtos.music import PartAssetsPayloadDTO, PartOptionDTO
+from core.enum.music import PartAssetType
 
 
 class PartAssetViewSet(
@@ -46,7 +47,10 @@ class PartAssetViewSet(
         serializer = self.get_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         filename = serializer.validated_data.get("filename", None)
-        part_asset = create_part_asset(piece_id, filename)
+        asset_type = serializer.validated_data.get("asset_type", None)
+        part_asset = create_part_asset(
+            piece_id=piece_id, filename=filename, asset_type=asset_type
+        )
         response_data = part_asset.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -60,10 +64,16 @@ class PartAssetViewSet(
         return Response(response_data, status=status.HTTP_200_OK)
 
     def list(self, request, piece_id, *args, **kwargs):
-        parts = get_parts(piece_id)
-        part_assets = get_part_assets(piece_id)
+        asset_type = request.query_params.get("asset_type")
+        if not asset_type or asset_type not in PartAssetType.values():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        # Find all parts that have an asset assigned
+        parts = get_parts(piece_id)
+        part_assets = get_part_assets(
+            piece_id=piece_id, asset_type=PartAssetType(asset_type)
+        )
+
+        # Find all parts that have a part asset assigned
         completed_parts = set()
         for part_asset in part_assets:
             if part_asset.parts:

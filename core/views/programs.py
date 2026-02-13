@@ -7,17 +7,26 @@ from core.services.programs import (
     get_programs,
     get_pieces_for_program,
 )
-from core.enum.instruments import InstrumentEnum
+from core.enum.instruments import (
+    InstrumentEnum,
+    InstrumentSectionEnum,
+    INSTRUMENT_SECTIONS,
+)
 
 
 @login_required
 def get_program_view(request, program_id):
     program = get_program(program_id)
     pieces = get_pieces_for_program(program_id)
+    string_instruments = [
+        instrument.value
+        for instrument in INSTRUMENT_SECTIONS.get(InstrumentSectionEnum.STRINGS, [])
+    ]
     context = {
         "program": program,
         "pieces": pieces,
         "instrument_options": InstrumentEnum.values(),
+        "string_instruments": string_instruments,
     }
     return render(request, "program.html", context)
 

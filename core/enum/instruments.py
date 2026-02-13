@@ -1,7 +1,7 @@
-from enum import Enum
+from core.enum.base import BaseEnum
 
 
-class InstrumentEnum(Enum):
+class InstrumentEnum(BaseEnum):
     ACCORDION = "Accordion"
     ALTO = "Alto"
     ALTO_SAXOPHONE = "Alto Saxophone"
@@ -132,14 +132,8 @@ class InstrumentEnum(Enum):
     XYLOPHONE = "Xylophone"
     ZITHER = "Zither"
 
-    def choices():
-        return [(instrument.value, instrument.value) for instrument in InstrumentEnum]
 
-    def values():
-        return [instrument.value for instrument in InstrumentEnum]
-
-
-class InstrumentSectionEnum(Enum):
+class InstrumentSectionEnum(BaseEnum):
     STRINGS = "Strings"
     BRASS = "Brass"
     WOODWINDS = "Woodwinds"

@@ -1,0 +1,105 @@
+<!-- Bowings Tab -->
+<div
+    class="p-6"
+    data-tab-panel="bowings"
+    x-show="activeTab === 'bowings'"
+    x-data="programBowings('{{ program.id }}', JSON.parse(document.getElementById('program-bowings-pieces-data').textContent), JSON.parse(document.getElementById('string-instruments-data').textContent))"
+    >
+    <p class="mt-1 text-sm text-slate-500">
+        Upload your bowings for each piece in the program.
+    </p>
+
+    <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-hidden">
+        <template x-if="pieces.length === 0">
+            <div class="p-4 text-sm text-slate-500">
+                Add pieces to this program to upload bowings.
+            </div>
+        </template>
+
+        <ul class="divide-y divide-slate-200">
+            <template x-for="piece in pieces" :key="piece.id">
+                <li class="bg-white">
+                    <button
+                        type="button"
+                        class="w-full px-4 py-3 text-left hover:bg-slate-50"
+                        @click="togglePiece(piece.id)"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <div class="text-sm font-medium" :class="isPieceInvalid(piece.id) ? 'text-red-600' : 'text-slate-900'">
+                                    <span x-show="isPieceInvalid(piece.id)">⚠️</span>
+                                    <span x-text="piece.title"></span>
+                                </div>
+                                <div class="text-xs text-slate-500" x-text="piece.composer"></div>
+                            </div>
+                            <div class="text-xs" :class="isPieceInvalid(piece.id) ? 'text-red-600' : 'text-slate-500'">
+                                <span x-text="summaryText(piece.id)"></span>
+                                <span class="ml-2" x-text="isPieceOpen(piece.id) ? '-' : '+'"></span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <div class="px-4 pb-4 border-t border-slate-100" x-show="isPieceOpen(piece.id)">
+                        <div x-show="pieceState(piece.id).loading" class="pt-3 flex items-center gap-2 text-sm text-slate-500">
+                            <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
+                            Loading bowings...
+                        </div>
+                        <div x-show="pieceState(piece.id).error" class="pt-3 text-sm text-red-600" x-text="pieceState(piece.id).error"></div>
+
+                        <template x-if="!pieceState(piece.id).loading && !pieceState(piece.id).error && pieceState(piece.id).stringPartOptions.length === 0">
+                            <div class="pt-3 text-sm text-slate-500">
+                                No string parts found for this piece.
+                            </div>
+                        </template>
+
+                        <div x-show="pieceState(piece.id).stringPartOptions.length > 0" class="pt-3 space-y-3">
+                            <div x-show="getMissingStringPartCount(piece.id) > 0">
+                            <input
+                                type="file"
+                                class="filepond w-full"
+                                :data-piece-id="piece.id"
+                                data-asset-type="Bowing"
+                                data-filepond-label="Drag & Drop Files to Upload Bowings (or <span class=&quot;filepond--label-action&quot;> Browse</span>)"
+                            >
+                            </div>
+
+                            <template x-if="pieceState(piece.id).partAssets.length === 0">
+                                <div class="text-sm text-slate-500">No bowings uploaded yet.</div>
+                            </template>
+
+                            <template x-for="partAsset in pieceState(piece.id).partAssets" :key="partAsset.id">
+                                <div class="grid grid-cols-6 gap-2 items-center" :id="`bowing-part-asset-${partAsset.id}`">
+                                    <span
+                                        class="font-light col-span-3 text-sm"
+                                        :class="(partAsset.parts || []).length ? '' : 'text-red-600'"
+                                        x-text="partAsset.upload_filename"
+                                    ></span>
+                                    <input
+                                        type="text"
+                                        class="bowing-part-asset block w-full rounded-xl border border-slate-200 col-span-2 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                        :data-piece-id="piece.id"
+                                        :data-part-asset-id="partAsset.id"
+                                        :data-options="JSON.stringify(pieceState(piece.id).stringPartOptions)"
+                                        :data-initial="JSON.stringify(partAsset.parts || [])"
+                                    />
+                                    <div class="flex items-center gap-2 text-xs font-bold">
+                                        <a class="btn-view" :href="`/piece/${piece.id}/asset/${partAsset.id}/download`">
+                                            View
+                                        </a>
+                                        <button
+                                            type="button"
+                                            class="btn-danger"
+                                            @click="deletePartAsset(piece.id, partAsset.id)"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </li>
+            </template>
+        </ul>
+        </div>
+</div>

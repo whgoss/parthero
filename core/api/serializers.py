@@ -2,12 +2,14 @@ from rest_framework import serializers
 from pydantic import ValidationError as PydanticValidationError
 from core.dtos.music import PartDTO
 from core.enum.status import UploadStatus
+from core.enum.music import PartAssetType
 from core.enum.instruments import InstrumentEnum
 from core.utils import EnumChoiceField
 
 
 class PartAssetCreateSerializer(serializers.Serializer):
     filename = serializers.CharField(max_length=255)
+    asset_type = EnumChoiceField(PartAssetType, default=PartAssetType.CLEAN)
 
     def validate_filename(self, value):
         # TODO: ensure extension is allowed, etc.

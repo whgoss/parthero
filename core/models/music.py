@@ -10,6 +10,7 @@ from django.db.models import (
 )
 from core.models.base import UUIDPrimaryKeyModel
 from core.models.organizations import Musician, Organization
+from core.enum.music import PartAssetType
 from core.enum.status import UploadStatus
 
 
@@ -56,6 +57,11 @@ class PartAsset(UUIDPrimaryKeyModel):
     upload_url = CharField(max_length=511, null=True, blank=True)
     upload_filename = CharField(max_length=255, null=True, blank=True)
     file_key = CharField(max_length=255, null=True, blank=True)
+    asset_type = CharField(
+        max_length=255,
+        default=PartAssetType.CLEAN.value,
+        choices=PartAssetType.choices(),
+    )
     status = CharField(
         max_length=255,
         default=UploadStatus.NONE.value,

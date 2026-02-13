@@ -12,6 +12,7 @@ from core.models.music import (
     PartInstrument,
     MusicianInstrument,
 )
+from core.enum.music import PartAssetType
 from core.enum.status import UploadStatus
 from core.enum.instruments import (
     InstrumentEnum,
@@ -83,7 +84,9 @@ class PieceDTO(BaseDTO):
         if completed_parts is None:
             completed_parts = (
                 Part.objects.filter(
-                    piece_id=str(model.id), assets__status=UploadStatus.UPLOADED.value
+                    piece_id=str(model.id),
+                    assets__asset_type=PartAssetType.CLEAN.value,
+                    assets__status=UploadStatus.UPLOADED.value,
                 )
                 .distinct()
                 .count()
@@ -177,6 +180,7 @@ class PartInstrumentDTO(BaseDTO):
 
 class PartAssetDTO(BaseDTO):
     piece_id: str
+    asset_type: PartAssetType
     status: UploadStatus
     parts: Optional[List[PartDTO]] = None
     upload_filename: Optional[str] = None
@@ -195,6 +199,7 @@ class PartAssetDTO(BaseDTO):
             id=str(model.id),
             piece_id=str(model.piece.id),
             parts=PartDTO.from_models(model.parts.all()) if model.parts else None,
+            asset_type=PartAssetType(model.asset_type),
             status=UploadStatus(model.status),
             upload_url=model.upload_url,
             upload_filename=model.upload_filename,

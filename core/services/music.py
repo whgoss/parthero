@@ -13,6 +13,7 @@ from core.dtos.music import (
     InstrumentDTO,
     InstrumentSectionDTO,
 )
+from core.enum.music import PartAssetType
 from core.enum.instruments import (
     InstrumentEnum,
     InstrumentSectionEnum,
@@ -182,7 +183,9 @@ def create_part(
 
 
 @transaction.atomic
-def create_part_asset(piece_id: str, filename: str) -> PartAssetUploadDTO:
+def create_part_asset(
+    piece_id: str, filename: str, asset_type: PartAssetType
+) -> PartAssetUploadDTO:
     piece = Piece.objects.get(id=piece_id)
     parts = Part.objects.filter(piece_id=piece_id)
     part_asset = PartAsset(id=uuid.uuid4(), piece_id=piece_id)
@@ -221,6 +224,7 @@ def create_part_asset(piece_id: str, filename: str) -> PartAssetUploadDTO:
     part_asset.file_key = file_key
     part_asset.upload_url = presigned_url
     part_asset.upload_filename = filename
+    part_asset.asset_type = asset_type.value
     part_asset.status = UploadStatus.PENDING.value
     part_asset.save()
 
@@ -255,11 +259,11 @@ def get_part_asset(part_asset_id: str) -> PartAssetDTO:
     return PartAssetDTO.from_model(part_asset)
 
 
-def get_part_assets(piece_id: str) -> List[PartAssetDTO]:
+def get_part_assets(piece_id: str, asset_type: PartAssetType) -> List[PartAssetDTO]:
     piece = Piece.objects.get(id=piece_id)
-    part_assets = PartAsset.objects.filter(piece_id=piece.id).order_by(
-        "-upload_filename"
-    )
+    part_assets = PartAsset.objects.filter(
+        piece_id=piece.id, asset_type=asset_type.value
+    ).order_by("-upload_filename")
     return PartAssetDTO.from_models(part_assets)
 
 

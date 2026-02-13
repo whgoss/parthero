@@ -15,7 +15,7 @@ function getCookie(name) {
 
 function updatePartAsset(pieceId, partAssetDto, newStatus) {
   if (!pieceId || !partAssetDto) return;
-  const partIds = partAssetDto.parts.map(part => part.id);
+  const partIds = (partAssetDto.parts || []).map((part) => part.id);
   return fetch(`/api/piece/${pieceId}/asset/${partAssetDto.id}`, {
     method: "PATCH",
     headers: {
@@ -32,28 +32,19 @@ function updatePartAsset(pieceId, partAssetDto, newStatus) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".instruments").forEach((instrumentElem) => {
-    const initialScriptId = instrumentElem.dataset.initialId;
-    const whitelistScriptId = instrumentElem.dataset.optionsId;
-    const whitelist = JSON.parse(document.getElementById(whitelistScriptId).textContent);
-    const initial = JSON.parse(document.getElementById(initialScriptId).textContent);
-
-    const tagify = new Tagify(instrumentElem, {
-      whitelist,
-      enforceWhitelist: true,
-      dropdown: { enabled: 0, closeOnSelect: false },
-      originalInputValueFormat: (valuesArr) => valuesArr.map((t) => t.value).join(","),
-    });
-
-    tagify.loadOriginalValues(initial);
-  });
-
-  // FilePond - Automatically turn any <input type="file" class="filepond"> into a FilePond instance
-  const inputs = document.querySelectorAll('input[type="file"].filepond');
+function initializeFilePonds(scope = document) {
+  const inputs = scope.querySelectorAll?.('input[type="file"].filepond') || [];
 
   inputs.forEach((input) => {
-    const pieceId = input.dataset.pieceId; // <input ... data-piece-id="{{ piece.id }}">
+    if (input.dataset.filepondInitialized === "true") {
+      return;
+    }
+
+    const pieceId = input.dataset.pieceId;
+    const assetType = input.dataset.assetType || "Clean";
+    const labelIdle =
+      input.dataset.filepondLabel ||
+      'Drag & Drop Files to Upload Parts (or <span class="filepond--label-action"> Browse</span>)';
 
     FilePond.create(input, {
       allowMultiple: true,
@@ -63,23 +54,21 @@ document.addEventListener("DOMContentLoaded", () => {
       credits: null,
       maxFiles: null,
       dropOnPage: false,
-      labelIdle: 'Drag & Drop Files to Upload Parts (or <span class="filepond--label-action"> Browse</span>)',
-      acceptedFileTypes: ['application/pdf'],
+      labelIdle,
+      acceptedFileTypes: ["application/pdf"],
       fileValidateTypeLabelExpectedTypes: "Only PDF files are allowed",
       server: {
         process: (fieldName, file, metadata, load, error, progress, abort) => {
           let partAssetDto = null;
           let xhr = null;
 
-
-          // 1) Determine part for filename
           fetch(`/api/piece/${pieceId}/asset`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "X-CSRFToken": getCookie("csrftoken"),
             },
-            body: JSON.stringify({ filename: file.name }),
+            body: JSON.stringify({ filename: file.name, asset_type: assetType }),
           })
             .then((res) => res.json())
             .then((data) => {
@@ -87,11 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
               xhr = new XMLHttpRequest();
               xhr.open("PUT", data.upload_url, true);
               xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable)
+                if (e.lengthComputable) {
                   progress(e.lengthComputable, e.loaded, e.total);
+                }
               };
 
-              // 2) Update part status after upload
               xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                   updatePartAsset(pieceId, partAssetDto, "Uploaded");
@@ -113,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
           return {
             abort: () => {
-              // user cancelled
               abort();
             },
           };
@@ -127,7 +115,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2000);
       },
     });
+
+    input.dataset.filepondInitialized = "true";
   });
+}
+
+window.initializeFilePonds = initializeFilePonds;
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".instruments").forEach((instrumentElem) => {
+    const initialScriptId = instrumentElem.dataset.initialId;
+    const whitelistScriptId = instrumentElem.dataset.optionsId;
+    const whitelist = JSON.parse(document.getElementById(whitelistScriptId).textContent);
+    const initial = JSON.parse(document.getElementById(initialScriptId).textContent);
+
+    const tagify = new Tagify(instrumentElem, {
+      whitelist,
+      enforceWhitelist: true,
+      dropdown: { enabled: 0, closeOnSelect: false },
+      originalInputValueFormat: (valuesArr) => valuesArr.map((t) => t.value).join(","),
+    });
+
+    tagify.loadOriginalValues(initial);
+  });
+
+  initializeFilePonds(document);
 });
 
 export { FilePond };

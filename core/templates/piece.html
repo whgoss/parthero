@@ -69,7 +69,7 @@
               </div>
             </div>
           </template>
-          <template x-if="!missingParts.length && !loading">
+          <template x-if="!missingParts.length && !loading && completedParts.length">
             <div class="flex">
               <h1 class="text-md font-bold text-green-600">
                 <span class="items-center justify-beginning px-1">✅ All Parts Uploaded</span>

@@ -95,7 +95,7 @@ window.partAssets = function partAssets(pieceId) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch(`/api/piece/${this.pieceId}/assets`, {
+        const response = await fetch(`/api/piece/${this.pieceId}/assets?asset_type=Clean`, {
           headers: { Accept: "application/json" },
         });
         if (!response.ok) {
@@ -119,7 +119,7 @@ window.partAssets = function partAssets(pieceId) {
       }
       this.validationLoading = true;
       try {
-        const response = await fetch(`/api/piece/${this.pieceId}/assets`, {
+        const response = await fetch(`/api/piece/${this.pieceId}/assets?asset_type=Clean`, {
           headers: { Accept: "application/json" },
         });
         if (!response.ok) {
