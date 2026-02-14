@@ -1,0 +1,193 @@
+<!-- Program Roster Tab -->
+<div
+    class="p-6"
+    data-tab-panel="roster"
+    x-show="activeTab === 'roster'"
+    x-data="programRosterSearch('{{ program.id }}')"
+>
+    {{ instrument_options|json_script:"instrument-options" }}
+    <p class="mt-1 text-sm text-slate-500">
+    Build a program-specific roster by assigning musicians to sections.
+    </p>
+
+    <!-- Program Roster Table -->
+    <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+            <th class="px-4 py-2.5 text-left">First Name</th>
+            <th class="px-4 py-2.5 text-left">Last Name</th>
+            <th class="px-4 py-2.5 text-left">Email</th>
+            <th class="px-4 py-2.5 text-left">Principal</th>
+            <th class="px-4 py-2.5 text-left">Sections / Instruments</th>
+            <th class="px-4 py-2.5 text-left"></th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+            <template x-if="!loading && roster.length === 0">
+            <tr>
+                <td class="px-4 py-3 text-sm text-slate-500" colspan="6">
+                No musicians assigned yet.
+                </td>
+            </tr>
+            </template>
+            <template x-for="program_musician in roster" :key="program_musician.id">
+            <tr>
+                <td class="px-4 py-3" x-text="program_musician.first_name"></td>
+                <td class="px-4 py-3" x-text="program_musician.last_name"></td>
+                <td class="px-4 py-3" x-text="program_musician.email"></td>
+                <td class="px-4 py-3" x-text="program_musician.principal ? 'Yes' : 'No'"></td>
+                <td class="px-4 py-3">
+                <input
+                    type="text"
+                    class="form-input roster-instruments"
+                    placeholder="Add sections or instruments"
+                    :value="rosterInstruments[program_musician.id] || formatInstrumentList(program_musician)"
+                    @input="rosterInstruments[program_musician.id] = $event.target.value"
+                    data-options-id="instrument-options"
+                    :data-program-musician-id="program_musician.id"
+                />
+                </td>
+                <td class="px-4 py-3">
+                <button
+                    type="button"
+                    class="btn-danger"
+                    @click="removeMusician(program_musician)"
+                >
+                    Remove
+                </button>
+                </td>
+            </tr>
+            </template>
+        </tbody>
+        </table>
+    </div>
+    </div>
+
+    <hr class="my-6 border-slate-200">
+    <div class="flex flex-wrap items-center mb-4">
+    <h2 class="text-lg font-medium">Add Musician to Program Roster</h2>
+
+    <div class="ml-auto flex items-center gap-2">
+        <!-- Load Principals -->
+        <a
+        class="btn-secondary"
+        @click="loadPrincipals()">
+        Load Principals
+        </a>
+
+        <!-- Load Core Members -->
+        <a
+        class="btn-secondary"
+        @click="loadCoreMembers()">
+        Load Core Members
+        </a>
+
+        <!-- Add a Musician -->
+        <a
+            href="/musician/"
+            class="btn-secondary">
+        <svg xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            class="h-4 w-4 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                d="M10 4v12m6-6H4" />
+        </svg>
+        Add a Musician
+        </a>
+    </div>
+    
+    </div>
+    <div>
+        <p class="mb-4 text-sm text-slate-500">
+        Add musicians from your master roster to this program.
+        </p>
+    </div>
+
+    <!-- Musician Search -->
+    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="relative">
+        <input
+        type="text"
+        class="form-input"
+        placeholder="Search by name"
+        x-model="name"
+        @input.debounce.400ms="search()"
+        />
+        <button
+        type="button"
+        class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+        x-show="name"
+        @click="clearSearch()"
+        aria-label="Clear search"
+        >
+        ✕
+        </button>
+    </div>
+    <div class="relative">
+        <input
+        type="text"
+        class="form-input pr-10"
+        placeholder="Search by instrument or section"
+        x-model="instrument"
+        @input.debounce.400ms="search()"
+        />
+        <button
+        type="button"
+        class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+        x-show="instrument"
+        @click="clearSearch()"
+        aria-label="Clear search"
+        >
+        ✕
+        </button>
+    </div>
+    </div>
+
+    <div class="mt-4">
+    <div x-show="loading" class="flex items-center gap-2 text-sm text-slate-500">
+        <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
+        Searching...
+    </div>
+    <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
+    <div x-show="saveError" class="mt-2 text-sm text-red-600" x-text="saveError"></div>
+
+    <template x-if="!loading && hasSearched && results.length === 0">
+        <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
+        No musicians found.
+        </div>
+    </template>
+
+    <ul class="mt-3 space-y-2">
+        <template x-for="musician in results" :key="musician.id">
+        <li
+            class="rounded-lg border border-slate-200 p-3 transition hover:bg-slate-50 cursor-pointer"
+            :class="isInRoster(musician) ? 'border-blue-200 bg-blue-50 cursor-default' : ''"
+            @click="addMusician(musician)"
+        >
+            <div class="flex items-center justify-between gap-3">
+            <div>
+                <div>
+                <span
+                    class="inline-flex items-center justify-center rounded-md border border-green-200 bg-green-50 gap-2 px-2 py-1 text-xs font-medium text-green-700"
+                    x-show="isInRoster(musician)"
+                >
+                    Selected
+                </span>
+                <span class="text-sm font-medium text-slate-900">
+                    <span x-text="musician.first_name"></span>
+                    <span x-text="musician.last_name"></span>
+                </span>
+                </div>
+                <div class="text-xs text-slate-500" x-text="musician.email"></div>
+            </div>
+            <div class="text-xs text-slate-500" x-text="formatInstrumentList(musician)"></div>
+            </div>
+        </li>
+        </template>
+    </ul>
+    </div>
+</div>

@@ -1,3 +1,4 @@
+{% load pydantic_json %}
 <!-- Bowings Tab -->
 <div
     class="p-6"
@@ -8,6 +9,8 @@
     <p class="mt-1 text-sm text-slate-500">
         Upload your bowings for each piece in the program.
     </p>
+
+    {{ pieces|pydantic_json_script:"program-bowings-pieces-data" }}
 
     <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-hidden">
         <template x-if="pieces.length === 0">
