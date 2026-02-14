@@ -101,7 +101,7 @@ def search(request):
 
 
 def download_part_asset(request, piece_id, part_asset_id):
-    part_asset = get_part_asset(part_asset_id)
+    part_asset = get_part_asset(request.organization.id, part_asset_id)
     if not part_asset:
         return HttpResponseNotFound("Unable to find asset")
 

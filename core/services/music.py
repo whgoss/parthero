@@ -233,16 +233,21 @@ def create_part_asset(
 
 @transaction.atomic
 def update_part_asset(
+    organization_id: str,
     part_asset_id: str,
     part_ids: Optional[List[str]] = None,
     status: Optional[UploadStatus] = None,
 ) -> PartAssetDTO:
-    part_asset = PartAsset.objects.get(id=part_asset_id)
+    part_asset = PartAsset.objects.get(
+        id=part_asset_id, piece__organization_id=organization_id
+    )
     if status:
         part_asset.status = status.value
         part_asset.save()
     if part_ids:
-        parts = Part.objects.filter(id__in=part_ids)
+        parts = Part.objects.filter(
+            id__in=part_ids, piece__organization_id=organization_id
+        )
         part_asset.parts.set(parts)
     else:
         part_asset.parts.set([])
@@ -250,25 +255,35 @@ def update_part_asset(
     return PartAssetDTO.from_model(part_asset)
 
 
-def delete_part_asset(part_asset_id: str) -> None:
-    PartAsset.objects.get(id=part_asset_id).delete()
+def delete_part_asset(organization_id: str, part_asset_id: str) -> None:
+    PartAsset.objects.get(
+        id=part_asset_id, piece__organization_id=organization_id
+    ).delete()
 
 
-def get_part_asset(part_asset_id: str) -> PartAssetDTO:
-    part_asset = PartAsset.objects.get(id=part_asset_id)
+def get_part_asset(organization_id: str, part_asset_id: str) -> PartAssetDTO:
+    part_asset = PartAsset.objects.get(
+        id=part_asset_id, piece__organization_id=organization_id
+    )
     return PartAssetDTO.from_model(part_asset)
 
 
-def get_part_assets(piece_id: str, asset_type: PartAssetType) -> List[PartAssetDTO]:
-    piece = Piece.objects.get(id=piece_id)
+def get_part_assets(
+    organization_id: str, piece_id: str, asset_type: PartAssetType
+) -> List[PartAssetDTO]:
+    piece = Piece.objects.get(id=piece_id, organization_id=organization_id)
     part_assets = PartAsset.objects.filter(
-        piece_id=piece.id, asset_type=asset_type.value
+        piece_id=piece.id,
+        asset_type=asset_type.value,
+        piece__organization_id=organization_id,
     ).order_by("-upload_filename")
     return PartAssetDTO.from_models(part_assets)
 
 
-def get_parts(piece_id: str) -> List[PartDTO]:
-    parts = Part.objects.filter(piece_id=piece_id)
+def get_parts(organization_id: str, piece_id: str) -> List[PartDTO]:
+    parts = Part.objects.filter(
+        piece_id=piece_id, piece__organization_id=organization_id
+    )
     return PartDTO.from_models(parts)
 
 

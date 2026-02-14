@@ -73,7 +73,7 @@ def test_no_instrument_collisions():
         composer_domo_id=None,
     )
 
-    parts = get_parts(piece.id)
+    parts = get_parts(organization.id, piece.id)
 
     assert len(parts) == 31
     assert _numbers_for_primary_instrument(parts, InstrumentEnum.FLUTE) == {1, 2}
@@ -164,7 +164,7 @@ def test_doubling_detection():
         composer_domo_id=None,
     )
 
-    parts = get_parts(piece.id)
+    parts = get_parts(organization.id, piece.id)
     assert len(parts) == 29
     assert _numbers_for_primary_instrument(parts, InstrumentEnum.FLUTE) == {1, 2}
     assert _numbers_for_primary_instrument(parts, InstrumentEnum.OBOE) == {1, 2}
@@ -351,7 +351,7 @@ def test_percussion_count():
         composer_domo_id=None,
     )
 
-    parts = get_parts(piece.id)
+    parts = get_parts(organization.id, piece.id)
     assert _numbers_for_primary_instrument(parts, InstrumentEnum.PERCUSSION) == {1, 2}
 
     instrumentation = "2 2 2 2 — 2 2 0 0 — timp+5 — str"
@@ -364,7 +364,7 @@ def test_percussion_count():
         domo_id=None,
         composer_domo_id=None,
     )
-    parts = get_parts(piece.id)
+    parts = get_parts(organization.id, piece.id)
     assert _numbers_for_primary_instrument(parts, InstrumentEnum.TIMPANI) == {1}
     assert _numbers_for_primary_instrument(parts, InstrumentEnum.PERCUSSION) == {
         1,
@@ -388,7 +388,7 @@ def test_violin_parts():
         domo_id=None,
         composer_domo_id=None,
     )
-    parts = get_parts(piece.id)
+    parts = get_parts(organization.id, piece.id)
 
     # Violin 1
     violin_1 = create_part_asset(

@@ -59,7 +59,9 @@ class PartAssetViewSet(
         serializer.is_valid(raise_exception=True)
         upload_status = serializer.validated_data.get("status", None)
         part_ids = serializer.validated_data.get("part_ids", None)
-        part_asset = update_part_asset(part_asset_id, part_ids, upload_status)
+        part_asset = update_part_asset(
+            request.organization.id, part_asset_id, part_ids, upload_status
+        )
         response_data = part_asset.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -68,9 +70,11 @@ class PartAssetViewSet(
         if not asset_type or asset_type not in PartAssetType.values():
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        parts = get_parts(piece_id)
+        parts = get_parts(request.organization.id, piece_id)
         part_assets = get_part_assets(
-            piece_id=piece_id, asset_type=PartAssetType(asset_type)
+            organization_id=request.organization.id,
+            piece_id=piece_id,
+            asset_type=PartAssetType(asset_type),
         )
 
         # Find all parts that have a part asset assigned
@@ -97,7 +101,7 @@ class PartAssetViewSet(
 
     @transaction.atomic
     def delete(self, request, part_asset_id, *args, **kwargs):
-        delete_part_asset(part_asset_id)
+        delete_part_asset(request.organization.id, part_asset_id)
         return Response(status=status.HTTP_200_OK)
 
 
