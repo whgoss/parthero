@@ -1,6 +1,7 @@
 boto3==1.41.5
 Django==5.2.4
 djangorestframework==3.16.1
+django-pgbulk==3.3.0
 djlint==1.36.4
 email_validator==2.3.0
 faker==38.2.0

@@ -303,14 +303,21 @@
             <h2 class="text-lg font-medium">Add Musician to Program Roster</h2>
 
             <div class="ml-auto flex items-center gap-2">
-              <!-- Load principals -->
+              <!-- Load Principals -->
               <a
                 class="btn-secondary"
                 @click="loadPrincipals()">
                 Load Principals
               </a>
 
-              <!-- Add musician -->
+              <!-- Load Core Members -->
+              <a
+                class="btn-secondary"
+                @click="loadCoreMembers()">
+                Load Core Members
+              </a>
+
+              <!-- Add a Musician -->
                 <a
                   href="/musician/"
                   class="btn-secondary">

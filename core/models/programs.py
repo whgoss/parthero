@@ -3,6 +3,7 @@ from django.db.models import (
     DateTimeField,
     ForeignKey,
     IntegerField,
+    UniqueConstraint,
     CASCADE,
 )
 from core.models.base import UUIDPrimaryKeyModel
@@ -34,12 +35,27 @@ class ProgramMusician(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, related_name="musicians", on_delete=CASCADE)
     musician = ForeignKey(Musician, on_delete=CASCADE)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["program", "musician"], name="unique_program_musician"
+            )
+        ]
+
 
 class ProgramMusicianInstrument(UUIDPrimaryKeyModel):
     program_musician = ForeignKey(
         ProgramMusician, related_name="instruments", on_delete=CASCADE
     )
     instrument = ForeignKey(Instrument, on_delete=CASCADE)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["program_musician", "instrument"],
+                name="unique_program_musician_instrument",
+            )
+        ]
 
 
 class ProgramPartMusician(UUIDPrimaryKeyModel):

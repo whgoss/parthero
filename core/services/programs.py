@@ -1,4 +1,5 @@
 import pytz
+import pgbulk
 from datetime import datetime
 from typing import Optional, List
 from django.db import transaction
@@ -234,7 +235,10 @@ def add_musicians_to_program(
     for musician in musicians:
         program_musician = ProgramMusician(program=program, musician=musician)
         program_musicians.append(program_musician)
-    saved_program_musicians = ProgramMusician.objects.bulk_create(program_musicians)
+    pgbulk.upsert(
+        ProgramMusician, program_musicians, unique_fields=["program_id", "musician_id"]
+    )
+    saved_program_musicians = ProgramMusician.objects.filter(program_id=program_id)
 
     # Designate each musicians' primary instrument on the program
     program_musician_instruments = []
@@ -251,6 +255,10 @@ def add_musicians_to_program(
                 instrument=musician_instrument.instrument,
             )
             program_musician_instruments.append(program_musician_instrument)
-    ProgramMusicianInstrument.objects.bulk_create(program_musician_instruments)
+    pgbulk.upsert(
+        ProgramMusicianInstrument,
+        program_musician_instruments,
+        unique_fields=["program_musician_id", "instrument_id"],
+    )
 
     return ProgramMusicianDTO.from_models(saved_program_musicians)

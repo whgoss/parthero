@@ -602,6 +602,33 @@ window.programRosterSearch = function programRosterSearch(programId) {
         this.saving = false;
       }
     },
+    async loadCoreMembers() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/musicians`,
+          {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify({ core_members: true }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to load core members");
+        }
+        this.fetchRoster();
+      } catch (error) {
+        this.saveError = "Unable to load core members right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
     resetRosterTagify() {
       this.destroyTagify();
       this.$nextTick(() => this.initRosterTagify());
