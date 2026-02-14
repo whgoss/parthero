@@ -575,6 +575,33 @@ window.programRosterSearch = function programRosterSearch(programId) {
         }
       }
     },
+    async loadPrincipals() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/musicians`,
+          {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify({ principals: true }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to load principals");
+        }
+        this.fetchRoster();
+      } catch (error) {
+        this.saveError = "Unable to load principals right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
     resetRosterTagify() {
       this.destroyTagify();
       this.$nextTick(() => this.initRosterTagify());

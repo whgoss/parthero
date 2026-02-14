@@ -21,6 +21,7 @@ from core.services.programs import (
     add_piece_to_program,
     remove_piece_from_program,
     add_musician_to_program,
+    add_musicians_to_program,
     remove_musician_from_program,
     get_musicians_for_program,
     add_program_musician_instrument,
@@ -186,10 +187,27 @@ class ProgramMusicianViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         Program.objects.get(id=program_id, organization_id=request.organization.id)
         serializer = ProgramMusicianCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        musician_id = serializer.validated_data.get("musician_id")
-        musicians = add_musician_to_program(
-            request.organization.id, program_id, musician_id
-        )
+        musician_id = serializer.validated_data.get("musician_id", None)
+        principals = serializer.validated_data.get("principals", False)
+        core_members = serializer.validated_data.get("core_members", False)
+        musicians = []
+        if musician_id:
+            musicians = add_musician_to_program(
+                organization_id=request.organization.id,
+                program_id=program_id,
+                musician_id=musician_id,
+            )
+        elif principals or core_members:
+            musicians = add_musicians_to_program(
+                organization_id=request.organization.id,
+                program_id=program_id,
+                principals=principals,
+                core_members=core_members,
+            )
+        else:
+            musicians = get_musicians_for_program(
+                organization_id=request.organization.id, program_id=program_id
+            )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
 

@@ -48,7 +48,7 @@
       <div class="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50/70 px-4 pt-4">
         <button
           type="button"
-          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition cursor-pointer"
           :class="activeTab === 'pieces' ? '-mb-px border-slate-200 bg-white text-slate-900' : 'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'"
           @click="setTab('pieces')"
         >
@@ -56,7 +56,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition cursor-pointer"
           :class="activeTab === 'bowings' ? '-mb-px border-slate-200 bg-white text-slate-900' : 'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'"
           @click="setTab('bowings')"
         >
@@ -64,7 +64,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition cursor-pointer"
           :class="activeTab === 'roster' ? '-mb-px border-slate-200 bg-white text-slate-900' : 'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'"
           @click="setTab('roster')"
         >
@@ -302,20 +302,30 @@
           <div class="flex flex-wrap items-center mb-4">
             <h2 class="text-lg font-medium">Add Musician to Program Roster</h2>
 
-            <!-- Add musician -->
-            <a
-              href="/musician/"
-              class="btn-secondary ml-auto">
-              <svg xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  class="h-4 w-4">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                      d="M10 4v12m6-6H4" />
-              </svg>
-              Add a Musician
-            </a>
+            <div class="ml-auto flex items-center gap-2">
+              <!-- Load principals -->
+              <a
+                class="btn-secondary"
+                @click="loadPrincipals()">
+                Load Principals
+              </a>
+
+              <!-- Add musician -->
+                <a
+                  href="/musician/"
+                  class="btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    class="h-4 w-4 shrink-0">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                        d="M10 4v12m6-6H4" />
+                </svg>
+                Add a Musician
+              </a>
+            </div>
+            
           </div>
           <div>
               <p class="mb-4 text-sm text-slate-500">

@@ -217,3 +217,40 @@ def remove_program_musician_instrument(
     return get_musicians_for_program(
         organization_id=organization_id, program_id=program.id
     )
+
+
+@transaction.atomic
+def add_musicians_to_program(
+    organization_id: str,
+    program_id: str,
+    principals: bool = False,
+    core_members: bool = True,
+) -> List[ProgramMusicianDTO]:
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
+    musicians = Musician.objects.filter(principal=principals, core_member=core_members)
+    program_musicians = []
+
+    # Add musicians to the program
+    for musician in musicians:
+        program_musician = ProgramMusician(program=program, musician=musician)
+        program_musicians.append(program_musician)
+    saved_program_musicians = ProgramMusician.objects.bulk_create(program_musicians)
+
+    # Designate each musicians' primary instrument on the program
+    program_musician_instruments = []
+    for program_musician in saved_program_musicians:
+        musician_instrument = (
+            MusicianInstrument.objects.filter(musician=program_musician.musician)
+            .select_related("instrument")
+            .first()
+        )
+
+        if musician_instrument and musician_instrument.instrument:
+            program_musician_instrument = ProgramMusicianInstrument(
+                program_musician=program_musician,
+                instrument=musician_instrument.instrument,
+            )
+            program_musician_instruments.append(program_musician_instrument)
+    ProgramMusicianInstrument.objects.bulk_create(program_musician_instruments)
+
+    return ProgramMusicianDTO.from_models(saved_program_musicians)

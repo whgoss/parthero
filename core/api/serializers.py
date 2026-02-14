@@ -40,7 +40,9 @@ class PartPatchSerializer(serializers.Serializer):
 
 
 class ProgramMusicianCreateSerializer(serializers.Serializer):
-    musician_id = serializers.CharField(required=True)
+    musician_id = serializers.CharField(required=False)
+    principals = serializers.BooleanField(required=False)
+    core_members = serializers.BooleanField(required=False)
 
 
 class ProgramMusicianInstrumentSerializer(serializers.Serializer):
