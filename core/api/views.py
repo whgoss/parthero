@@ -149,14 +149,16 @@ class ProgramPieceViewSet(viewsets.GenericViewSet):
     @transaction.atomic
     def update(self, request, program_id, piece_id, *args, **kwargs):
         Program.objects.get(id=program_id, organization_id=request.organization.id)
-        pieces = add_piece_to_program(program_id, piece_id)
+        pieces = add_piece_to_program(request.organization.id, program_id, piece_id)
         response_data = [piece.model_dump(mode="json") for piece in pieces]
         return Response(response_data, status=status.HTTP_200_OK)
 
     @transaction.atomic
     def delete(self, request, program_id, piece_id, *args, **kwargs):
         Program.objects.get(id=program_id, organization_id=request.organization.id)
-        pieces = remove_piece_from_program(program_id, piece_id)
+        pieces = remove_piece_from_program(
+            request.organization.id, program_id, piece_id
+        )
         response_data = [piece.model_dump(mode="json") for piece in pieces]
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -185,19 +187,23 @@ class ProgramMusicianViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         serializer = ProgramMusicianCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         musician_id = serializer.validated_data.get("musician_id")
-        musicians = add_musician_to_program(program_id, musician_id)
+        musicians = add_musician_to_program(
+            request.organization.id, program_id, musician_id
+        )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
 
     def list(self, request, program_id, *args, **kwargs):
-        musicians = get_musicians_for_program(program_id)
+        musicians = get_musicians_for_program(request.organization.id, program_id)
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
 
     @transaction.atomic
     def delete(self, request, program_id, program_musician_id, *args, **kwargs):
         Program.objects.get(id=program_id, organization_id=request.organization.id)
-        musicians = remove_musician_from_program(program_id, program_musician_id)
+        musicians = remove_musician_from_program(
+            request.organization.id, program_id, program_musician_id
+        )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -215,7 +221,7 @@ class ProgramMusicianInstrumentViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         instrument = serializer.validated_data.get("instrument")
         musicians = add_program_musician_instrument(
-            program_id, program_musician_id, instrument
+            request.organization.id, program_id, program_musician_id, instrument
         )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
@@ -227,7 +233,7 @@ class ProgramMusicianInstrumentViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         instrument = serializer.validated_data.get("instrument")
         musicians = remove_program_musician_instrument(
-            program_id, program_musician_id, instrument
+            request.organization.id, program_id, program_musician_id, instrument
         )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)

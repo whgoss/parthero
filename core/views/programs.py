@@ -16,8 +16,8 @@ from core.enum.instruments import (
 
 @login_required
 def get_program_view(request, program_id):
-    program = get_program(program_id)
-    pieces = get_pieces_for_program(program_id)
+    program = get_program(request.organization.id, program_id)
+    pieces = get_pieces_for_program(request.organization.id, program_id)
     string_instruments = [
         instrument.value
         for instrument in INSTRUMENT_SECTIONS.get(InstrumentSectionEnum.STRINGS, [])
@@ -38,7 +38,9 @@ def get_programs_view(request):
     programs = get_programs(request.organization.id)
     if programs:
         upcoming_program = programs[0]
-        upcoming_pieces = get_pieces_for_program(upcoming_program.id)
+        upcoming_pieces = get_pieces_for_program(
+            request.organization.id, upcoming_program.id
+        )
     context = {
         "programs": programs,
         "upcoming_program": upcoming_program,

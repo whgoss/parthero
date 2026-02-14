@@ -54,8 +54,8 @@ def create_program(
     return ProgramDTO.from_model(program)
 
 
-def get_program(piece_id: str) -> ProgramDTO:
-    program = Program.objects.get(id=piece_id)
+def get_program(organization_id: str, program_id: str) -> ProgramDTO:
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
     return ProgramDTO.from_model(program)
 
 
@@ -68,8 +68,10 @@ def get_programs(organization_id: str) -> List[ProgramDTO]:
     return ProgramDTO.from_models(programs)
 
 
-def get_pieces_for_program(program_id: str) -> List[PieceDTO]:
-    program_pieces = ProgramPiece.objects.filter(program_id=program_id)
+def get_pieces_for_program(organization_id: str, program_id: str) -> List[PieceDTO]:
+    program_pieces = ProgramPiece.objects.filter(
+        program_id=program_id, program__organization_id=organization_id
+    )
     piece_ids = []
     for program_piece in program_pieces:
         piece_ids.append(program_piece.piece_id)
@@ -80,43 +82,52 @@ def get_pieces_for_program(program_id: str) -> List[PieceDTO]:
 
 
 def add_piece_to_program(
+    organization_id: str,
     program_id: str,
     piece_id: str,
 ) -> List[PieceDTO]:
-    program = Program.objects.get(id=program_id)
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
     piece = Piece.objects.get(id=piece_id, organization=program.organization)
     program_piece = ProgramPiece.objects.filter(program=program, piece=piece).first()
     if not program_piece:
         program_piece = ProgramPiece(program=program, piece=piece)
         program_piece.save()
-    return get_pieces_for_program(program.id)
+    return get_pieces_for_program(
+        organization_id=organization_id, program_id=program.id
+    )
 
 
 def remove_piece_from_program(
+    organization_id: str,
     program_id: str,
     piece_id: str,
 ) -> List[PieceDTO]:
-    program = Program.objects.get(id=program_id)
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
     piece = Piece.objects.get(id=piece_id, organization=program.organization)
     program_piece = ProgramPiece.objects.filter(program=program, piece=piece).first()
     if program_piece:
         program_piece.delete()
-    return get_pieces_for_program(program.id)
+    return get_pieces_for_program(
+        organization_id=organization_id, program_id=program.id
+    )
 
 
-def get_musicians_for_program(program_id: str) -> List[ProgramMusicianDTO]:
+def get_musicians_for_program(
+    organization_id: str, program_id: str
+) -> List[ProgramMusicianDTO]:
     program_musicians = ProgramMusician.objects.filter(
-        program_id=program_id
+        program_id=program_id, program__organization_id=organization_id
     ).select_related("program", "musician", "musician__organization")
     return ProgramMusicianDTO.from_models(program_musicians)
 
 
 def add_musician_to_program(
+    organization_id: str,
     program_id: str,
     musician_id: str,
 ) -> List[ProgramMusicianDTO]:
-    program = Program.objects.get(id=program_id)
-    musician = Musician.objects.get(id=musician_id)
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
+    musician = Musician.objects.get(id=musician_id, organization_id=organization_id)
     program_musician = ProgramMusician.objects.filter(
         program=program, musician=musician
     ).first()
@@ -134,14 +145,17 @@ def add_musician_to_program(
             program_musician=program_musician,
             instrument=musician_instrument.instrument,
         )
-    return get_musicians_for_program(program.id)
+    return get_musicians_for_program(
+        organization_id=organization_id, program_id=program.id
+    )
 
 
 def remove_musician_from_program(
+    organization_id: str,
     program_id: str,
     program_musician_id: str,
 ) -> List[ProgramMusicianDTO]:
-    program = Program.objects.get(id=program_id)
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
     program_musician = ProgramMusician.objects.filter(
         id=program_musician_id, program=program
     ).first()
@@ -150,44 +164,56 @@ def remove_musician_from_program(
             program_musician=program_musician
         ).delete()
         program_musician.delete()
-    return get_musicians_for_program(program.id)
+    return get_musicians_for_program(
+        organization_id=organization_id, program_id=program.id
+    )
 
 
 def add_program_musician_instrument(
+    organization_id: str,
     program_id: str,
     program_musician_id: str,
     instrument: InstrumentEnum,
 ) -> List[ProgramMusicianDTO]:
-    program = Program.objects.get(id=program_id)
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
     program_musician = ProgramMusician.objects.filter(
         id=program_musician_id, program=program
     ).first()
     if not program_musician:
-        return get_musicians_for_program(program.id)
+        return get_musicians_for_program(
+            organization_id=organization_id, program_id=program.id
+        )
     instrument_model = Instrument.objects.filter(name=instrument.value).first()
     if instrument_model:
         ProgramMusicianInstrument.objects.get_or_create(
             program_musician=program_musician,
             instrument=instrument_model,
         )
-    return get_musicians_for_program(program.id)
+    return get_musicians_for_program(
+        organization_id=organization_id, program_id=program.id
+    )
 
 
 def remove_program_musician_instrument(
+    organization_id: str,
     program_id: str,
     program_musician_id: str,
     instrument: InstrumentEnum,
 ) -> List[ProgramMusicianDTO]:
-    program = Program.objects.get(id=program_id)
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
     program_musician = ProgramMusician.objects.filter(
         id=program_musician_id, program=program
     ).first()
     if not program_musician:
-        return get_musicians_for_program(program.id)
+        return get_musicians_for_program(
+            organization_id=organization_id, program_id=program.id
+        )
     instrument_model = Instrument.objects.filter(name=instrument.value).first()
     if instrument_model:
         ProgramMusicianInstrument.objects.filter(
             program_musician=program_musician,
             instrument=instrument_model,
         ).delete()
-    return get_musicians_for_program(program.id)
+    return get_musicians_for_program(
+        organization_id=organization_id, program_id=program.id
+    )
