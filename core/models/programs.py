@@ -1,14 +1,18 @@
 from django.db.models import (
     CharField,
+    BooleanField,
+    OneToOneField,
     DateTimeField,
     ForeignKey,
     IntegerField,
     UniqueConstraint,
     CASCADE,
+    SET_NULL,
 )
 from core.models.base import UUIDPrimaryKeyModel
 from core.models.music import Piece, Part, Instrument
 from core.models.organizations import Organization, Musician
+from core.models.users import User
 from core.enum.status import ProgramStatus
 
 
@@ -19,6 +23,7 @@ class Program(UUIDPrimaryKeyModel):
         default=ProgramStatus.CREATED.value,
         choices=ProgramStatus.choices(),
     )
+    overrides_enabled = BooleanField(default=False)
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     def __str__(self):
@@ -73,3 +78,36 @@ class ProgramRehearsal(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, related_name="rehearsals", on_delete=CASCADE)
     date = DateTimeField()
     timezone = CharField(default="America/New_York")
+
+
+class ProgramChecklist(UUIDPrimaryKeyModel):
+    program = OneToOneField(Program, related_name="checklist", on_delete=CASCADE)
+    pieces_completed_on = DateTimeField(null=True, blank=True)
+    pieces_completed_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    roster_completed_on = DateTimeField(null=True, blank=True)
+    roster_completed_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    overrides_completed_on = DateTimeField(null=True, blank=True)
+    overrides_completed_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    bowings_completed_on = DateTimeField(null=True, blank=True)
+    bowings_completed_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    assignments_sent_on = DateTimeField(null=True, blank=True)
+    assignments_sent_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    assignments_completed_on = DateTimeField(null=True, blank=True)
+    assignments_completed_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    delivery_sent_on = DateTimeField(null=True, blank=True)
+    delivery_sent_by = OneToOneField(
+        User, related_name="+", null=True, blank=True, on_delete=SET_NULL
+    )
+    delivery_completed_on = DateTimeField(null=True, blank=True)

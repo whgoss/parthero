@@ -1,9 +1,9 @@
 import re
 import uuid
 import logging
-from datetime import datetime
 from typing import List, Optional
 from django.db import transaction
+from django.utils import timezone
 from django.db.models import Count, Q
 from core.dtos.music import (
     PieceDTO,
@@ -114,7 +114,7 @@ def create_piece(
     if not setup_checklist.completed:
         setup_checklist.piece_completed = True
         setup_checklist.completed = True
-        setup_checklist.completed_date = datetime.now()
+        setup_checklist.completed_date = timezone.now()
         setup_checklist.save()
 
     return PieceDTO.from_model(piece)
@@ -138,7 +138,10 @@ def get_pieces(organization_id: str) -> List[PieceDTO]:
         parts_count=Count("parts", distinct=True),
         completed_parts=Count(
             "parts",
-            filter=Q(parts__assets__status=UploadStatus.UPLOADED.value),
+            filter=Q(
+                parts__assets__status=UploadStatus.UPLOADED.value,
+                parts__assets__asset_type=PartAssetType.CLEAN,
+            ),
             distinct=True,
         ),
     )

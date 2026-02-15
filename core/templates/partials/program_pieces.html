@@ -1,15 +1,33 @@
 {% load pydantic_json %}
 <!-- Program Pieces Tab -->
 <div class="p-6" data-tab-panel="pieces" x-show="activeTab === 'pieces'">
-
-    <!-- Selected Pieces -->
-    <p class="mt-1 text-sm text-slate-500">
-    Below are the pieces you've selected for your program.
-    </p>
-    
     {{ pieces|pydantic_json_script:"selected-pieces-data" }}
+    {{ program.checklist|pydantic_json_script:"program-checklist-data" }}
     
-    <div class="mt-4" x-data="programPieceSearch('{{ program.id }}', JSON.parse(document.getElementById('selected-pieces-data').textContent))">
+    <div x-data="programPieceSearch('{{ program.id }}', JSON.parse(document.getElementById('selected-pieces-data').textContent), JSON.parse(document.getElementById('program-checklist-data').textContent))">
+    <div class="flex items-center gap-3 mb-4">
+        <p class="text-sm text-slate-500">
+            Below are the pieces you've selected for your program.
+        </p>
+        <button
+            type="button"
+            class="btn-primary ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
+            :disabled="selectedPieces.length === 0"
+            x-show="!completed"
+            @click="markAsComplete()"
+        >
+            Mark Pieces as Complete
+        </button>
+        <button
+            type="button"
+            class="btn-primary-warning ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
+            x-show="completed == true"
+            @click="markAsIncomplete()"
+        >
+            Mark Pieces as Incomplete
+        </button>
+
+    </div>
     <div class="rounded-lg border border-slate-200 bg-slate-50/60 p-4" x-ref="selectedPieces">
     <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold text-slate-800">Selected Pieces</h2>
@@ -153,5 +171,7 @@
             </template>
         </ul>
     </div>
+
+    
   </div>
 </div>

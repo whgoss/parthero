@@ -6,16 +6,18 @@ from django.db import transaction
 from django.db.models import Min, F, Count
 from django.utils import timezone
 from core.dtos.music import PieceDTO
-from core.dtos.programs import ProgramDTO, ProgramMusicianDTO
+from core.dtos.programs import ProgramDTO, ProgramMusicianDTO, ProgramChecklistDTO
 from core.enum.status import ProgramStatus
 from core.models.music import Piece, MusicianInstrument, Instrument
 from core.models.organizations import Organization, Musician, SetupChecklist
+from core.models.users import User
 from core.models.programs import (
     Program,
     ProgramPerformance,
     ProgramPiece,
     ProgramMusician,
     ProgramMusicianInstrument,
+    ProgramChecklist,
 )
 from core.enum.instruments import InstrumentEnum
 
@@ -47,6 +49,11 @@ def create_program(
         )
         program_performance.save()
 
+    # Create a program checklist
+    program_checklist = ProgramChecklist(program=program)
+    program_checklist.save()
+
+    # Modify the setup checklist if necessary
     setup_checklist = SetupChecklist.objects.get(organization_id=organization_id)
     if not setup_checklist.completed:
         setup_checklist.program_created = True
@@ -218,6 +225,58 @@ def remove_program_musician_instrument(
     return get_musicians_for_program(
         organization_id=organization_id, program_id=program.id
     )
+
+
+@transaction.atomic
+def update_program_checklist(
+    organization_id: str,
+    program_id: str,
+    user_id: str,
+    pieces_completed: Optional[bool] = None,
+    roster_completed: Optional[bool] = None,
+    overrides_completed: Optional[bool] = None,
+    bowings_completed: Optional[bool] = None,
+    assignments_sent: Optional[bool] = None,
+    assignments_completed: Optional[bool] = None,
+    delivery_sent: Optional[bool] = None,
+    delivery_completed: Optional[bool] = None,
+) -> ProgramChecklistDTO:
+    program_checklist = ProgramChecklist.objects.get(
+        program_id=program_id, program__organization_id=organization_id
+    )
+
+    user = User.objects.get(id=user_id)
+    if pieces_completed is not None:
+        if pieces_completed:
+            program_checklist.pieces_completed_on = timezone.now()
+            program_checklist.pieces_completed_by = user
+        else:
+            program_checklist.pieces_completed_on = None
+            program_checklist.pieces_completed_by = None
+    if roster_completed is not None:
+        if roster_completed:
+            program_checklist.roster_completed_on = timezone.now()
+            program_checklist.roster_completed_by = user
+        else:
+            program_checklist.roster_completed_on = None
+            program_checklist.roster_completed_by = None
+    if overrides_completed is not None:
+        if overrides_completed:
+            program_checklist.overrides_completed_on = timezone.now()
+            program_checklist.overrides_completed_by = user
+        else:
+            program_checklist.overrides_completed_on = None
+            program_checklist.overrides_completed_by = None
+    if bowings_completed is not None:
+        if bowings_completed:
+            program_checklist.bowings_completed_on = timezone.now()
+            program_checklist.bowings_completed_by = user
+        else:
+            program_checklist.bowings_completed_on = None
+            program_checklist.bowings_completed_by = None
+    program_checklist.save()
+
+    return ProgramChecklistDTO.from_model(program_checklist)
 
 
 @transaction.atomic

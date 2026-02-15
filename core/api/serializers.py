@@ -49,6 +49,17 @@ class ProgramMusicianInstrumentSerializer(serializers.Serializer):
     instrument = EnumChoiceField(InstrumentEnum, required=True)
 
 
+class ProgramChecklistPatchSerializer(serializers.Serializer):
+    pieces_completed = serializers.BooleanField(required=False)
+    roster_completed = serializers.BooleanField(required=False)
+    overrides_completed = serializers.BooleanField(required=False)
+    bowings_completed = serializers.BooleanField(required=False)
+    assignments_sent = serializers.BooleanField(required=False)
+    assignments_completed = serializers.BooleanField(required=False)
+    delivery_sent = serializers.BooleanField(required=False)
+    delivery_completed = serializers.BooleanField(required=False)
+
+
 class PartDTOWrapperSerializer(serializers.Serializer):
     def validate(self, attrs):
         # attrs is empty because we’re not declaring explicit fields,

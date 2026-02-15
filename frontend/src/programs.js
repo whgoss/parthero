@@ -397,7 +397,11 @@ window.programBowings = function programBowings(programId, pieces = [], stringIn
   };
 };
 
-window.programPieceSearch = function programPieceSearch(programId, initialPieces = []) {
+window.programPieceSearch = function programPieceSearch(
+  programId,
+  initialPieces = [],
+  initialChecklist = null
+) {
   const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
 
   return {
@@ -406,6 +410,9 @@ window.programPieceSearch = function programPieceSearch(programId, initialPieces
     composer: "",
     results: [],
     selectedPieces: initialPieces,
+    completed: Boolean(
+      initialChecklist?.pieces_completed ?? initialChecklist?.pieces_completed_on
+    ),
     loading: false,
     error: null,
     hasSearched: false,
@@ -508,6 +515,60 @@ window.programPieceSearch = function programPieceSearch(programId, initialPieces
         this.selectedPieces = await response.json();
       } catch (error) {
         this.saveError = "Unable to remove piece right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsComplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/checklist`,
+          {
+            method: "PATCH",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify({ pieces_completed: true }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to mark as completed");
+        }
+        this.completed = true;
+      } catch (error) {
+        this.saveError = "Unable to mark as completed right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsIncomplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/checklist`,
+          {
+            method: "PATCH",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify({ pieces_completed: false }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to mark as completed");
+        }
+        this.completed = false;
+      } catch (error) {
+        this.saveError = "Unable to mark as completed right now.";
       } finally {
         this.saving = false;
       }

@@ -5,6 +5,7 @@ from django.db import transaction
 from core.api.serializers import (
     PartAssetCreateSerializer,
     PartAssetPatchSerializer,
+    ProgramChecklistPatchSerializer,
     ProgramMusicianCreateSerializer,
     ProgramMusicianInstrumentSerializer,
 )
@@ -26,6 +27,7 @@ from core.services.programs import (
     get_musicians_for_program,
     add_program_musician_instrument,
     remove_program_musician_instrument,
+    update_program_checklist,
 )
 from core.services.organizations import search_for_musician
 from core.models.programs import Program
@@ -254,4 +256,25 @@ class ProgramMusicianInstrumentViewSet(viewsets.GenericViewSet):
             request.organization.id, program_id, program_musician_id, instrument
         )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ProgramChecklistViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsInOrganization]
+
+    def get_serializer_class(self, data):
+        return ProgramChecklistPatchSerializer(data=data)
+
+    @transaction.atomic
+    def partial_update(self, request, program_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        serializer = self.get_serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        program_checklist = update_program_checklist(
+            organization_id=request.organization.id,
+            program_id=program_id,
+            user_id=request.user.id,
+            **serializer.validated_data,
+        )
+        response_data = program_checklist.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)

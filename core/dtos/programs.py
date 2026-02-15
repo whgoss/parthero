@@ -8,7 +8,9 @@ from core.models.programs import (
     ProgramPerformance,
     ProgramMusician,
     ProgramMusicianInstrument,
+    ProgramChecklist,
 )
+from core.dtos.users import UserDTO
 
 
 class ProgramDTO(BaseDTO):
@@ -16,6 +18,8 @@ class ProgramDTO(BaseDTO):
     name: str
     status: ProgramStatus = ProgramStatus.CREATED
     piece_count: int
+    overrides_enabled: bool
+    checklist: "ProgramChecklistDTO"
     performances: Optional[List["ProgramPerformanceDTO"]] = None
 
     @classmethod
@@ -35,7 +39,9 @@ class ProgramDTO(BaseDTO):
             organization_id=str(model.organization.id),
             name=model.name,
             status=ProgramStatus(model.status),
+            overrides_enabled=model.overrides_enabled,
             performances=ProgramPerformanceDTO.from_models(model.performances.all()),
+            checklist=ProgramChecklistDTO.from_model(model.checklist),
             piece_count=piece_count,
         )
 
@@ -104,4 +110,99 @@ class ProgramMusicianInstrumentDTO(BaseDTO):
             program_id=str(model.program_musician.program.id),
             musician_id=str(model.program_musician.musician.id),
             instrument=InstrumentEnum(model.instrument.name),
+        )
+
+
+class ProgramChecklistDTO(BaseDTO):
+    program_id: str
+    overrides_enabled: bool
+    pieces_completed_on: Optional[datetime] = None
+    pieces_completed_by: Optional[UserDTO] = None
+    roster_completed_on: Optional[datetime] = None
+    roster_completed_by: Optional[UserDTO] = None
+    overrides_completed_on: Optional[datetime] = None
+    overrides_completed_by: Optional[UserDTO] = None
+    bowings_completed_on: Optional[datetime] = None
+    bowings_completed_by: Optional[UserDTO] = None
+    assignments_sent_on: Optional[datetime] = None
+    assignments_sent_by: Optional[UserDTO] = None
+    assignments_completed_on: Optional[datetime] = None
+    assignments_completed_by: Optional[UserDTO] = None
+    delivery_sent_on: Optional[datetime] = None
+    delivery_sent_by: Optional[UserDTO] = None
+    delivery_completed_on: Optional[datetime] = None
+
+    @property
+    def pieces_completed(self) -> bool:
+        return self.pieces_completed_on is not None
+
+    @property
+    def roster_completed(self) -> bool:
+        return self.roster_completed_on is not None
+
+    @property
+    def overrides_completed(self) -> bool:
+        if self.overrides_enabled:
+            return self.overrides_completed_on is not None
+        else:
+            return True
+
+    @property
+    def bowings_completed(self) -> bool:
+        return self.bowings_completed_on is not None
+
+    @property
+    def assignments_completed(self) -> bool:
+        return self.assignments_completed_on is not None
+
+    @property
+    def delivery_sent(self) -> bool:
+        return self.delivery_sent_on is not None
+
+    @property
+    def completed(self) -> bool:
+        return (
+            self.pieces_completed
+            and self.roster_completed
+            and self.overrides_completed
+            and self.bowings_completed
+            and self.assignments_completed
+            and self.delivery_sent
+        )
+
+    @classmethod
+    def from_model(cls, model: ProgramChecklist):
+        return cls(
+            id=str(model.id),
+            overrides_enabled=model.program.overrides_enabled,
+            program_id=str(model.program.id),
+            pieces_completed_on=model.pieces_completed_on,
+            pieces_completed_by=UserDTO.from_model(model.pieces_completed_by)
+            if model.pieces_completed_by
+            else None,
+            roster_completed_on=model.roster_completed_on,
+            roster_completed_by=UserDTO.from_model(model.roster_completed_by)
+            if model.roster_completed_by
+            else None,
+            overrides_completed_on=model.overrides_completed_on,
+            overrides_completed_by=UserDTO.from_model(model.overrides_completed_by)
+            if model.overrides_completed_by
+            else None,
+            bowings_completed_on=model.bowings_completed_on,
+            bowings_completed_by=UserDTO.from_model(model.bowings_completed_by)
+            if model.bowings_completed_by
+            else None,
+            assignments_sent_on=model.assignments_sent_on,
+            assignments_sent_by=UserDTO.from_model(model.assignments_sent_by)
+            if model.assignments_sent_by
+            else None,
+            assignments_completed_on=model.assignments_completed_on,
+            assignments_completed_by=UserDTO.from_model(model.assignments_completed_by)
+            if model.assignments_completed_by
+            else None,
+            delivery_sent_on=model.delivery_sent_on,
+            delivery_sent_by=UserDTO.from_model(model.delivery_sent_by)
+            if model.delivery_sent_by
+            else None,
+            delivery_completed_on=model.delivery_completed_on,
         )

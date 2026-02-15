@@ -40,6 +40,70 @@
       {% endfor %}
     </div>
 
+    {% with checklist=program.checklist %}
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+      <div class="flex items-center justify-between gap-3">
+        <h1 class="text-lg font-medium">Program Checklist</h1>
+        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {% if checklist.completed %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+          {% if checklist.completed %}Complete{% else %}In Progress{% endif %}
+        </span>
+      </div>
+
+      <div class="mt-4 rounded-lg border border-slate-200 overflow-hidden">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-2.5 text-left">Step</th>
+              <th class="px-4 py-2.5 text-left">Status</th>
+              <th class="px-4 py-2.5 text-left">Completed On</th>
+              <th class="px-4 py-2.5 text-left">Completed By</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+            <tr>
+              <td class="px-4 py-3">Pieces Ready</td>
+              <td class="px-4 py-3">{% if checklist.pieces_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.pieces_completed_on %}{{ checklist.pieces_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.pieces_completed_by %}{{ checklist.pieces_completed_by.first_name }} {{ checklist.pieces_completed_by.last_name }}{% else %}-{% endif %}</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3">Roster Ready</td>
+              <td class="px-4 py-3">{% if checklist.roster_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.roster_completed_on %}{{ checklist.roster_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.roster_completed_by %}{{ checklist.roster_completed_by.first_name }} {{ checklist.roster_completed_by.last_name }}{% else %}-{% endif %}</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3">Bowings Ready</td>
+              <td class="px-4 py-3">{% if checklist.bowings_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.bowings_completed_on %}{{ checklist.bowings_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.bowings_completed_by %}{{ checklist.bowings_completed_by.first_name }} {{ checklist.bowings_completed_by.last_name }}{% else %}-{% endif %}</td>
+            </tr>
+            {% if program.overrides_enabled %}
+            <tr>
+              <td class="px-4 py-3">Overrides Reviewed</td>
+              <td class="px-4 py-3">{% if checklist.overrides_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.overrides_completed_on %}{{ checklist.overrides_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.overrides_completed_by %}{{ checklist.overrides_completed_by.first_name }} {{ checklist.overrides_completed_by.last_name }}{% else %}-{% endif %}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td class="px-4 py-3">Assignments Complete</td>
+              <td class="px-4 py-3">{% if checklist.assignments_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.assignments_completed_on %}{{ checklist.assignments_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.assignments_completed_by %}{{ checklist.assignments_completed_by.first_name }} {{ checklist.assignments_completed_by.last_name }}{% else %}-{% endif %}</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3">Delivery Sent</td>
+              <td class="px-4 py-3">{% if checklist.delivery_sent %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.delivery_sent_on %}{{ checklist.delivery_sent_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3">{% if checklist.delivery_sent_by %}{{ checklist.delivery_sent_by.first_name }} {{ checklist.delivery_sent_by.last_name }}{% else %}-{% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endwith %}
+
     <div
       class="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden mb-4"
       x-data="programTabs()"
