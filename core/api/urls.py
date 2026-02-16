@@ -22,7 +22,9 @@ program_musicians_delete = ProgramMusicianViewSet.as_view({"delete": "delete"})
 program_musician_instrument_update = ProgramMusicianInstrumentViewSet.as_view(
     {"put": "update", "delete": "delete"}
 )
-program_checklist_patch = ProgramChecklistViewSet.as_view({"patch": "partial_update"})
+program_checklist = ProgramChecklistViewSet.as_view(
+    {"get": "retrieve", "patch": "partial_update"}
+)
 musicians_search = MusicianSearchViewSet.as_view({"get": "list"})
 domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
 
@@ -70,7 +72,7 @@ urlpatterns = [
     ),
     path(
         "programs/<str:program_id>/checklist",
-        program_checklist_patch,
+        program_checklist,
         name="api_program_checklist_patch",
     ),
     path(

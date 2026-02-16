@@ -31,21 +31,41 @@
     </div>
 
     <!-- Basic Details -->
-    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
-      <h1 class="text-lg font-medium">Performance Dates</h1>
-      {% for performance in program.performances %}
-        <div class="text-sm font-light">
-            {{ performance.date|date:"M j, Y h:i a" }}
-        </div>
-      {% endfor %}
-    </div>
+    {% if program.performances %}  
+      <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+        <h1 class="text-lg font-medium">Performance Dates</h1>
+        {% for performance in program.performances %}
+          <div class="text-sm font-light">
+              {{ performance.date|date:"M j, Y h:i a" }}
+          </div>
+        {% endfor %}
+        
+      </div>
+    {% endif %}
 
-    {% with checklist=program.checklist %}
-    <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+    <!-- Program Checklist -->
+    {{ program.checklist|pydantic_json_script:"program-checklist-initial-data" }}
+    <div
+      class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4"
+      x-data="programChecklist('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent))"
+      x-init="init()"
+    >
       <div class="flex items-center justify-between gap-3">
         <h1 class="text-lg font-medium">Program Checklist</h1>
-        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {% if checklist.completed %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
-          {% if checklist.completed %}Complete{% else %}In Progress{% endif %}
+        <button
+          type="button"
+          class="btn-primary"
+          x-show="canDeliverParts"
+          @click="openDeliveryModal()"
+        >
+          Deliver Parts
+        </button>
+        <span
+          class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+          x-show="!canDeliverParts"
+          :class="completed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
+          x-text="completed ? 'Complete' : 'In Progress'"
+        >
         </span>
       </div>
 
@@ -62,89 +82,170 @@
           <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
             <tr>
               <td class="px-4 py-3">Pieces Ready</td>
-              <td class="px-4 py-3">{% if checklist.pieces_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.pieces_completed_on %}{{ checklist.pieces_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.pieces_completed_by %}{{ checklist.pieces_completed_by.first_name }} {{ checklist.pieces_completed_by.last_name }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3" x-text="statusLabel('pieces_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedOnLabel('pieces_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedByLabel('pieces_completed_by')"></td>
             </tr>
             <tr>
               <td class="px-4 py-3">Roster Ready</td>
-              <td class="px-4 py-3">{% if checklist.roster_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.roster_completed_on %}{{ checklist.roster_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.roster_completed_by %}{{ checklist.roster_completed_by.first_name }} {{ checklist.roster_completed_by.last_name }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3" x-text="statusLabel('roster_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedOnLabel('roster_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedByLabel('roster_completed_by')"></td>
             </tr>
             <tr>
               <td class="px-4 py-3">Bowings Ready</td>
-              <td class="px-4 py-3">{% if checklist.bowings_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.bowings_completed_on %}{{ checklist.bowings_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.bowings_completed_by %}{{ checklist.bowings_completed_by.first_name }} {{ checklist.bowings_completed_by.last_name }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3" x-text="statusLabel('bowings_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedOnLabel('bowings_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedByLabel('bowings_completed_by')"></td>
             </tr>
-            {% if program.overrides_enabled %}
             <tr>
               <td class="px-4 py-3">Overrides Reviewed</td>
-              <td class="px-4 py-3">{% if checklist.overrides_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.overrides_completed_on %}{{ checklist.overrides_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.overrides_completed_by %}{{ checklist.overrides_completed_by.first_name }} {{ checklist.overrides_completed_by.last_name }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3" x-text="statusLabel('overrides_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedOnLabel('overrides_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedByLabel('overrides_completed_by')"></td>
             </tr>
-            {% endif %}
             <tr>
               <td class="px-4 py-3">Assignments Complete</td>
-              <td class="px-4 py-3">{% if checklist.assignments_completed %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.assignments_completed_on %}{{ checklist.assignments_completed_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.assignments_completed_by %}{{ checklist.assignments_completed_by.first_name }} {{ checklist.assignments_completed_by.last_name }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3" x-text="statusLabel('assignments_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedOnLabel('assignments_completed_on')"></td>
+              <td class="px-4 py-3" x-text="completedByLabel('assignments_completed_by')"></td>
             </tr>
             <tr>
               <td class="px-4 py-3">Delivery Sent</td>
-              <td class="px-4 py-3">{% if checklist.delivery_sent %}✅ Complete{% else %}⏳ Pending{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.delivery_sent_on %}{{ checklist.delivery_sent_on|date:"M j, Y h:i a" }}{% else %}-{% endif %}</td>
-              <td class="px-4 py-3">{% if checklist.delivery_sent_by %}{{ checklist.delivery_sent_by.first_name }} {{ checklist.delivery_sent_by.last_name }}{% else %}-{% endif %}</td>
+              <td class="px-4 py-3" x-text="statusLabel('delivery_sent_on')"></td>
+              <td class="px-4 py-3" x-text="completedOnLabel('delivery_sent_on')"></td>
+              <td class="px-4 py-3" x-text="completedByLabel('delivery_sent_by')"></td>
             </tr>
           </tbody>
         </table>
       </div>
+      <div x-show="loading" class="mt-3 text-xs text-slate-500">Refreshing checklist...</div>
+      <div x-show="error" class="mt-3 text-xs text-red-600" x-text="error"></div>
+
+      <!-- Deliver Parts Confirmation Modal -->
+      <div
+        x-show="showDeliveryModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4"
+        @click.self="closeDeliveryModal()"
+      >
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+          <h2 class="text-lg font-semibold text-slate-900">Deliver Parts?</h2>
+          <p class="mt-2 text-sm text-slate-600">
+            This will send parts to the musicians on the program roster and cannot be undone.
+          </p>
+          <div x-show="deliveryError" class="mt-3 text-sm text-red-600" x-text="deliveryError"></div>
+          <div class="mt-5 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              class="btn-secondary"
+              @click="closeDeliveryModal()"
+              :disabled="deliverySaving"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              @click="confirmDeliverySent()"
+              :disabled="deliverySaving"
+            >
+              Confirm Delivery
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-    {% endwith %}
 
     <div
       class="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden mb-4"
-      x-data="programTabs()"
+      x-data="programTabs('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent))"
       x-init="init()"
     >
       <div class="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50/70 px-4 pt-4">
         <button
           type="button"
-          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition cursor-pointer"
-          :class="activeTab === 'pieces' ? '-mb-px border-slate-200 bg-white text-slate-900' : 'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          :class="tabButtonClass('pieces')"
           @click="setTab('pieces')"
         >
           Pieces
         </button>
         <button
           type="button"
-          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition cursor-pointer"
-          :class="activeTab === 'bowings' ? '-mb-px border-slate-200 bg-white text-slate-900' : 'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          :class="tabButtonClass('roster')"
+          @click="setTab('roster')"
+        >
+          Roster
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          :class="tabButtonClass('bowings')"
           @click="setTab('bowings')"
         >
+          <svg
+            x-show="!isTabEnabled('bowings')"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="mr-1.5 h-4 w-4 text-slate-400"
+          >
+            <path fill-rule="evenodd" d="M10 2a4 4 0 0 0-4 4v2H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V6a4 4 0 0 0-4-4Zm2 6V6a2 2 0 1 0-4 0v2h4Z" clip-rule="evenodd" />
+          </svg>
           Bowings
         </button>
         <button
           type="button"
-          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition cursor-pointer"
-          :class="activeTab === 'roster' ? '-mb-px border-slate-200 bg-white text-slate-900' : 'border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'"
-          @click="setTab('roster')"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          :class="tabButtonClass('overrides')"
+          @click="setTab('overrides')"
         >
-          Roster
+          <svg
+            x-show="!isTabEnabled('overrides')"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="mr-1.5 h-4 w-4 text-slate-400"
+          >
+            <path fill-rule="evenodd" d="M10 2a4 4 0 0 0-4 4v2H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V6a4 4 0 0 0-4-4Zm2 6V6a2 2 0 1 0-4 0v2h4Z" clip-rule="evenodd" />
+          </svg>
+          Overrides
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center rounded-t-lg border border-b-0 px-5 py-2.5 text-sm font-semibold transition"
+          :class="tabButtonClass('assignments')"
+          @click="setTab('assignments')"
+        >
+          <svg
+            x-show="!isTabEnabled('assignments')"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="mr-1.5 h-4 w-4 text-slate-400"
+          >
+            <path fill-rule="evenodd" d="M10 2a4 4 0 0 0-4 4v2H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V6a4 4 0 0 0-4-4Zm2 6V6a2 2 0 1 0-4 0v2h4Z" clip-rule="evenodd" />
+          </svg>
+          Assignments
         </button>
       </div>
 
         <!-- Program Pieces Tab -->
         {% include "partials/program_pieces.html" with program=program pieces=pieces %}
 
+        <!-- Program Roster Tab -->
+        {% include "partials/program_roster.html" with program=program %}
+
         <!-- Bowings Tab -->
         {{ string_instruments|json_script:"string-instruments-data" }}
         {% include "partials/bowings.html" with program=program %}
 
-        <!-- Program Roster Tab -->
-        {% include "partials/program_roster.html" with program=program %}
+        <!-- Overrides Tab -->
+        {% include "partials/program_overrides.html" %}
+
+        <!-- Assignments Tab -->
+        {% include "partials/program_assignments.html" %}
     
     </div>
   </div>

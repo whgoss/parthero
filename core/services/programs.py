@@ -67,6 +67,13 @@ def get_program(organization_id: str, program_id: str) -> ProgramDTO:
     return ProgramDTO.from_model(program)
 
 
+def get_program_checklist(organization_id: str, program_id: str) -> ProgramChecklistDTO:
+    program_checklist = ProgramChecklist.objects.get(
+        program_id=program_id, program__organization_id=organization_id
+    )
+    return ProgramChecklistDTO.from_model(program_checklist)
+
+
 def get_programs(organization_id: str) -> List[ProgramDTO]:
     programs = (
         Program.objects.filter(organization_id=organization_id)
@@ -246,6 +253,67 @@ def update_program_checklist(
     )
 
     user = User.objects.get(id=user_id)
+
+    current_pieces_completed = program_checklist.pieces_completed_on is not None
+    current_roster_completed = program_checklist.roster_completed_on is not None
+    current_bowings_completed = program_checklist.bowings_completed_on is not None
+    current_overrides_completed = program_checklist.overrides_completed_on is not None
+    current_assignments_completed = (
+        program_checklist.assignments_completed_on is not None
+    )
+
+    pieces_will_be_completed = (
+        pieces_completed if pieces_completed is not None else current_pieces_completed
+    )
+    roster_will_be_completed = (
+        roster_completed if roster_completed is not None else current_roster_completed
+    )
+    bowings_will_be_completed = (
+        bowings_completed
+        if bowings_completed is not None
+        else current_bowings_completed
+    )
+    overrides_will_be_completed = (
+        overrides_completed
+        if overrides_completed is not None
+        else current_overrides_completed
+    )
+    assignments_will_be_completed = (
+        assignments_completed
+        if assignments_completed is not None
+        else current_assignments_completed
+    )
+
+    if bowings_completed:
+        if not pieces_will_be_completed:
+            raise ValueError("Bowings cannot be completed before pieces are complete.")
+
+    if overrides_completed:
+        if not pieces_will_be_completed:
+            raise ValueError(
+                "Overrides cannot be completed before pieces are complete."
+            )
+
+    if assignments_completed:
+        if not all(
+            [
+                pieces_will_be_completed,
+                roster_will_be_completed,
+                bowings_will_be_completed,
+                overrides_will_be_completed,
+            ]
+        ):
+            raise ValueError(
+                "Assignments cannot be completed until pieces, roster, bowings, "
+                "and overrides are complete."
+            )
+
+    if delivery_sent:
+        if not assignments_will_be_completed:
+            raise ValueError("Delivery cannot be sent until assignments are complete.")
+    if delivery_sent is False:
+        raise ValueError("Delivery cannot be undone once sent.")
+
     if pieces_completed is not None:
         if pieces_completed:
             program_checklist.pieces_completed_on = timezone.now()
@@ -253,6 +321,12 @@ def update_program_checklist(
         else:
             program_checklist.pieces_completed_on = None
             program_checklist.pieces_completed_by = None
+            program_checklist.bowings_completed_on = None
+            program_checklist.bowings_completed_by = None
+            program_checklist.overrides_completed_on = None
+            program_checklist.overrides_completed_by = None
+            program_checklist.assignments_completed_on = None
+            program_checklist.assignments_completed_by = None
     if roster_completed is not None:
         if roster_completed:
             program_checklist.roster_completed_on = timezone.now()
@@ -260,6 +334,8 @@ def update_program_checklist(
         else:
             program_checklist.roster_completed_on = None
             program_checklist.roster_completed_by = None
+            program_checklist.assignments_completed_on = None
+            program_checklist.assignments_completed_by = None
     if overrides_completed is not None:
         if overrides_completed:
             program_checklist.overrides_completed_on = timezone.now()
@@ -267,6 +343,8 @@ def update_program_checklist(
         else:
             program_checklist.overrides_completed_on = None
             program_checklist.overrides_completed_by = None
+            program_checklist.assignments_completed_on = None
+            program_checklist.assignments_completed_by = None
     if bowings_completed is not None:
         if bowings_completed:
             program_checklist.bowings_completed_on = timezone.now()
@@ -274,6 +352,19 @@ def update_program_checklist(
         else:
             program_checklist.bowings_completed_on = None
             program_checklist.bowings_completed_by = None
+            program_checklist.assignments_completed_on = None
+            program_checklist.assignments_completed_by = None
+    if assignments_completed is not None:
+        if assignments_completed:
+            program_checklist.assignments_completed_on = timezone.now()
+            program_checklist.assignments_completed_by = user
+        else:
+            program_checklist.assignments_completed_on = None
+            program_checklist.assignments_completed_by = None
+    if delivery_sent is not None and delivery_sent:
+        if program_checklist.delivery_sent_on is None:
+            program_checklist.delivery_sent_on = timezone.now()
+            program_checklist.delivery_sent_by = user
     program_checklist.save()
 
     return ProgramChecklistDTO.from_model(program_checklist)

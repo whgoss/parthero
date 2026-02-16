@@ -75,18 +75,81 @@ window.performanceDates = function performanceDates() {
   }
 }
 
-window.programTabs = function programTabs() {
+window.programTabs = function programTabs(programId, initialChecklist = null) {
   return {
+    programId,
+    checklist: initialChecklist || {},
     activeTab: "pieces",
+    isStepComplete(completedOnField) {
+      return Boolean(this.checklist?.[completedOnField]);
+    },
+    isTabEnabled(tab) {
+      if (tab === "pieces" || tab === "roster") {
+        return true;
+      }
+      if (tab === "bowings") {
+        return this.isStepComplete("pieces_completed_on");
+      }
+      if (tab === "overrides") {
+        return this.isStepComplete("pieces_completed_on");
+      }
+      if (tab === "assignments") {
+        const piecesComplete = this.isStepComplete("pieces_completed_on");
+        const rosterComplete = this.isStepComplete("roster_completed_on");
+        const bowingsComplete = this.isStepComplete("bowings_completed_on");
+        const overridesComplete = this.isStepComplete("overrides_completed_on");
+        return piecesComplete && rosterComplete && bowingsComplete && overridesComplete;
+      }
+      return false;
+    },
+    tabButtonClass(tab) {
+      if (!this.isTabEnabled(tab)) {
+        return "border-transparent bg-slate-100 text-slate-400 cursor-not-allowed";
+      }
+      if (this.activeTab === tab) {
+        return "-mb-px border-slate-200 bg-white text-slate-900";
+      }
+      return "border-transparent bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-800 cursor-pointer";
+    },
+    async refreshChecklist() {
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          return;
+        }
+        this.checklist = await response.json();
+      } catch (error) {
+        return;
+      }
+      if (!this.isTabEnabled(this.activeTab)) {
+        this.setTab("pieces");
+      }
+    },
     init() {
+      if (!this._checklistRefreshListener) {
+        this._checklistRefreshListener = () => {
+          this.refreshChecklist();
+        };
+        window.addEventListener(
+          "program-checklist:refresh",
+          this._checklistRefreshListener
+        );
+      }
+
       const saved = window.sessionStorage.getItem("program-active-tab");
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           const isValidTab =
-            parsed?.tab === "pieces" || parsed?.tab === "bowings" || parsed?.tab === "roster";
+            parsed?.tab === "pieces" ||
+            parsed?.tab === "bowings" ||
+            parsed?.tab === "roster" ||
+            parsed?.tab === "overrides" ||
+            parsed?.tab === "assignments";
           const isFresh = parsed?.ts && Date.now() - parsed.ts < 10 * 60 * 1000;
-          if (isValidTab && isFresh) {
+          if (isValidTab && isFresh && this.isTabEnabled(parsed.tab)) {
             this.activeTab = parsed.tab;
           } else {
             window.sessionStorage.removeItem("program-active-tab");
@@ -107,6 +170,9 @@ window.programTabs = function programTabs() {
       }
     },
     setTab(tab) {
+      if (!this.isTabEnabled(tab)) {
+        return;
+      }
       this.activeTab = tab;
       window.sessionStorage.setItem(
         "program-active-tab",
@@ -126,13 +192,156 @@ window.programTabs = function programTabs() {
   };
 };
 
-window.programBowings = function programBowings(programId, pieces = [], stringInstruments = []) {
+window.programChecklist = function programChecklist(
+  programId,
+  initialChecklist = null
+) {
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+  return {
+    programId,
+    checklist: initialChecklist || {},
+    loading: false,
+    error: null,
+    showDeliveryModal: false,
+    deliverySaving: false,
+    deliveryError: null,
+    init() {
+      if (!this._checklistRefreshListener) {
+        this._checklistRefreshListener = () => {
+          this.fetchChecklist();
+        };
+        window.addEventListener(
+          "program-checklist:refresh",
+          this._checklistRefreshListener
+        );
+      }
+    },
+    isStepComplete(completedOnField) {
+      return Boolean(this.checklist?.[completedOnField]);
+    },
+    statusLabel(completedOnField) {
+      return this.isStepComplete(completedOnField) ? "✅ Complete" : "⏳ Pending";
+    },
+    completedOnLabel(completedOnField) {
+      const completedOn = this.checklist?.[completedOnField];
+      if (!completedOn) {
+        return "-";
+      }
+      const parsedDate = new Date(completedOn);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return "-";
+      }
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(parsedDate);
+    },
+    completedByLabel(completedByField) {
+      const completedBy = this.checklist?.[completedByField];
+      if (!completedBy) {
+        return "-";
+      }
+      const firstName = completedBy.first_name || "";
+      const lastName = completedBy.last_name || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      return fullName || "-";
+    },
+    get completed() {
+      return (
+        this.isStepComplete("pieces_completed_on") &&
+        this.isStepComplete("roster_completed_on") &&
+        this.isStepComplete("overrides_completed_on") &&
+        this.isStepComplete("bowings_completed_on") &&
+        this.isStepComplete("assignments_completed_on") &&
+        this.isStepComplete("delivery_sent_on")
+      );
+    },
+    get canDeliverParts() {
+      return (
+        this.isStepComplete("assignments_completed_on") &&
+        !this.isStepComplete("delivery_sent_on")
+      );
+    },
+    openDeliveryModal() {
+      this.deliveryError = null;
+      this.showDeliveryModal = true;
+    },
+    closeDeliveryModal() {
+      if (this.deliverySaving) {
+        return;
+      }
+      this.showDeliveryModal = false;
+    },
+    async confirmDeliverySent() {
+      this.deliverySaving = true;
+      this.deliveryError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ delivery_sent: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to send delivery");
+        }
+        this.checklist = await response.json();
+        this.showDeliveryModal = false;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.deliveryError = "Unable to send delivery right now.";
+      } finally {
+        this.deliverySaving = false;
+      }
+    },
+    async fetchChecklist() {
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch checklist");
+        }
+        this.checklist = await response.json();
+      } catch (error) {
+        this.error = "Unable to refresh checklist right now.";
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+};
+
+window.programBowings = function programBowings(
+  programId,
+  pieces = [],
+  stringInstruments = [],
+  initialChecklist = null
+) {
   const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
   const stringInstrumentSet = new Set(stringInstruments || []);
 
   return {
     programId,
     pieces,
+    completed: Boolean(
+      initialChecklist?.bowings_completed ?? initialChecklist?.bowings_completed_on
+    ),
+    saving: false,
+    saveError: null,
     openPieceIds: [],
     pieceStates: {},
     tagifyInstances: new Map(),
@@ -158,6 +367,56 @@ window.programBowings = function programBowings(programId, pieces = [], stringIn
 
       // Always preload bowings for all pieces; accordion remains collapsed until user opens.
       this.fetchAllBowings();
+    },
+    async markAsComplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ bowings_completed: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark bowings as completed");
+        }
+        this.completed = true;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark bowings as completed right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsIncomplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ bowings_completed: false }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark bowings as incomplete");
+        }
+        this.completed = false;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark bowings as incomplete right now.";
+      } finally {
+        this.saving = false;
+      }
     },
     pieceState(pieceId) {
       if (!this.pieceStates[pieceId]) {
@@ -540,6 +799,7 @@ window.programPieces = function programPieces(
           throw new Error("Failed to mark as completed");
         }
         this.completed = true;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
       } catch (error) {
         this.saveError = "Unable to mark as completed right now.";
       } finally {
@@ -567,6 +827,7 @@ window.programPieces = function programPieces(
           throw new Error("Failed to mark as completed");
         }
         this.completed = false;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
       } catch (error) {
         this.saveError = "Unable to mark as completed right now.";
       } finally {
@@ -584,11 +845,14 @@ window.programPieces = function programPieces(
   };
 };
 
-window.programRoster = function programRoster(programId) {
+window.programRoster = function programRoster(programId, initialChecklist = null) {
   const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
 
   return {
     programId,
+    completed: Boolean(
+      initialChecklist?.roster_completed ?? initialChecklist?.roster_completed_on
+    ),
     name: "",
     instrument: "",
     results: [],
@@ -877,6 +1141,186 @@ window.programRoster = function programRoster(programId) {
         this.resetRosterTagify();
       } catch (error) {
         this.saveError = "Unable to remove musician right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsComplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ roster_completed: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark roster as completed");
+        }
+        this.completed = true;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark roster as completed right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsIncomplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ roster_completed: false }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark roster as incomplete");
+        }
+        this.completed = false;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark roster as incomplete right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+  };
+};
+
+window.programOverrides = function programOverrides(programId, initialChecklist = null) {
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+  return {
+    programId,
+    completed: Boolean(
+      initialChecklist?.overrides_completed ?? initialChecklist?.overrides_completed_on
+    ),
+    saving: false,
+    saveError: null,
+    async markAsComplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ overrides_completed: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark overrides as completed");
+        }
+        this.completed = true;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark overrides as completed right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsIncomplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ overrides_completed: false }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark overrides as incomplete");
+        }
+        this.completed = false;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark overrides as incomplete right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+  };
+};
+
+window.programAssignments = function programAssignments(
+  programId,
+  initialChecklist = null
+) {
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+  return {
+    programId,
+    completed: Boolean(
+      initialChecklist?.assignments_completed ??
+      initialChecklist?.assignments_completed_on
+    ),
+    saving: false,
+    saveError: null,
+    async markAsComplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ assignments_completed: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark assignments as completed");
+        }
+        this.completed = true;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark assignments as completed right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async markAsIncomplete() {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ assignments_completed: false }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to mark assignments as incomplete");
+        }
+        this.completed = false;
+        window.dispatchEvent(new Event("program-checklist:refresh"));
+      } catch (error) {
+        this.saveError = "Unable to mark assignments as incomplete right now.";
       } finally {
         this.saving = false;
       }

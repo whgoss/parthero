@@ -14,6 +14,7 @@ from core.services.programs import (
     add_musicians_to_program,
     add_piece_to_program,
     add_program_musician_instrument,
+    get_program_checklist,
     get_musicians_for_program,
     remove_musician_from_program,
     remove_piece_from_program,
@@ -126,16 +127,28 @@ class ProgramChecklistViewSet(viewsets.GenericViewSet):
     def get_serializer_class(self, data):
         return ProgramChecklistPatchSerializer(data=data)
 
+    def retrieve(self, request, program_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        checklist = get_program_checklist(request.organization.id, program_id)
+        response_data = checklist.model_dump(mode="json")
+        return Response(response_data, status=status.HTTP_200_OK)
+
     @transaction.atomic
     def partial_update(self, request, program_id, *args, **kwargs):
         Program.objects.get(id=program_id, organization_id=request.organization.id)
         serializer = self.get_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        program_checklist = update_program_checklist(
-            organization_id=request.organization.id,
-            program_id=program_id,
-            user_id=request.user.id,
-            **serializer.validated_data,
-        )
+        try:
+            program_checklist = update_program_checklist(
+                organization_id=request.organization.id,
+                program_id=program_id,
+                user_id=request.user.id,
+                **serializer.validated_data,
+            )
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         response_data = program_checklist.model_dump(mode="json")
         return Response(response_data, status=status.HTTP_200_OK)

@@ -18,7 +18,6 @@ class ProgramDTO(BaseDTO):
     name: str
     status: ProgramStatus = ProgramStatus.CREATED
     piece_count: int
-    overrides_enabled: bool
     checklist: "ProgramChecklistDTO"
     performances: Optional[List["ProgramPerformanceDTO"]] = None
 
@@ -39,7 +38,6 @@ class ProgramDTO(BaseDTO):
             organization_id=str(model.organization.id),
             name=model.name,
             status=ProgramStatus(model.status),
-            overrides_enabled=model.overrides_enabled,
             performances=ProgramPerformanceDTO.from_models(model.performances.all()),
             checklist=ProgramChecklistDTO.from_model(model.checklist),
             piece_count=piece_count,
@@ -115,7 +113,6 @@ class ProgramMusicianInstrumentDTO(BaseDTO):
 
 class ProgramChecklistDTO(BaseDTO):
     program_id: str
-    overrides_enabled: bool
     pieces_completed_on: Optional[datetime] = None
     pieces_completed_by: Optional[UserDTO] = None
     roster_completed_on: Optional[datetime] = None
@@ -142,10 +139,7 @@ class ProgramChecklistDTO(BaseDTO):
 
     @property
     def overrides_completed(self) -> bool:
-        if self.overrides_enabled:
-            return self.overrides_completed_on is not None
-        else:
-            return True
+        return self.overrides_completed_on is not None
 
     @property
     def bowings_completed(self) -> bool:
@@ -174,7 +168,6 @@ class ProgramChecklistDTO(BaseDTO):
     def from_model(cls, model: ProgramChecklist):
         return cls(
             id=str(model.id),
-            overrides_enabled=model.program.overrides_enabled,
             program_id=str(model.program.id),
             pieces_completed_on=model.pieces_completed_on,
             pieces_completed_by=UserDTO.from_model(model.pieces_completed_by)

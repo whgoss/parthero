@@ -1,6 +1,5 @@
 from django.db.models import (
     CharField,
-    BooleanField,
     OneToOneField,
     DateTimeField,
     ForeignKey,
@@ -23,7 +22,6 @@ class Program(UUIDPrimaryKeyModel):
         default=ProgramStatus.CREATED.value,
         choices=ProgramStatus.choices(),
     )
-    overrides_enabled = BooleanField(default=False)
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     def __str__(self):

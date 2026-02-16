@@ -4,11 +4,30 @@
     class="p-6"
     data-tab-panel="bowings"
     x-show="activeTab === 'bowings'"
-    x-data="programBowings('{{ program.id }}', JSON.parse(document.getElementById('program-bowings-pieces-data').textContent), JSON.parse(document.getElementById('string-instruments-data').textContent))"
+    x-data="programBowings('{{ program.id }}', JSON.parse(document.getElementById('program-bowings-pieces-data').textContent), JSON.parse(document.getElementById('string-instruments-data').textContent), JSON.parse(document.getElementById('program-checklist-initial-data').textContent))"
     >
-    <p class="mt-1 text-sm text-slate-500">
-        Upload your bowings for each piece in the program.
-    </p>
+    <div class="flex items-center gap-3 mb-4">
+        <p class="text-sm text-slate-500">
+            Upload your bowings for each piece in the program.
+        </p>
+        <button
+            type="button"
+            class="btn-primary ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
+            x-show="!completed"
+            @click="markAsComplete()"
+        >
+            Mark Bowings as Complete
+        </button>
+        <button
+            type="button"
+            class="btn-primary-warning ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
+            x-show="completed == true"
+            @click="markAsIncomplete()"
+        >
+            Mark Bowings as Incomplete
+        </button>
+    </div>
+    <div x-show="saveError" class="mb-3 text-sm text-red-600" x-text="saveError"></div>
 
     {{ pieces|pydantic_json_script:"program-bowings-pieces-data" }}
 
