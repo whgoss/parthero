@@ -97,7 +97,7 @@
                     <tbody class="divide-y divide-slate-100 bg-white">
                         {% if piece_count > 0 %}
                             {% for piece in pieces %}
-                                <tr class="hover:hover:bg-slate-50/60 cursor-pointer" onclick="window.location.href='/piece/{{ piece.id }}/'">
+                                <tr class="hover:hover:bg-slate-50/60 cursor-pointer" onclick="window.location.href='/pieces/{{ piece.id }}/'">
                                     <td class="px-4 py-3 align-center">
                                         <span class="font">{{ piece.title }}</span>
                                     </td>

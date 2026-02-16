@@ -95,7 +95,7 @@ window.partAssets = function partAssets(pieceId) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch(`/api/piece/${this.pieceId}/assets?asset_type=Clean`, {
+        const response = await fetch(`/api/pieces/${this.pieceId}/assets?asset_type=Clean`, {
           headers: { Accept: "application/json" },
         });
         if (!response.ok) {
@@ -119,7 +119,7 @@ window.partAssets = function partAssets(pieceId) {
       }
       this.validationLoading = true;
       try {
-        const response = await fetch(`/api/piece/${this.pieceId}/assets?asset_type=Clean`, {
+        const response = await fetch(`/api/pieces/${this.pieceId}/assets?asset_type=Clean`, {
           headers: { Accept: "application/json" },
         });
         if (!response.ok) {
@@ -193,7 +193,7 @@ window.partAssets = function partAssets(pieceId) {
           const partIds = tagify.value
             .map((tag) => tag.id)
             .filter((id) => id != null);
-          fetch(`/api/piece/${pieceId}/asset/${partAssetId}`, {
+          fetch(`/api/pieces/${pieceId}/asset/${partAssetId}`, {
             method: "PATCH",
             credentials: "same-origin",
             headers: {
@@ -227,7 +227,7 @@ window.partAssets = function partAssets(pieceId) {
       if (!partAssetId) return;
       try {
         const response = await fetch(
-          `/api/piece/${this.pieceId}/asset/${partAssetId}`,
+          `/api/pieces/${this.pieceId}/asset/${partAssetId}`,
           {
             method: "DELETE",
             credentials: "same-origin",

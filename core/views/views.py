@@ -47,7 +47,7 @@ def create_piece_view(request):
             domo_id,
             composer_domo_id,
         )
-        return redirect(f"/piece/{piece.id}/")
+        return redirect(f"/pieces/{piece.id}/")
     else:
         domo_id = request.GET.get("domo_id", None)
         form = PieceForm(

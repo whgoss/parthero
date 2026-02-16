@@ -66,7 +66,7 @@ def create_program_view(request):
                 performance_dates=performance_dates,
             )
 
-            return redirect(f"/program/{program.id}")
+            return redirect(f"/programs/{program.id}")
     else:
         form = ProgramForm(organization_id=request.organization.id)
         formset = PerformanceFormSet(prefix="perf")

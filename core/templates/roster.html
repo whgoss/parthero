@@ -47,7 +47,7 @@
 
         <!-- Add musician -->
         <a
-          href="/musician/"
+          href="/musicians/"
           class="btn-secondary">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 20 20"
@@ -127,7 +127,7 @@
           <tbody class="divide-y divide-slate-100 bg-white">
             {% if musicians %}
               {% for musician in musicians %}
-                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/musician/{{ musician.id }}/'">
+                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/musicians/{{ musician.id }}/'">
                   <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
                     {{ musician.first_name }}
                   </td>

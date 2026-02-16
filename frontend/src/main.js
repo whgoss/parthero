@@ -16,7 +16,7 @@ function getCookie(name) {
 function updatePartAsset(pieceId, partAssetDto, newStatus) {
   if (!pieceId || !partAssetDto) return;
   const partIds = (partAssetDto.parts || []).map((part) => part.id);
-  return fetch(`/api/piece/${pieceId}/asset/${partAssetDto.id}`, {
+  return fetch(`/api/pieces/${pieceId}/asset/${partAssetDto.id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -62,7 +62,7 @@ function initializeFilePonds(scope = document) {
           let partAssetDto = null;
           let xhr = null;
 
-          fetch(`/api/piece/${pieceId}/asset`, {
+          fetch(`/api/pieces/${pieceId}/asset`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

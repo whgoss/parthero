@@ -79,7 +79,7 @@ def musician(request, musician_id: str | None = None):
                     extra_tags="musician",
                 )
 
-            response = redirect(f"/musician/{musician.id}")
+            response = redirect(f"/musicians/{musician.id}")
             return response
     else:
         form = MusicianForm(

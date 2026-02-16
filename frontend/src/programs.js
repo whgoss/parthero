@@ -267,7 +267,7 @@ window.programBowings = function programBowings(programId, pieces = [], stringIn
       state.loading = true;
       state.error = null;
       try {
-        const response = await fetch(`/api/piece/${pieceId}/assets?asset_type=Bowing`, {
+        const response = await fetch(`/api/pieces/${pieceId}/assets?asset_type=Bowing`, {
           headers: { Accept: "application/json" },
         });
         if (!response.ok) {
@@ -326,7 +326,7 @@ window.programBowings = function programBowings(programId, pieces = [], stringIn
         let debouncedSave = null;
         const saveParts = () => {
           const partIds = tagify.value.map((entry) => entry.id).filter(Boolean);
-          fetch(`/api/piece/${pieceId}/asset/${partAssetId}`, {
+          fetch(`/api/pieces/${pieceId}/asset/${partAssetId}`, {
             method: "PATCH",
             credentials: "same-origin",
             headers: {
@@ -374,7 +374,7 @@ window.programBowings = function programBowings(programId, pieces = [], stringIn
     async deletePartAsset(pieceId, partAssetId) {
       const state = this.pieceState(pieceId);
       try {
-        const response = await fetch(`/api/piece/${pieceId}/asset/${partAssetId}`, {
+        const response = await fetch(`/api/pieces/${pieceId}/asset/${partAssetId}`, {
           method: "DELETE",
           credentials: "same-origin",
           headers: {
@@ -397,7 +397,7 @@ window.programBowings = function programBowings(programId, pieces = [], stringIn
   };
 };
 
-window.programPieceSearch = function programPieceSearch(
+window.programPieces = function programPieces(
   programId,
   initialPieces = [],
   initialChecklist = null
@@ -473,7 +473,7 @@ window.programPieceSearch = function programPieceSearch(
       this.saveError = null;
       try {
         const response = await fetch(
-          `/api/program/${this.programId}/pieces/${piece.id}`,
+          `/api/programs/${this.programId}/pieces/${piece.id}`,
           {
             method: "PUT",
             credentials: "same-origin",
@@ -499,7 +499,7 @@ window.programPieceSearch = function programPieceSearch(
       this.saveError = null;
       try {
         const response = await fetch(
-          `/api/program/${this.programId}/pieces/${piece.id}`,
+          `/api/programs/${this.programId}/pieces/${piece.id}`,
           {
             method: "DELETE",
             credentials: "same-origin",
@@ -584,7 +584,7 @@ window.programPieceSearch = function programPieceSearch(
   };
 };
 
-window.programRosterSearch = function programRosterSearch(programId) {
+window.programRoster = function programRoster(programId) {
   const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
 
   return {

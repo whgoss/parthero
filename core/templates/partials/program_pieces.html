@@ -4,7 +4,7 @@
     {{ pieces|pydantic_json_script:"selected-pieces-data" }}
     {{ program.checklist|pydantic_json_script:"program-checklist-data" }}
     
-    <div x-data="programPieceSearch('{{ program.id }}', JSON.parse(document.getElementById('selected-pieces-data').textContent), JSON.parse(document.getElementById('program-checklist-data').textContent))">
+    <div x-data="programPieces('{{ program.id }}', JSON.parse(document.getElementById('selected-pieces-data').textContent), JSON.parse(document.getElementById('program-checklist-data').textContent))">
     <div class="flex items-center gap-3 mb-4">
         <p class="text-sm text-slate-500">
             Below are the pieces you've selected for your program.

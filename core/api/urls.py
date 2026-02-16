@@ -29,12 +29,12 @@ domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
 
 urlpatterns = [
     path(
-        "piece/<str:piece_id>/asset",
+        "pieces/<str:piece_id>/asset",
         part_asset_create,
         name="api_part_asset_create",
     ),
     path(
-        "piece/<str:piece_id>/asset/<str:part_asset_id>",
+        "pieces/<str:piece_id>/asset/<str:part_asset_id>",
         part_asset_patch,
         name="api_part_asset_patch",
     ),
@@ -44,12 +44,12 @@ urlpatterns = [
         name="api_piece_search",
     ),
     path(
-        "program/<str:program_id>/pieces/<str:piece_id>",
+        "programs/<str:program_id>/pieces/<str:piece_id>",
         program_piece,
         name="api_program_piece_update",
     ),
     path(
-        "piece/<str:piece_id>/assets",
+        "pieces/<str:piece_id>/assets",
         part_assets_list,
         name="api_piece_part_assets",
     ),
