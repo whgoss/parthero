@@ -12,16 +12,10 @@ from core.models.base import UUIDPrimaryKeyModel
 from core.models.music import Piece, Part, Instrument
 from core.models.organizations import Organization, Musician
 from core.models.users import User
-from core.enum.status import ProgramStatus
 
 
 class Program(UUIDPrimaryKeyModel):
     name = CharField(max_length=255)
-    status = CharField(
-        max_length=255,
-        default=ProgramStatus.CREATED.value,
-        choices=ProgramStatus.choices(),
-    )
     organization = ForeignKey(Organization, on_delete=CASCADE)
 
     def __str__(self):
@@ -62,8 +56,16 @@ class ProgramMusicianInstrument(UUIDPrimaryKeyModel):
 
 
 class ProgramPartMusician(UUIDPrimaryKeyModel):
+    program = ForeignKey(Program, on_delete=CASCADE, null=True, blank=True)
     part = ForeignKey(Part, on_delete=CASCADE)
     musician = ForeignKey(Musician, on_delete=CASCADE)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["program", "part"], name="unique_program_part_assignment"
+            )
+        ]
 
 
 class ProgramPerformance(UUIDPrimaryKeyModel):

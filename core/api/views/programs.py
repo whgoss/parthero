@@ -14,6 +14,7 @@ from core.services.programs import (
     add_musicians_to_program,
     add_piece_to_program,
     add_program_musician_instrument,
+    get_pieces_for_program,
     get_program_checklist,
     get_musicians_for_program,
     remove_musician_from_program,
@@ -25,6 +26,12 @@ from core.services.programs import (
 
 class ProgramPieceViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated, IsInOrganization]
+
+    def list(self, request, program_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        pieces = get_pieces_for_program(request.organization.id, program_id)
+        response_data = [piece.model_dump(mode="json") for piece in pieces]
+        return Response(response_data, status=status.HTTP_200_OK)
 
     @transaction.atomic
     def update(self, request, program_id, piece_id, *args, **kwargs):

@@ -4,6 +4,7 @@
     data-tab-panel="assignments"
     x-show="activeTab === 'assignments'"
     x-data="programAssignments('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent))"
+    x-init="init()"
 >
     <div class="flex items-center gap-3 mb-4">
         <p class="text-sm text-slate-500">
@@ -12,23 +13,175 @@
         <button
             type="button"
             class="btn-primary ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
-            x-show="!completed"
-            @click="markAsComplete()"
+            x-show="canSendToPrincipals"
+            :disabled="sending"
+            @click="openSendModal()"
         >
-            Mark Assignments as Complete
+            Send to Principals for Assignment
         </button>
         <button
             type="button"
-            class="btn-primary-warning ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
-            x-show="completed == true"
-            @click="markAsIncomplete()"
+            class="btn-primary ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
+            x-show="canMarkAsCompleted"
+            :disabled="!canActuallyCompleteAssignments"
         >
-            Mark Assignments as Incomplete
+            Mark Assignments as Complete
         </button>
     </div>
     <div x-show="saveError" class="mb-3 text-sm text-red-600" x-text="saveError"></div>
+    <div x-show="loadingStatus" class="mb-3 text-xs text-slate-500">Refreshing assignment statuses...</div>
 
-    <div class="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
-        Assignments content coming soon.
+    <div class="mt-4 rounded-xl border border-slate-200 overflow-hidden">
+        <button
+            type="button"
+            class="w-full border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-left text-sm font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition"
+            @click="togglePrincipalStatusSection()"
+        >
+            <span>Principal Assignment Status</span>
+            <svg class="h-4 w-4 text-slate-500 transition-transform" :class="principalStatusSectionOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.126l3.71-3.895a.75.75 0 1 1 1.08 1.04l-4.25 4.46a.75.75 0 0 1-1.08 0l-4.25-4.46a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        <div class="bg-white" x-show="principalStatusSectionOpen">
+            <template x-if="(statusPayload.principals || []).length === 0">
+                <div class="px-4 py-3 text-sm text-slate-500">No principal assignment workflows yet.</div>
+            </template>
+            <template x-if="(statusPayload.principals || []).length > 0">
+                <div class="rounded-lg border border-slate-200 overflow-hidden m-4">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                            <tr>
+                                <th class="px-3 py-2 text-left">Principal</th>
+                                <th class="px-3 py-2 text-left">Assignment Status</th>
+                                <th class="px-3 py-2 text-left">Link Accessed</th>
+                                <th class="px-3 py-2 text-left">Assigned Parts</th>
+                                <th class="px-3 py-2 text-left">Last Accessed On</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <template x-for="principal in (statusPayload.principals || [])" :key="principal.id">
+                                <tr>
+                                    <td class="px-3 py-2 text-slate-700">
+                                        <a class="text-blue-700 hover:text-blue-900 hover:underline" :href="principal.profile_url">
+                                            <span x-text="`${principal.first_name} ${principal.last_name}`"></span>
+                                        </a>
+                                    </td>
+                                    <td class="px-3 py-2 text-slate-700" x-text="principal.status"></td>
+                                    <td class="px-3 py-2 text-slate-700" x-text="principal.link_accessed ? 'Yes' : 'No'"></td>
+                                    <td class="px-3 py-2 text-slate-700" x-text="`${principal.assigned_parts.assigned}/${principal.assigned_parts.total}`"></td>
+                                    <td class="px-3 py-2 text-slate-700" x-text="formatDateTime(principal.last_accessed_on)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div class="mt-4 rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+            <h3 class="text-sm font-semibold text-slate-700">Piece Assignment Status</h3>
+            <div class="text-xs text-slate-500" x-text="`${statusPayload.summary.assigned_parts}/${statusPayload.summary.total_parts} parts assigned`"></div>
+        </div>
+        <div class="bg-white">
+            <template x-if="(statusPayload.pieces || []).length === 0">
+                <div class="px-4 py-3 text-sm text-slate-500">No pieces on this program yet.</div>
+            </template>
+            <template x-for="piece in (statusPayload.pieces || [])" :key="piece.id">
+                <div class="border-b last:border-b-0 border-slate-100">
+                    <button
+                        type="button"
+                        class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-50 transition"
+                        @click="togglePiece(piece.id)"
+                    >
+                        <div>
+                            <div class="text-sm font-semibold text-slate-800" x-text="piece.title"></div>
+                            <div class="text-xs text-slate-500" x-text="piece.composer"></div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="text-xs rounded-full px-2 py-1 border"
+                                :class="piece.all_assigned ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'"
+                                x-text="piece.all_assigned ? 'Complete' : 'In Progress'"
+                            ></span>
+                            <svg class="h-4 w-4 text-slate-500 transition-transform" :class="isPieceOpen(piece.id) ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.126l3.71-3.895a.75.75 0 1 1 1.08 1.04l-4.25 4.46a.75.75 0 0 1-1.08 0l-4.25-4.46a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </button>
+                    <div x-show="isPieceOpen(piece.id)" class="px-4 pb-4">
+                        <div class="rounded-lg border border-slate-200 overflow-hidden">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">Part</th>
+                                        <th class="px-3 py-2 text-left">Status</th>
+                                        <th class="px-3 py-2 text-left">Assigned Musician</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <template x-for="part in piece.parts" :key="part.id">
+                                        <tr>
+                                            <td class="px-3 py-2 text-slate-700" x-text="part.display_name"></td>
+                                            <td class="px-3 py-2">
+                                                <span
+                                                    class="text-xs rounded-full px-2 py-1 border"
+                                                    :class="part.assigned_musician ? 'border-green-200 bg-green-50 text-green-700' : 'border-slate-200 bg-slate-50 text-slate-600'"
+                                                    x-text="part.status"
+                                                ></span>
+                                            </td>
+                                            <td class="px-3 py-2 text-slate-700">
+                                                <template x-if="part.assigned_musician">
+                                                    <a
+                                                        class="text-blue-700 hover:text-blue-900 hover:underline"
+                                                        :href="part.assigned_musician.profile_url"
+                                                        x-text="`${part.assigned_musician.first_name} ${part.assigned_musician.last_name}`"
+                                                    ></a>
+                                                </template>
+                                                <template x-if="!part.assigned_musician">
+                                                    <span class="text-slate-400">Unassigned</span>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div
+        x-show="showSendModal"
+        class="modal-backdrop"
+        @click.self="closeSendModal()"
+    >
+        <div class="modal-card modal-card-sm">
+            <h2 class="modal-title">Send to Principals for Assignment?</h2>
+            <p class="modal-body">
+                This will email eligible principals and ask them to assign parts for their subsections.
+            </p>
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    @click="closeSendModal()"
+                    :disabled="sending"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    class="btn-primary"
+                    @click="confirmSendToPrincipals()"
+                    :disabled="sending"
+                >
+                    Confirm
+                </button>
+            </div>
+        </div>
     </div>
 </div>

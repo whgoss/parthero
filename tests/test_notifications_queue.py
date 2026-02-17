@@ -1,0 +1,134 @@
+import pytest
+
+from core.enum.notifications import NotificationType
+from core.enum.instruments import InstrumentEnum
+from core.services.notifications import (
+    send_notification_email,
+    send_part_assignment_emails,
+)
+from core.services.organizations import create_musician
+from core.services.programs import add_musician_to_program, create_program
+from tests.mocks import create_organization
+
+pytestmark = pytest.mark.django_db
+
+
+def test_send_part_assignment_emails_enqueues_principals_only(monkeypatch):
+    organization = create_organization()
+    program = create_program(
+        organization_id=str(organization.id),
+        name="Queue Program",
+        performance_dates=[],
+    )
+    principal = create_musician(
+        organization_id=str(organization.id),
+        first_name="Pat",
+        last_name="Principal",
+        email="principal-queue@example.com",
+        principal=True,
+        core_member=True,
+        instruments=[InstrumentEnum.TRUMPET],
+    )
+    string_principal = create_musician(
+        organization_id=str(organization.id),
+        first_name="Vi",
+        last_name="Principal",
+        email="violin-principal-queue@example.com",
+        principal=True,
+        core_member=True,
+        instruments=[InstrumentEnum.VIOLIN_1],
+    )
+    section = create_musician(
+        organization_id=str(organization.id),
+        first_name="Sam",
+        last_name="Section",
+        email="section-queue@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.TRUMPET],
+    )
+
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(principal.id),
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(string_principal.id),
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(section.id),
+    )
+
+    payloads = []
+
+    def _enqueue_email_payload(payload):
+        payloads.append(payload)
+        return "msg-1"
+
+    monkeypatch.setattr(
+        "core.services.notifications.enqueue_email_payload",
+        _enqueue_email_payload,
+    )
+
+    send_part_assignment_emails(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+    )
+
+    assert [payload.model_dump() for payload in payloads] == [
+        {
+            "organization_id": str(organization.id),
+            "program_id": str(program.id),
+            "musician_id": str(principal.id),
+            "notification_type": NotificationType.ASSIGNMENT,
+        },
+    ]
+
+
+def test_send_notification_email_dispatches_assignment(monkeypatch):
+    calls = []
+
+    def _send_assignment_email(organization_id: str, program_id: str, musician_id: str):
+        calls.append((organization_id, program_id, musician_id))
+
+    monkeypatch.setattr(
+        "core.services.notifications.send_assignment_email",
+        _send_assignment_email,
+    )
+
+    send_notification_email(
+        organization_id="org-1",
+        program_id="program-1",
+        musician_id="musician-1",
+        notification_type=NotificationType.ASSIGNMENT,
+    )
+
+    assert calls == [("org-1", "program-1", "musician-1")]
+
+
+def test_send_notification_email_dispatches_part_delivery(monkeypatch):
+    calls = []
+
+    def _send_part_delivery_email(
+        organization_id: str, program_id: str, musician_id: str
+    ):
+        calls.append((organization_id, program_id, musician_id))
+
+    monkeypatch.setattr(
+        "core.services.notifications.send_part_delivery_email",
+        _send_part_delivery_email,
+    )
+
+    send_notification_email(
+        organization_id="org-1",
+        program_id="program-1",
+        musician_id="musician-1",
+        notification_type=NotificationType.PART_DELIVERY,
+    )
+
+    assert calls == [("org-1", "program-1", "musician-1")]

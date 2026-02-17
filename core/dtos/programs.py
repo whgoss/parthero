@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Optional, List
 from core.dtos.base import BaseDTO
 from core.enum.instruments import InstrumentEnum
-from core.enum.status import ProgramStatus
 from core.models.programs import (
     Program,
     ProgramPerformance,
@@ -16,7 +15,6 @@ from core.dtos.users import UserDTO
 class ProgramDTO(BaseDTO):
     organization_id: str
     name: str
-    status: ProgramStatus = ProgramStatus.CREATED
     piece_count: int
     checklist: "ProgramChecklistDTO"
     performances: Optional[List["ProgramPerformanceDTO"]] = None
@@ -37,7 +35,6 @@ class ProgramDTO(BaseDTO):
             id=str(model.id),
             organization_id=str(model.organization.id),
             name=model.name,
-            status=ProgramStatus(model.status),
             performances=ProgramPerformanceDTO.from_models(model.performances.all()),
             checklist=ProgramChecklistDTO.from_model(model.checklist),
             piece_count=piece_count,
@@ -199,3 +196,65 @@ class ProgramChecklistDTO(BaseDTO):
             else None,
             delivery_completed_on=model.delivery_completed_on,
         )
+
+
+class ProgramAssignmentEligibleMusicianDTO(BaseDTO):
+    first_name: str
+    last_name: str
+    email: str
+    instruments: List[str]
+
+
+class ProgramAssignmentAssignedMusicianDTO(BaseDTO):
+    first_name: str
+    last_name: str
+    profile_url: Optional[str] = None
+
+
+class ProgramAssignmentPartDTO(BaseDTO):
+    display_name: str
+    assigned_musician_id: Optional[str] = None
+    status: Optional[str] = None
+    assigned_musician: Optional[ProgramAssignmentAssignedMusicianDTO] = None
+
+
+class ProgramAssignmentPieceDTO(BaseDTO):
+    title: str
+    composer: str
+    parts: List[ProgramAssignmentPartDTO]
+    all_assigned: Optional[bool] = None
+
+
+class ProgramAssignmentDTO(BaseDTO):
+    pieces: List[ProgramAssignmentPieceDTO]
+    eligible_musicians: List[ProgramAssignmentEligibleMusicianDTO]
+    eligible_musician_ids: List[str]
+    all_assigned: bool
+
+
+class ProgramAssignmentPrincipalPartsDTO(BaseDTO):
+    assigned: int
+    total: int
+
+
+class ProgramAssignmentPrincipalStatusDTO(BaseDTO):
+    first_name: str
+    last_name: str
+    profile_url: str
+    status: str
+    link_accessed: bool
+    assigned_parts: ProgramAssignmentPrincipalPartsDTO
+    last_accessed_on: Optional[datetime] = None
+    completed_on: Optional[datetime] = None
+
+
+class ProgramAssignmentSummaryDTO(BaseDTO):
+    total_parts: int
+    assigned_parts: int
+    all_assigned: bool
+
+
+class ProgramAssignmentStatusDTO(BaseDTO):
+    pieces: List[ProgramAssignmentPieceDTO]
+    principals: List[ProgramAssignmentPrincipalStatusDTO]
+    summary: ProgramAssignmentSummaryDTO

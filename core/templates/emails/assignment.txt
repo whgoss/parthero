@@ -1,0 +1,16 @@
+Assign Parts for {{ program.name }}
+
+Hi {% if musician.first_name %}{{ musician.first_name }}{% else %}there{% endif %},
+
+You are receiving this because you are a principal on this program.
+Please assign the listed parts to musicians in your section.
+
+Pieces in this program:
+{% for piece in pieces %}
+- {{ piece.title }}{% if piece.composer %} by {{ piece.composer }}{% endif %}
+{% empty %}
+- No pieces are currently listed.
+{% endfor %}
+
+Click Here to assign parts:
+{{ url }}

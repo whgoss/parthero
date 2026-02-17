@@ -1,0 +1,93 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assign Parts for {{ program.name }}</title>
+    <link rel="stylesheet" href="{% static 'frontend/bundle.css' %}">
+    <script type="module" src="{% static 'frontend/main.js' %}"></script>
+    <script type="module" src="{% static 'frontend/programs.js' %}"></script>
+    <script type="module" src="{% static 'frontend/pieces.js' %}"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    {{ payload|json_script:"magic-assignment-payload" }}
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div
+        x-data="magicAssignments('{{ magic_token }}', JSON.parse(document.getElementById('magic-assignment-payload').textContent))"
+        x-init="init()"
+      >
+        <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+          <h1 class="text-2xl font-semibold text-slate-900">Assign Parts for {{ program.name }}</h1>
+          <p class="mt-2 text-sm text-slate-600">
+            Hi {{ musician.first_name }} {{ musician.last_name }}. Assign each part to an eligible musician in your subsection.
+          </p>
+          <div x-show="confirmed" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            Assignments confirmed. Thanks.
+          </div>
+          <div x-show="saveError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" x-text="saveError"></div>
+        </div>
+
+        <template x-for="piece in payload.pieces" :key="piece.id">
+          <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-4 mb-4">
+            <div class="mb-3">
+              <h2 class="text-lg font-semibold text-slate-900" x-text="piece.title"></h2>
+              <p class="text-sm text-slate-500" x-text="piece.composer"></p>
+            </div>
+            <div class="space-y-3">
+              <template x-for="part in piece.parts" :key="part.id">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center rounded-lg border border-slate-200 p-3">
+                  <div class="text-sm font-medium text-slate-800" x-text="part.display_name"></div>
+                  <div class="md:col-span-2">
+                    <input
+                      type="text"
+                      class="assignment-musician-input form-input w-full"
+                      :data-part-id="part.id"
+                    />
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <div x-show="payload.pieces.length === 0" class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
+          <p class="text-sm text-slate-600">There are currently no assignable parts for your subsection on this program.</p>
+        </div>
+
+        <div class="sticky bottom-0 bg-slate-100/95 backdrop-blur py-4">
+          <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <div class="text-sm text-slate-600" x-text="allAssigned ? 'All parts assigned' : 'Assign all parts to continue'"></div>
+            <button
+              type="button"
+              class="btn-primary disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+              :disabled="!allAssigned || confirming || confirmed"
+              @click="openConfirm()"
+            >
+              Assign Parts
+            </button>
+          </div>
+        </div>
+
+        <div
+          x-show="confirmOpen"
+          class="modal-backdrop"
+          @click.self="closeConfirm()"
+        >
+          <div class="modal-card modal-card-sm">
+            <h2 class="modal-title">Confirm Assignments?</h2>
+            <p class="modal-body">
+              This will confirm your selections for all parts in this program.
+            </p>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closeConfirm()" :disabled="confirming">Cancel</button>
+              <button type="button" class="btn-primary" @click="confirmAssignments()" :disabled="confirming">
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

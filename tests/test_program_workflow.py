@@ -100,6 +100,7 @@ def test_assignments_can_be_completed_after_all_prerequisites():
         roster_completed=True,
         bowings_completed=True,
         overrides_completed=True,
+        assignments_sent=True,
     )
     result = update_program_checklist(
         organization_id=str(program.organization_id),
@@ -109,6 +110,39 @@ def test_assignments_can_be_completed_after_all_prerequisites():
     )
 
     assert result.assignments_completed is True
+
+
+def test_assignments_sent_requires_prior_workflow_steps():
+    user = _create_user()
+    program = _create_program_with_checklist()
+
+    with pytest.raises(ValueError, match="Assignments cannot be sent"):
+        update_program_checklist(
+            organization_id=str(program.organization_id),
+            program_id=str(program.id),
+            user_id=str(user.id),
+            assignments_sent=True,
+        )
+
+
+def test_assignments_sent_sets_timestamp_and_user():
+    user = _create_user()
+    program = _create_program_with_checklist()
+
+    result = update_program_checklist(
+        organization_id=str(program.organization_id),
+        program_id=str(program.id),
+        user_id=str(user.id),
+        pieces_completed=True,
+        roster_completed=True,
+        bowings_completed=True,
+        overrides_completed=True,
+        assignments_sent=True,
+    )
+
+    assert result.assignments_sent_on is not None
+    assert result.assignments_sent_by is not None
+    assert result.assignments_sent_by.id == str(user.id)
 
 
 def test_marking_pieces_incomplete_clears_dependent_steps():
@@ -123,6 +157,7 @@ def test_marking_pieces_incomplete_clears_dependent_steps():
         roster_completed=True,
         bowings_completed=True,
         overrides_completed=True,
+        assignments_sent=True,
         assignments_completed=True,
     )
     update_program_checklist(
@@ -139,6 +174,7 @@ def test_marking_pieces_incomplete_clears_dependent_steps():
     assert checklist.pieces_completed is False
     assert checklist.bowings_completed is False
     assert checklist.overrides_completed is False
+    assert checklist.assignments_sent_on is None
     assert checklist.assignments_completed is False
 
 
@@ -167,6 +203,7 @@ def test_delivery_sent_sets_timestamp_and_user_after_assignments_complete():
         roster_completed=True,
         bowings_completed=True,
         overrides_completed=True,
+        assignments_sent=True,
         assignments_completed=True,
     )
 
@@ -180,3 +217,30 @@ def test_delivery_sent_sets_timestamp_and_user_after_assignments_complete():
     assert result.delivery_sent is True
     assert result.delivery_sent_by is not None
     assert result.delivery_sent_by.id == str(user.id)
+
+
+def test_assignments_sent_triggers_assignment_email_enqueue(monkeypatch):
+    user = _create_user()
+    program = _create_program_with_checklist()
+    calls = []
+
+    def _mock_send_part_assignment_emails(organization_id: str, program_id: str):
+        calls.append((organization_id, program_id))
+
+    monkeypatch.setattr(
+        "core.services.notifications.send_part_assignment_emails",
+        _mock_send_part_assignment_emails,
+    )
+
+    update_program_checklist(
+        organization_id=str(program.organization_id),
+        program_id=str(program.id),
+        user_id=str(user.id),
+        pieces_completed=True,
+        roster_completed=True,
+        bowings_completed=True,
+        overrides_completed=True,
+        assignments_sent=True,
+    )
+
+    assert calls == [(str(program.organization_id), str(program.id))]

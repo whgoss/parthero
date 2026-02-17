@@ -20,5 +20,15 @@
       "console": "integratedTerminal",
       "justMyCode": false
     },
+    {
+      "name": "Run: queue_consumer",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["queue_consumer"],
+      "console": "integratedTerminal",
+      "django": true,
+      "justMyCode": false,
+    },
   ]
 }

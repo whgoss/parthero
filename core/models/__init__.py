@@ -6,6 +6,7 @@ from core.models.music import (
     Instrument,
 )
 from core.models.organizations import Musician, Organization
+from core.models.notifications import MagicLink, Notification
 from core.models.users import User, UserOrganization
 
 __all__ = [
@@ -16,6 +17,8 @@ __all__ = [
     "Musician",
     "MusicianInstrument",
     "Organization",
+    "MagicLink",
+    "Notification",
     "User",
     "UserOrganization",
 ]

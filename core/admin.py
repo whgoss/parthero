@@ -8,12 +8,15 @@ from core.models.music import (
     Instrument,
 )
 from core.models.organizations import Organization, Musician, SetupChecklist
-from core.models.programs import Program, ProgramPerformance
+from core.models.programs import Program, ProgramPerformance, ProgramChecklist
+from core.models.notifications import MagicLink, Notification
 from core.models.users import User, UserOrganization
 
 admin.site.register(Instrument)
 admin.site.register(Musician)
 admin.site.register(MusicianInstrument)
+admin.site.register(Notification)
+admin.site.register(MagicLink)
 admin.site.register(Organization)
 admin.site.register(SetupChecklist)
 admin.site.register(Piece)
@@ -22,5 +25,6 @@ admin.site.register(PartAsset)
 admin.site.register(PartInstrument)
 admin.site.register(Program)
 admin.site.register(ProgramPerformance)
+admin.site.register(ProgramChecklist)
 admin.site.register(User)
 admin.site.register(UserOrganization)

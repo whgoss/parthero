@@ -7,11 +7,3 @@ class UploadStatus(BaseEnum):
     UPLOADED = "Uploaded"
     ABORTED = "Aborted"
     NONE = "None"
-
-
-class ProgramStatus(BaseEnum):
-    CREATED = "Created"
-    PIECES = "Pieces"
-    ROSTER = "Roster"
-    ASSIGNMENT = "Assignment"
-    DELIVERED = "Delivered"

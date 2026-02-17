@@ -7,7 +7,6 @@ from django.db.models import Min, F, Count
 from django.utils import timezone
 from core.dtos.music import PieceDTO
 from core.dtos.programs import ProgramDTO, ProgramMusicianDTO, ProgramChecklistDTO
-from core.enum.status import ProgramStatus
 from core.models.music import Piece, MusicianInstrument, Instrument
 from core.models.organizations import Organization, Musician, SetupChecklist
 from core.models.users import User
@@ -26,14 +25,12 @@ from core.enum.instruments import InstrumentEnum
 def create_program(
     organization_id: str,
     name: str,
-    status: Optional[ProgramStatus] = ProgramStatus.CREATED,
     performance_dates: Optional[List[datetime]] = None,
 ) -> ProgramDTO:
     organization = Organization.objects.get(id=organization_id)
     program = Program(
         organization_id=organization.id,
         name=name,
-        status=status.value,
     )
     program.save()
 
@@ -134,6 +131,17 @@ def get_musicians_for_program(
         program_id=program_id, program__organization_id=organization_id
     ).select_related("program", "musician", "musician__organization")
     return ProgramMusicianDTO.from_models(program_musicians)
+
+
+def get_musician_for_program(
+    organization_id: str, program_id: str, musician_id: str
+) -> ProgramMusicianDTO:
+    program_musician = ProgramMusician.objects.get(
+        program_id=program_id,
+        musician_id=musician_id,
+        program__organization_id=organization_id,
+    )
+    return ProgramMusicianDTO.from_model(program_musician)
 
 
 def add_musician_to_program(
@@ -258,6 +266,7 @@ def update_program_checklist(
     current_roster_completed = program_checklist.roster_completed_on is not None
     current_bowings_completed = program_checklist.bowings_completed_on is not None
     current_overrides_completed = program_checklist.overrides_completed_on is not None
+    current_assignments_sent = program_checklist.assignments_sent_on is not None
     current_assignments_completed = (
         program_checklist.assignments_completed_on is not None
     )
@@ -277,6 +286,9 @@ def update_program_checklist(
         overrides_completed
         if overrides_completed is not None
         else current_overrides_completed
+    )
+    assignments_will_be_sent = (
+        assignments_sent if assignments_sent is not None else current_assignments_sent
     )
     assignments_will_be_completed = (
         assignments_completed
@@ -301,11 +313,25 @@ def update_program_checklist(
                 roster_will_be_completed,
                 bowings_will_be_completed,
                 overrides_will_be_completed,
+                assignments_will_be_sent,
             ]
         ):
             raise ValueError(
                 "Assignments cannot be completed until pieces, roster, bowings, "
-                "and overrides are complete."
+                "overrides, and sending to principals are complete."
+            )
+
+    if assignments_sent:
+        if not all(
+            [
+                pieces_will_be_completed,
+                roster_will_be_completed,
+                bowings_will_be_completed,
+                overrides_will_be_completed,
+            ]
+        ):
+            raise ValueError(
+                "Assignments cannot be sent until pieces, roster, bowings, and overrides are complete."
             )
 
     if delivery_sent:
@@ -325,6 +351,8 @@ def update_program_checklist(
             program_checklist.bowings_completed_by = None
             program_checklist.overrides_completed_on = None
             program_checklist.overrides_completed_by = None
+            program_checklist.assignments_sent_on = None
+            program_checklist.assignments_sent_by = None
             program_checklist.assignments_completed_on = None
             program_checklist.assignments_completed_by = None
     if roster_completed is not None:
@@ -334,6 +362,8 @@ def update_program_checklist(
         else:
             program_checklist.roster_completed_on = None
             program_checklist.roster_completed_by = None
+            program_checklist.assignments_sent_on = None
+            program_checklist.assignments_sent_by = None
             program_checklist.assignments_completed_on = None
             program_checklist.assignments_completed_by = None
     if overrides_completed is not None:
@@ -343,6 +373,8 @@ def update_program_checklist(
         else:
             program_checklist.overrides_completed_on = None
             program_checklist.overrides_completed_by = None
+            program_checklist.assignments_sent_on = None
+            program_checklist.assignments_sent_by = None
             program_checklist.assignments_completed_on = None
             program_checklist.assignments_completed_by = None
     if bowings_completed is not None:
@@ -352,6 +384,26 @@ def update_program_checklist(
         else:
             program_checklist.bowings_completed_on = None
             program_checklist.bowings_completed_by = None
+            program_checklist.assignments_sent_on = None
+            program_checklist.assignments_sent_by = None
+            program_checklist.assignments_completed_on = None
+            program_checklist.assignments_completed_by = None
+    if assignments_sent is not None:
+        if assignments_sent:
+            if program_checklist.assignments_sent_on is None:
+                program_checklist.assignments_sent_on = timezone.now()
+                program_checklist.assignments_sent_by = user
+
+                # Nested import prevents circular dependency
+                from core.services.notifications import send_part_assignment_emails
+
+                send_part_assignment_emails(
+                    organization_id=organization_id,
+                    program_id=program_id,
+                )
+        else:
+            program_checklist.assignments_sent_on = None
+            program_checklist.assignments_sent_by = None
             program_checklist.assignments_completed_on = None
             program_checklist.assignments_completed_by = None
     if assignments_completed is not None:
@@ -366,7 +418,6 @@ def update_program_checklist(
             program_checklist.delivery_sent_on = timezone.now()
             program_checklist.delivery_sent_by = user
     program_checklist.save()
-
     return ProgramChecklistDTO.from_model(program_checklist)
 
 

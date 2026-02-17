@@ -71,17 +71,13 @@ def create_musician(
     return MusicianDTO.from_model(musician)
 
 
-def get_musician(organization_id: str, musician_id: str) -> MusicianDTO | None:
-    musician = Musician.objects.filter(
-        organization__id=organization_id, id=musician_id
-    ).first()
+def get_musician(organization_id: str, musician_id: str) -> MusicianDTO:
+    musician = Musician.objects.get(organization__id=organization_id, id=musician_id)
     return MusicianDTO.from_model(musician)
 
 
-def get_musician_by_email(organization_id: str, email: str) -> MusicianDTO | None:
-    musician = Musician.objects.filter(
-        organization__id=organization_id, email=email
-    ).first()
+def get_musician_by_email(organization_id: str, email: str) -> MusicianDTO:
+    musician = Musician.objects.get(organization__id=organization_id, email=email)
     return MusicianDTO.from_model(musician)
 
 

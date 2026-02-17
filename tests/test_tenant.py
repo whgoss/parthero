@@ -2,6 +2,7 @@ import pytest
 from faker import Faker
 from core.models.music import PartAsset, Piece
 from core.models.programs import Program
+from core.models.organizations import Musician
 from core.enum.instruments import InstrumentEnum
 from core.enum.music import PartAssetType
 from core.enum.status import UploadStatus
@@ -124,8 +125,8 @@ def test_get_musician_blocks_cross_tenant_access():
         instruments=[],
     )
 
-    result = get_musician(str(org_b.id), str(musician.id))
-    assert result is None
+    with pytest.raises(Musician.DoesNotExist):
+        get_musician(str(org_b.id), str(musician.id))
 
 
 def test_update_musician_blocks_cross_tenant_access():

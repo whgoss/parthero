@@ -143,3 +143,24 @@ REQUEST_TIMEOUT = os.environ.get("REQUEST_TIMEOUT", 5)
 DOMO_ID = os.environ.get("DOMO_ID")
 DOMO_TOKEN = os.environ.get("DOMO_TOKEN")
 DOMO_URL = os.environ.get("DOMO_URL")
+
+
+# Email configuration
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "localhost"
+    EMAIL_PORT = 1025
+    ALLOWED_HOSTS
+# else:
+# EMAIL_HOST = "mail.gandi.net"
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = "delivery@parthero.net"
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", None)
+# EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = "PartHero <delivery@parthero.net>"
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Queue settings
+EMAIL_QUEUE_NAME = os.environ.get("EMAIL_QUEUE_NAME", "email-queue")
+EMAIL_QUEUE_URL = os.environ.get("EMAIL_QUEUE_URL", "")

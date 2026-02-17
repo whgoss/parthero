@@ -204,9 +204,16 @@ INSTRUMENT_SECTIONS = {
 
 
 INSTRUMENT_PRIMARIES = {
+    InstrumentEnum.ALTO_FLUTE: InstrumentEnum.FLUTE,
+    InstrumentEnum.BASS_FLUTE: InstrumentEnum.FLUTE,
     InstrumentEnum.PICCOLO: InstrumentEnum.FLUTE,
+    InstrumentEnum.OBOE_DAMORE: InstrumentEnum.OBOE,
     InstrumentEnum.ENGLISH_HORN: InstrumentEnum.OBOE,
+    InstrumentEnum.BASS_OBOE: InstrumentEnum.OBOE,
+    InstrumentEnum.HECKELPHONE: InstrumentEnum.OBOE,
     InstrumentEnum.BASS_CLARINET: InstrumentEnum.CLARINET,
     InstrumentEnum.CONTRABASS_CLARINET: InstrumentEnum.CLARINET,
     InstrumentEnum.CONTRABASSOON: InstrumentEnum.BASSOON,
+    InstrumentEnum.BASS_TROMBONE: InstrumentEnum.TROMBONE,
+    InstrumentEnum.PICCOLO_TRUMPET: InstrumentEnum.TRUMPET,
 }

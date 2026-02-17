@@ -142,6 +142,7 @@ window.programTabs = function programTabs(programId, initialChecklist = null) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          const isSameProgram = parsed?.program_id === this.programId;
           const isValidTab =
             parsed?.tab === "pieces" ||
             parsed?.tab === "bowings" ||
@@ -149,7 +150,7 @@ window.programTabs = function programTabs(programId, initialChecklist = null) {
             parsed?.tab === "overrides" ||
             parsed?.tab === "assignments";
           const isFresh = parsed?.ts && Date.now() - parsed.ts < 10 * 60 * 1000;
-          if (isValidTab && isFresh && this.isTabEnabled(parsed.tab)) {
+          if (isSameProgram && isValidTab && isFresh && this.isTabEnabled(parsed.tab)) {
             this.activeTab = parsed.tab;
           } else {
             window.sessionStorage.removeItem("program-active-tab");
@@ -168,6 +169,11 @@ window.programTabs = function programTabs(programId, initialChecklist = null) {
           window.dispatchEvent(new Event("roster-tab:show"));
         }, 0);
       }
+      if (this.activeTab === "assignments") {
+        setTimeout(() => {
+          window.dispatchEvent(new Event("assignments-tab:show"));
+        }, 0);
+      }
     },
     setTab(tab) {
       if (!this.isTabEnabled(tab)) {
@@ -176,7 +182,7 @@ window.programTabs = function programTabs(programId, initialChecklist = null) {
       this.activeTab = tab;
       window.sessionStorage.setItem(
         "program-active-tab",
-        JSON.stringify({ tab, ts: Date.now() })
+        JSON.stringify({ program_id: this.programId, tab, ts: Date.now() })
       );
       if (tab === "bowings") {
         setTimeout(() => {
@@ -186,6 +192,11 @@ window.programTabs = function programTabs(programId, initialChecklist = null) {
       if (tab === "roster") {
         setTimeout(() => {
           window.dispatchEvent(new Event("roster-tab:show"));
+        }, 0);
+      }
+      if (tab === "assignments") {
+        setTimeout(() => {
+          window.dispatchEvent(new Event("assignments-tab:show"));
         }, 0);
       }
     },
@@ -348,15 +359,7 @@ window.programBowings = function programBowings(
     rootEl: null,
     init() {
       this.rootEl = this.$el;
-      this.pieces.forEach((piece) => {
-        this.pieceStates[piece.id] = {
-          loading: false,
-          loaded: false,
-          error: null,
-          partAssets: [],
-          stringPartOptions: [],
-        };
-      });
+      this.syncPieceStates();
 
       if (!this._bowingsRefreshHandler) {
         this._bowingsRefreshHandler = () => {
@@ -364,9 +367,54 @@ window.programBowings = function programBowings(
         };
         window.addEventListener("part-assets:refresh", this._bowingsRefreshHandler);
       }
+      if (!this._bowingsTabShowListener) {
+        this._bowingsTabShowListener = () => {
+          this.reloadPieces();
+        };
+        window.addEventListener("bowings-tab:show", this._bowingsTabShowListener);
+      }
 
       // Always preload bowings for all pieces; accordion remains collapsed until user opens.
       this.fetchAllBowings();
+    },
+    syncPieceStates() {
+      const pieceIds = new Set(this.pieces.map((piece) => piece.id));
+      Object.keys(this.pieceStates).forEach((pieceId) => {
+        if (!pieceIds.has(pieceId)) {
+          delete this.pieceStates[pieceId];
+        }
+      });
+      this.pieces.forEach((piece) => {
+        if (!this.pieceStates[piece.id]) {
+          this.pieceStates[piece.id] = {
+            loading: false,
+            loaded: false,
+            error: null,
+            partAssets: [],
+            stringPartOptions: [],
+          };
+        }
+      });
+      this.openPieceIds = this.openPieceIds.filter((pieceId) => pieceIds.has(pieceId));
+    },
+    async reloadPieces() {
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/pieces`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch program pieces");
+        }
+        this.pieces = await response.json();
+        this.syncPieceStates();
+        await this.fetchAllBowings();
+        this.$nextTick(() => {
+          this.openPieceIds.forEach((pieceId) => this.initPieceTagify(pieceId));
+          window.initializeFilePonds?.(this.rootEl);
+        });
+      } catch (error) {
+        this.saveError = "Unable to refresh bowings pieces right now.";
+      }
     },
     async markAsComplete() {
       this.saving = true;
@@ -1269,14 +1317,115 @@ window.programAssignments = function programAssignments(
 
   return {
     programId,
-    completed: Boolean(
-      initialChecklist?.assignments_completed ??
-      initialChecklist?.assignments_completed_on
-    ),
-    saving: false,
+    checklist: initialChecklist || {},
+    statusPayload: { pieces: [], principals: [], summary: { total_parts: 0, assigned_parts: 0, all_assigned: false } },
+    loadingStatus: false,
+    sending: false,
+    showSendModal: false,
     saveError: null,
-    async markAsComplete() {
-      this.saving = true;
+    openPieceIds: [],
+    principalStatusSectionOpen: true,
+    init() {
+      if (!this._checklistRefreshListener) {
+        this._checklistRefreshListener = () => {
+          this.fetchChecklist();
+          this.fetchAssignments();
+        };
+        window.addEventListener(
+          "program-checklist:refresh",
+          this._checklistRefreshListener
+        );
+      }
+      if (!this._assignmentsTabShowListener) {
+        this._assignmentsTabShowListener = () => {
+          this.fetchChecklist();
+          this.fetchAssignments();
+        };
+        window.addEventListener(
+          "assignments-tab:show",
+          this._assignmentsTabShowListener
+        );
+      }
+      this.fetchChecklist();
+      this.fetchAssignments();
+    },
+    isStepComplete(completedOnField) {
+      return Boolean(this.checklist?.[completedOnField]);
+    },
+    get assignmentsSent() {
+      if (this.isStepComplete("assignments_sent_on")) {
+        return true;
+      }
+      const principals = this.statusPayload?.principals || [];
+      return principals.some((principal) => principal.status && principal.status !== "Not Sent");
+    },
+    get canSendToPrincipals() {
+      return (
+        this.isStepComplete("pieces_completed_on") &&
+        this.isStepComplete("roster_completed_on") &&
+        this.isStepComplete("bowings_completed_on") &&
+        this.isStepComplete("overrides_completed_on") &&
+        !this.assignmentsSent
+      );
+    },
+    get canMarkAsCompleted() {
+      return (
+        this.isStepComplete("pieces_completed_on") &&
+        this.isStepComplete("roster_completed_on") &&
+        this.isStepComplete("bowings_completed_on") &&
+        this.isStepComplete("overrides_completed_on") &&
+        this.assignmentsSent &&
+        !this.isStepComplete("assignments_completed_on")
+      );
+    },
+    get canActuallyCompleteAssignments() {
+      const principals = this.statusPayload?.principals || [];
+      const summary = this.statusPayload?.summary || {};
+      const principalsCompleted =
+        principals.length > 0 && principals.every((principal) => Boolean(principal.completed_on));
+      return Boolean(summary.all_assigned) && principalsCompleted;
+    },
+    isPieceOpen(pieceId) {
+      return this.openPieceIds.includes(pieceId);
+    },
+    togglePiece(pieceId) {
+      if (this.isPieceOpen(pieceId)) {
+        this.openPieceIds = this.openPieceIds.filter((id) => id !== pieceId);
+        return;
+      }
+      this.openPieceIds = [...this.openPieceIds, pieceId];
+    },
+    togglePrincipalStatusSection() {
+      this.principalStatusSectionOpen = !this.principalStatusSectionOpen;
+    },
+    formatDateTime(value) {
+      if (!value) {
+        return "-";
+      }
+      const parsedDate = new Date(value);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return "-";
+      }
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(parsedDate);
+    },
+    openSendModal() {
+      this.saveError = null;
+      this.showSendModal = true;
+    },
+    closeSendModal() {
+      if (this.sending) {
+        return;
+      }
+      this.showSendModal = false;
+    },
+    async confirmSendToPrincipals() {
+      this.sending = true;
       this.saveError = null;
       try {
         const response = await fetch(`/api/programs/${this.programId}/checklist`, {
@@ -1287,42 +1436,198 @@ window.programAssignments = function programAssignments(
             "Content-Type": "application/json",
             "X-CSRFToken": csrfToken(),
           },
-          body: JSON.stringify({ assignments_completed: true }),
+          body: JSON.stringify({ assignments_sent: true }),
         });
         if (!response.ok) {
-          throw new Error("Failed to mark assignments as completed");
+          throw new Error("Failed to send assignments to principals");
         }
-        this.completed = true;
+        this.checklist = await response.json();
+        this.showSendModal = false;
         window.dispatchEvent(new Event("program-checklist:refresh"));
       } catch (error) {
-        this.saveError = "Unable to mark assignments as completed right now.";
+        this.saveError = "Unable to send assignments to principals right now.";
+      } finally {
+        this.sending = false;
+      }
+    },
+    async fetchChecklist() {
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch checklist");
+        }
+        this.checklist = await response.json();
+      } catch (error) {
+        this.saveError = "Unable to refresh assignments state right now.";
+      }
+    },
+    async fetchAssignments() {
+      if (this.loadingStatus) {
+        return;
+      }
+      this.loadingStatus = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/assignments`,
+          {
+            headers: { Accept: "application/json" },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch assignments status");
+        }
+        this.statusPayload = await response.json();
+      } catch (error) {
+        this.saveError = "Unable to refresh assignment statuses right now.";
+      } finally {
+        this.loadingStatus = false;
+      }
+    },
+  };
+};
+
+window.magicAssignments = function magicAssignments(token, initialPayload = null) {
+  return {
+    token,
+    payload: initialPayload || { pieces: [], eligible_musicians: [], all_assigned: false },
+    loading: false,
+    saving: false,
+    saveError: null,
+    confirmOpen: false,
+    confirming: false,
+    confirmed: false,
+    tagifyInstances: new Map(),
+    init() {
+      this.$nextTick(() => this.initTagify());
+    },
+    get allAssigned() {
+      return Boolean(this.payload?.all_assigned);
+    },
+    musicianLabel(musician) {
+      const fullName = `${musician.first_name} ${musician.last_name}`.trim();
+      return `${fullName} (${musician.email})`;
+    },
+    getMusicianById(musicianId) {
+      return (this.payload?.eligible_musicians || []).find((m) => m.id === musicianId);
+    },
+    assignmentValue(part) {
+      const musician = this.getMusicianById(part.assigned_musician_id);
+      if (!musician) return [];
+      return [{ value: this.musicianLabel(musician), id: musician.id }];
+    },
+    getPartById(partId) {
+      for (const piece of this.payload?.pieces || []) {
+        for (const part of piece.parts || []) {
+          if (part.id === partId) return part;
+        }
+      }
+      return null;
+    },
+    whitelist() {
+      return (this.payload?.eligible_musicians || []).map((musician) => ({
+        value: this.musicianLabel(musician),
+        id: musician.id,
+      }));
+    },
+    resetTagify() {
+      this.tagifyInstances.forEach((instance) => instance.destroy());
+      this.tagifyInstances.clear();
+      this.$nextTick(() => this.initTagify());
+    },
+    initTagify() {
+      const inputs = this.$el.querySelectorAll(".assignment-musician-input");
+      const whitelist = this.whitelist();
+      inputs.forEach((input) => {
+        if (input._tagify || input.dataset.tagifyInitialized === "true") return;
+        const partId = input.dataset.partId;
+        const initial = this.assignmentValue(this.getPartById(partId));
+        const tagify = new Tagify(input, {
+          whitelist,
+          enforceWhitelist: true,
+          maxTags: 1,
+          dropdown: { enabled: 0, closeOnSelect: true },
+          originalInputValueFormat: (valuesArr) => valuesArr.map((tag) => tag.value).join(","),
+        });
+        tagify.loadOriginalValues(initial);
+        input.dataset.tagifyInitialized = "true";
+        this.tagifyInstances.set(input, tagify);
+
+        const save = (musicianId) => this.savePartAssignment(partId, musicianId);
+        tagify.on("add", (event) => save(event?.detail?.data?.id || null));
+        tagify.on("remove", () => save(null));
+      });
+    },
+    async refresh() {
+      this.loading = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/magic/${this.token}/assignments`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to refresh assignments");
+        }
+        this.payload = await response.json();
+        this.resetTagify();
+      } catch (error) {
+        this.saveError = "Unable to refresh assignments right now.";
+      } finally {
+        this.loading = false;
+      }
+    },
+    async savePartAssignment(partId, musicianId) {
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/magic/${this.token}/assignments/part/${partId}`, {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ musician_id: musicianId }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data?.detail || "Failed to save assignment");
+        }
+        this.payload = await response.json();
+      } catch (error) {
+        this.saveError = error?.message || "Unable to save assignment.";
+        this.refresh();
       } finally {
         this.saving = false;
       }
     },
-    async markAsIncomplete() {
-      this.saving = true;
+    openConfirm() {
+      if (!this.allAssigned) return;
+      this.confirmOpen = true;
+    },
+    closeConfirm() {
+      if (this.confirming) return;
+      this.confirmOpen = false;
+    },
+    async confirmAssignments() {
+      this.confirming = true;
       this.saveError = null;
       try {
-        const response = await fetch(`/api/programs/${this.programId}/checklist`, {
-          method: "PATCH",
-          credentials: "same-origin",
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken(),
-          },
-          body: JSON.stringify({ assignments_completed: false }),
+        const response = await fetch(`/api/magic/${this.token}/assignments/confirm`, {
+          method: "POST",
+          headers: { Accept: "application/json" },
         });
         if (!response.ok) {
-          throw new Error("Failed to mark assignments as incomplete");
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data?.detail || "Failed to confirm assignments");
         }
-        this.completed = false;
-        window.dispatchEvent(new Event("program-checklist:refresh"));
+        this.confirmed = true;
+        this.confirmOpen = false;
       } catch (error) {
-        this.saveError = "Unable to mark assignments as incomplete right now.";
+        this.saveError = error?.message || "Unable to confirm assignments.";
       } finally {
-        this.saving = false;
+        this.confirming = false;
       }
     },
   };

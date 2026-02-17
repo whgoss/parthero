@@ -11,6 +11,7 @@ from core.views.views import (
     download_part_asset,
 )
 from core.views.programs import create_program_view, get_program_view, get_programs_view
+from core.views.magic_links import assignment_magic_link_view
 from core.views import organizations
 
 urlpatterns = [
@@ -39,6 +40,12 @@ urlpatterns = [
         name="switch_organization",
     ),
     path("select_piece/", select_piece, name="select_piece"),
+    # Magic link workflow
+    path(
+        "magic/<str:token>/assignments/",
+        assignment_magic_link_view,
+        name="magic_assignments",
+    ),
     # API URL Paths
     path("api/", include("core.api.urls")),
 ]
