@@ -307,7 +307,7 @@ def get_program_assignments_status(
             program_id=program_id,
             principal_musician_id=str(principal.musician_id),
         )
-        # String principals and any principals with no applicable subsection work are excluded.
+        # String principals and any principals with no applicable section work are excluded.
         if not principal_payload.pieces:
             continue
 

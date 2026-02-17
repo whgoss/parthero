@@ -22,11 +22,11 @@ def _create_part(piece_id: str, instrument: InstrumentEnum) -> str:
     return str(part.id)
 
 
-def test_assignment_payload_scopes_to_principal_subsection():
+def test_assignment_payload_scopes_to_principal_section():
     organization = create_organization()
     program = create_program(
         organization_id=str(organization.id),
-        name="Subsection Program",
+        name="Section Program",
         performance_dates=[],
     )
 

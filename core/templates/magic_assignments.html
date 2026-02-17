@@ -20,7 +20,7 @@
         <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
           <h1 class="text-2xl font-semibold text-slate-900">Assign Parts for {{ program.name }}</h1>
           <p class="mt-2 text-sm text-slate-600">
-            Hi {{ musician.first_name }} {{ musician.last_name }}. Assign each part to an eligible musician in your subsection.
+            Hi {{ musician.first_name }} {{ musician.last_name }}. Assign each part to an eligible musician in your section.
           </p>
           <div x-show="confirmed" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             Assignments confirmed. Thanks.
@@ -52,12 +52,12 @@
         </template>
 
         <div x-show="payload.pieces.length === 0" class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
-          <p class="text-sm text-slate-600">There are currently no assignable parts for your subsection on this program.</p>
+          <p class="text-sm text-slate-600">There are currently no assignable parts for your section on this program.</p>
         </div>
 
         <div class="sticky bottom-0 bg-slate-100/95 backdrop-blur py-4">
           <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
-            <div class="text-sm text-slate-600" x-text="allAssigned ? 'All parts assigned' : 'Assign all parts to continue'"></div>
+            <div class="text-sm text-slate-600" x-text="allAssigned ? 'All parts assigned' : ''"></div>
             <button
               type="button"
               class="btn-primary disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
