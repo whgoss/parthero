@@ -949,6 +949,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
       }
     },
     async loadPrincipals() {
+      if (this.completed) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {
@@ -976,6 +979,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
       }
     },
     async loadCoreMembers() {
+      if (this.completed) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {
@@ -1048,6 +1054,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!programMusicianId) return;
 
         const onTagChange = (event, method) => {
+          if (this.completed) {
+            return;
+          }
           const instrument = event?.detail?.data?.value;
           if (instrument) {
             this.updateMusicianInstrument(programMusicianId, instrument, method);
@@ -1059,6 +1068,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
       });
     },
     async updateMusicianInstrument(programMusicianId, instrument, method) {
+      if (this.completed) {
+        return;
+      }
       try {
         const response = await fetch(
           `/api/programs/${this.programId}/musicians/${programMusicianId}/instruments`,
@@ -1139,6 +1151,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
       return this.roster.some((member) => member.musician_id === musician.id);
     },
     async addMusician(musician) {
+      if (this.completed) {
+        return;
+      }
       if (this.isInRoster(musician)) {
         return;
       }
@@ -1167,6 +1182,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
       }
     },
     async removeMusician(musician) {
+      if (this.completed) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {

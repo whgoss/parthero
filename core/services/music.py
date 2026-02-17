@@ -140,7 +140,7 @@ def get_pieces(organization_id: str) -> List[PieceDTO]:
             "parts",
             filter=Q(
                 parts__assets__status=UploadStatus.UPLOADED.value,
-                parts__assets__asset_type=PartAssetType.CLEAN,
+                parts__assets__asset_type=PartAssetType.CLEAN.value,
             ),
             distinct=True,
         ),

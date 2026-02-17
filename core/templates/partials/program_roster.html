@@ -14,6 +14,7 @@
             type="button"
             class="btn-primary ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
             x-show="!completed"
+            :disabled="completed || saving"
             @click="markAsComplete()"
         >
             Mark Roster as Complete
@@ -22,6 +23,7 @@
             type="button"
             class="btn-primary-warning ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
             x-show="completed == true"
+            :disabled="saving"
             @click="markAsIncomplete()"
         >
             Mark Roster as Incomplete
@@ -61,6 +63,7 @@
                     type="text"
                     class="form-input roster-instruments"
                     placeholder="Add sections or instruments"
+                    :disabled="completed"
                     :value="rosterInstruments[program_musician.id] || formatInstrumentList(program_musician)"
                     @input="rosterInstruments[program_musician.id] = $event.target.value"
                     data-options-id="instrument-options"
@@ -71,6 +74,7 @@
                 <button
                     type="button"
                     class="btn-danger"
+                    :disabled="completed || saving"
                     @click="removeMusician(program_musician)"
                 >
                     Remove
@@ -89,33 +93,38 @@
 
     <div class="ml-auto flex items-center gap-2">
         <!-- Load Principals -->
-        <a
+        <button
+        type="button"
         class="btn-secondary"
+        :disabled="completed || saving"
         @click="loadPrincipals()">
         Load Principals
-        </a>
+        </button>
 
         <!-- Load Core Members -->
-        <a
+        <button
+        type="button"
         class="btn-secondary"
+        :disabled="completed || saving"
         @click="loadCoreMembers()">
         Load Core Members
-        </a>
+        </button>
 
         <!-- Add a Musician -->
-        <a
+        <button
             href="/musicians/"
-            class="btn-secondary">
-        <svg xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            class="h-4 w-4 shrink-0">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                d="M10 4v12m6-6H4" />
-        </svg>
-        Add a Musician
-        </a>
+            class="btn-secondary"
+            :disabled="completed || saving">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                class="h-4 w-4 shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                        d="M10 4v12m6-6H4" />
+            </svg>
+            Add a Musician
+        </button>
     </div>
     
     </div>
@@ -138,6 +147,7 @@
         <button
         type="button"
         class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+        :disabled="completed"
         x-show="name"
         @click="clearSearch()"
         aria-label="Clear search"
@@ -156,6 +166,7 @@
         <button
         type="button"
         class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+        :disabled="completed"
         x-show="instrument"
         @click="clearSearch()"
         aria-label="Clear search"
@@ -183,8 +194,8 @@
         <template x-for="musician in results" :key="musician.id">
         <li
             class="rounded-lg border border-slate-200 p-3 transition hover:bg-slate-50 cursor-pointer"
-            :class="isInRoster(musician) ? 'border-blue-200 bg-blue-50 cursor-default' : ''"
-            @click="addMusician(musician)"
+            :class="isInRoster(musician) ? 'border-blue-200 bg-blue-50 cursor-default' : completed ? 'opacity-50 cursor-not-allowed' : ''"
+            @click="!completed && addMusician(musician)"
         >
             <div class="flex items-center justify-between gap-3">
             <div>

@@ -83,10 +83,10 @@ class PieceDTO(BaseDTO):
 
         if completed_parts is None:
             completed_parts = (
-                Part.objects.filter(
+                PartAsset.objects.filter(
                     piece_id=str(model.id),
-                    assets__asset_type=PartAssetType.CLEAN.value,
-                    assets__status=UploadStatus.UPLOADED.value,
+                    asset_type=PartAssetType.CLEAN.value,
+                    status=UploadStatus.UPLOADED.value,
                 )
                 .distinct()
                 .count()

@@ -3,10 +3,12 @@ import pgbulk
 from datetime import datetime
 from typing import Optional, List
 from django.db import transaction
-from django.db.models import Min, F, Count
+from django.db.models import Min, F, Count, Q
 from django.utils import timezone
 from core.dtos.music import PieceDTO
 from core.dtos.programs import ProgramDTO, ProgramMusicianDTO, ProgramChecklistDTO
+from core.enum.music import PartAssetType
+from core.enum.status import UploadStatus
 from core.models.music import Piece, MusicianInstrument, Instrument
 from core.models.organizations import Organization, Musician, SetupChecklist
 from core.models.users import User
@@ -89,6 +91,14 @@ def get_pieces_for_program(organization_id: str, program_id: str) -> List[PieceD
         piece_ids.append(program_piece.piece_id)
     piece_models = Piece.objects.filter(id__in=piece_ids).annotate(
         parts_count=Count("parts", distinct=True),
+        completed_parts=Count(
+            "parts",
+            filter=Q(
+                parts__assets__status=UploadStatus.UPLOADED.value,
+                parts__assets__asset_type=PartAssetType.CLEAN.value,
+            ),
+            distinct=True,
+        ),
     )
     return PieceDTO.from_models(piece_models)
 

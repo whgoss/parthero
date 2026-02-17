@@ -10,11 +10,11 @@ we're using and insert it into our final bundled .css
 
 @layer components {
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-md border border-slate-300 bg-white gap-2 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer;
+    @apply inline-flex items-center justify-center rounded-md border border-slate-300 bg-white gap-2 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed disabled:pointer-events-none;
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center rounded-md border border-rose-200 bg-rose-50 gap-2 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 cursor-pointer;
+    @apply inline-flex items-center justify-center rounded-md border border-rose-200 bg-rose-50 gap-2 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 cursor-pointer disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed disabled:pointer-events-none;
   }
 
   .btn-view {
