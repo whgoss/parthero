@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from django.db import transaction
 
-from core.dtos.organizations import MusicianDTO
+from core.dtos.organizations import MusicianDTO, OrganizationDTO
 from core.dtos.music import PartDTO
 from core.dtos.programs import (
     ProgramAssignmentAssignedMusicianDTO,
@@ -23,6 +23,7 @@ from core.enum.instruments import (
 from core.models.notifications import MagicLink
 from core.models.music import Part
 from core.models.programs import (
+    Program,
     ProgramChecklist,
     ProgramMusician,
     ProgramPartMusician,
@@ -106,6 +107,8 @@ def get_assignment_payload(
         ProgramMusician.DoesNotExist: If the musician is not on the program roster.
         PermissionError: If the musician is on the roster but is not a principal.
     """
+    program = Program.objects.get(id=program_id)
+    organization = OrganizationDTO.from_model(program.organization)
     principal_program_musician = (
         ProgramMusician.objects.filter(
             program_id=program_id,
@@ -212,6 +215,7 @@ def get_assignment_payload(
                 break
 
     return ProgramAssignmentDTO(
+        organization=organization,
         pieces=pieces,
         eligible_musicians=eligible_musicians,
         eligible_musician_ids=list(eligible_musician_ids),

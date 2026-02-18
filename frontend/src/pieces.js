@@ -65,6 +65,7 @@ window.partAssets = function partAssets(pieceId) {
     partOptions: [],
     loading: false,
     validationLoading: false,
+    validationRefreshQueued: false,
     error: null,
     tagifyInstances: new Map(),
     refreshTimer: null,
@@ -115,6 +116,7 @@ window.partAssets = function partAssets(pieceId) {
     },
     async fetchValidation() {
       if (this.validationLoading) {
+        this.validationRefreshQueued = true;
         return;
       }
       this.validationLoading = true;
@@ -131,6 +133,10 @@ window.partAssets = function partAssets(pieceId) {
         this.error = "Unable to refresh part validation.";
       } finally {
         this.validationLoading = false;
+        if (this.validationRefreshQueued) {
+          this.validationRefreshQueued = false;
+          this.fetchValidation();
+        }
       }
     },
     destroyTagify() {

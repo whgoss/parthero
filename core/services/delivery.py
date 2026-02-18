@@ -9,11 +9,12 @@ from core.dtos.programs import (
     ProgramDeliveryFileDTO,
     ProgramDeliveryPieceDTO,
 )
+from core.dtos.organizations import OrganizationDTO
 from core.enum.instruments import INSTRUMENT_SECTIONS, InstrumentSectionEnum
 from core.enum.music import PartAssetType
 from core.enum.status import UploadStatus
 from core.models.music import Part, PartAsset
-from core.models.programs import ProgramMusician, ProgramPartMusician
+from core.models.programs import Program, ProgramMusician, ProgramPartMusician
 from core.services.music import get_part_instruments
 from core.services.programs import get_program_musician_instruments
 from core.services.s3 import create_download_url
@@ -131,6 +132,8 @@ def get_program_delivery_payload(
     program_id: str, musician_id: str
 ) -> ProgramDeliveryDTO:
     """Build piece-grouped delivery metadata shown on the magic-link page."""
+    program = Program.objects.get(id=program_id)
+    organization = OrganizationDTO.from_model(program.organization)
     part_assets = _get_delivery_assets_for_musician(
         program_id=program_id,
         musician_id=musician_id,
@@ -161,7 +164,7 @@ def get_program_delivery_payload(
             )
         )
     pieces.sort(key=lambda p: p.title.lower())
-    return ProgramDeliveryDTO(pieces=pieces)
+    return ProgramDeliveryDTO(organization=organization, pieces=pieces)
 
 
 def get_program_delivery_downloads(

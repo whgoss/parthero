@@ -30,7 +30,21 @@
 
     <!-- Instrumentation -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
-      <h1 class="text-lg font-medium">Instrumentation</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-lg font-medium">Instrumentation</h1>
+        <a
+          href="https://daniels-orchestral.com/other-resources/this-online-tool/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center text-slate-400 hover:text-slate-600"
+          title="Open Daniels' online instrumentation reference in a new tab."
+          aria-label="Open Daniels instrumentation reference"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+            <path fill-rule="evenodd" d="M18 10A8 8 0 1 1 2 10a8 8 0 0 1 16 0Zm-8-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 2a1 1 0 1 0-2 0v4a1 1 0 1 0 2 0V9Z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
       <span class="text-md font-light">{{ piece.instrumentation }}</span>
     </div>
 
@@ -41,8 +55,8 @@
     >
       <h1 class="text-lg font-medium">Parts</h1>
 
-      <!-- Upload Form -->
-      <form method="post" class="space-y-4 items-center" x-show="missingParts.length">
+      <!-- FilePond Upload Form -->
+      <form method="post" class="mt-2 items-center" x-show="missingParts.length">
           {% csrf_token %}
           <div class="relative z-10">
           <input

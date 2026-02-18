@@ -92,7 +92,7 @@ we're using and insert it into our final bundled .css
 /* Make the FilePond box bigger and fully clickable */
 .filepond--root {
   width: 100%;
-  min-height: 128px;
+  min-height: 5em;
 }
 
 .filepond--panel-root {

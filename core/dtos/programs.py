@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from core.dtos.base import BaseDTO
-from core.dtos.organizations import MusicianDTO
+from core.dtos.organizations import MusicianDTO, OrganizationDTO
 from core.enum.instruments import InstrumentEnum
 from core.models.programs import (
     Program,
@@ -220,6 +220,7 @@ class ProgramAssignmentPieceDTO(BaseDTO):
 
 
 class ProgramAssignmentDTO(BaseDTO):
+    organization: OrganizationDTO
     pieces: List[ProgramAssignmentPieceDTO]
     eligible_musicians: List[MusicianDTO]
     eligible_musician_ids: List[str]
@@ -267,6 +268,7 @@ class ProgramDeliveryPieceDTO(BaseDTO):
 
 
 class ProgramDeliveryDTO(BaseDTO):
+    organization: OrganizationDTO
     pieces: List[ProgramDeliveryPieceDTO]
 
 

@@ -31,7 +31,7 @@
 
     {{ pieces|pydantic_json_script:"program-bowings-pieces-data" }}
 
-    <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-hidden">
+    <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-visible">
         <template x-if="pieces.length === 0">
             <div class="p-4 text-sm text-slate-500">
                 Add pieces to this program to upload bowings.

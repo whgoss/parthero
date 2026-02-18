@@ -108,7 +108,14 @@ def send_assignment_email(
     A Notification row is persisted before send; status transitions to SENT/FAILED.
     Duplicate ASSIGNMENT notifications for the same program+musician are ignored.
     """
-    program = Program.objects.get(id=program_id, organization_id=organization_id)
+    program = (
+        Program.objects.filter(id=program_id, organization_id=organization_id)
+        .prefetch_related("organization")
+        .first()
+    )
+    if not program:
+        return None
+
     musician = Musician.objects.get(id=musician_id, organization_id=organization_id)
     program_musician = (
         ProgramMusician.objects.filter(
@@ -121,11 +128,14 @@ def send_assignment_email(
         .first()
     )
 
-    # Only principals can assign parts
-    if not program_musician or not program_musician.musician.principal:
-        return None
+    # String principals don't need to assign parts
     if _is_string_principal(program_musician):
         return None
+
+    # Must be assigned to the program and a principal
+    if not program_musician or not program_musician.musician.principal:
+        return None
+
     assignment_payload = get_assignment_payload(
         program_id=program_id,
         principal_musician_id=musician_id,
@@ -133,7 +143,7 @@ def send_assignment_email(
     if not assignment_payload.pieces:
         return None
 
-    # Dedupe on (program, recipient, type) so queue retries are safe.
+    # Dedupe on (program, recipient, type) so queue retries are safe
     notification = Notification.objects.filter(
         program_id=program_id,
         recipient_id=musician_id,
@@ -142,18 +152,21 @@ def send_assignment_email(
     if notification:
         return None
 
+    # Create the magic link
     magic_link = create_magic_link(
         program_id=program_id,
         musician_id=musician_id,
         link_type=MagicLinkType.ASSIGNMENT,
     )
 
+    # Create the email context and send the email
     pieces = get_pieces_for_program(
         organization_id=organization_id,
         program_id=program_id,
     )
 
     context = {
+        "organization": program.organization,
         "musician": musician,
         "program": program,
         "pieces": pieces,
@@ -209,35 +222,48 @@ def send_part_delivery_email(
     Only roster musicians are eligible. Duplicate PART_DELIVERY notifications
     for the same program+musician are ignored.
     """
-    program = Program.objects.get(id=program_id, organization_id=organization_id)
+    program = (
+        Program.objects.filter(id=program_id, organization_id=organization_id)
+        .prefetch_related("organization")
+        .first()
+    )
+    if not program:
+        return None
+
     musician = Musician.objects.get(id=musician_id, organization_id=organization_id)
-    is_on_roster = ProgramMusician.objects.filter(
+    is_on_program_roster = ProgramMusician.objects.filter(
         program_id=program_id,
         musician_id=musician_id,
         musician__organization_id=organization_id,
     ).exists()
-    if not is_on_roster:
+
+    if not is_on_program_roster:
         return None
 
+    # Dedupe on (program, recipient, type) so queue retries are safe
     notification = Notification.objects.filter(
         program_id=program_id,
         recipient_id=musician_id,
         type=NotificationType.PART_DELIVERY.value,
     ).first()
+
     if notification:
         return None
 
+    # Create the magic link
     magic_link = create_magic_link(
         program_id=program_id,
         musician_id=musician_id,
         link_type=MagicLinkType.DELIVERY,
     )
 
+    # Create the template context and send the email
     pieces = get_pieces_for_program(
         organization_id=organization_id,
         program_id=program_id,
     )
     context = {
+        "organization": program.organization,
         "musician": musician,
         "program": program,
         "pieces": pieces,
