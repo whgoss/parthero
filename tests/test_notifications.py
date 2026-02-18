@@ -5,7 +5,7 @@ from core.enum.notifications import NotificationType
 from core.models.music import Instrument, Part, PartInstrument, Piece
 from core.models.notifications import Notification
 from core.models.programs import ProgramPiece
-from core.services.notifications import send_assignment_email
+from core.services.notifications import send_assignment_email, send_part_delivery_email
 from core.services.organizations import create_musician
 from core.services.programs import add_musician_to_program, create_program
 from tests.mocks import create_organization
@@ -143,3 +143,57 @@ def test_send_assignment_email_skips_principal_without_assignable_parts(monkeypa
     )
     assert notifications.count() == 0
     assert sends["count"] == 0
+
+
+def test_send_part_delivery_email_deduplicates_by_notification_type(monkeypatch):
+    organization = create_organization()
+    program = create_program(
+        organization_id=str(organization.id),
+        name="Delivery Program",
+        performance_dates=[],
+    )
+    musician = create_musician(
+        organization_id=str(organization.id),
+        first_name="Del",
+        last_name="Ivery",
+        email="delivery@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.TRUMPET],
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+    )
+
+    sends = {"count": 0}
+
+    def _mock_send(_self):
+        sends["count"] += 1
+        return 1
+
+    monkeypatch.setattr(
+        "core.services.notifications.EmailMultiAlternatives.send",
+        _mock_send,
+    )
+
+    send_part_delivery_email(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+    )
+    send_part_delivery_email(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+    )
+
+    notifications = Notification.objects.filter(
+        program_id=program.id,
+        recipient_id=musician.id,
+        type=NotificationType.PART_DELIVERY.value,
+    )
+    assert notifications.count() == 1
+    assert notifications.first().type == NotificationType.PART_DELIVERY.value
+    assert sends["count"] == 1

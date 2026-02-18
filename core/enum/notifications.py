@@ -18,3 +18,4 @@ class NotificationStatus(BaseEnum):
 
 class MagicLinkType(BaseEnum):
     ASSIGNMENT = "Assignment"
+    DELIVERY = "Delivery"

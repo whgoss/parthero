@@ -1,0 +1,16 @@
+Parts Ready for {{ program.name }}
+
+Hi {% if musician.first_name %}{{ musician.first_name }}{% else %}there{% endif %},
+
+Your parts are ready for this program.
+Open the secure link below to download them.
+
+Pieces in this program:
+{% for piece in pieces %}
+- {{ piece.title }}{% if piece.composer %} by {{ piece.composer }}{% endif %}
+{% empty %}
+- No pieces are currently listed.
+{% endfor %}
+
+Download Parts:
+{{ url }}

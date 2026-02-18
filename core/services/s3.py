@@ -70,13 +70,21 @@ def create_upload_url(
 
 
 def create_download_url(
-    organization_id: str, file_key: str, expiration: int = 3600
+    organization_id: str,
+    file_key: str,
+    expiration: int = 3600,
+    download_filename: str | None = None,
 ) -> str:
     s3_client = get_s3_client()
     try:
+        params = {"Bucket": organization_id, "Key": file_key}
+        if download_filename:
+            params["ResponseContentDisposition"] = (
+                f'attachment; filename="{download_filename}"'
+            )
         presigned_url = s3_client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": organization_id, "Key": file_key},
+            Params=params,
             ExpiresIn=expiration,
         )
     except ClientError as error:

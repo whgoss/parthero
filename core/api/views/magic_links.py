@@ -4,6 +4,10 @@ from rest_framework.response import Response
 
 from core.enum.notifications import MagicLinkType
 from core.services.assignments import assign_program_part, get_assignment_payload
+from core.services.delivery import (
+    get_program_delivery_downloads,
+    get_program_delivery_payload,
+)
 from core.services.magic_links import (
     get_valid_magic_link,
     mark_magic_link_accessed,
@@ -16,6 +20,18 @@ def _get_assignment_magic_link(token: str):
         magic_link = get_valid_magic_link(
             token=token, link_type=MagicLinkType.ASSIGNMENT
         )
+    except Exception as exc:
+        raise Http404("Magic link is invalid or expired.") from exc
+
+    if not magic_link.program_id or not magic_link.musician_id:
+        raise Http404("Magic link is invalid.")
+
+    return magic_link
+
+
+def _get_delivery_magic_link(token: str):
+    try:
+        magic_link = get_valid_magic_link(token=token, link_type=MagicLinkType.DELIVERY)
     except Exception as exc:
         raise Http404("Magic link is invalid or expired.") from exc
 
@@ -87,3 +103,43 @@ class MagicAssignmentConfirmViewSet(viewsets.GenericViewSet):
 
         mark_magic_link_completed(magic_link)
         return Response({"ok": True}, status=status.HTTP_200_OK)
+
+
+class MagicDeliveryViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def retrieve(self, request, token, *args, **kwargs):
+        magic_link = _get_delivery_magic_link(token)
+        mark_magic_link_accessed(magic_link)
+        payload = get_program_delivery_payload(
+            program_id=str(magic_link.program_id),
+            musician_id=str(magic_link.musician_id),
+        )
+        return Response(payload.model_dump(mode="json"), status=status.HTTP_200_OK)
+
+
+class MagicDeliveryDownloadViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def list(self, request, token, *args, **kwargs):
+        magic_link = _get_delivery_magic_link(token)
+        mark_magic_link_accessed(magic_link)
+        payload = get_program_delivery_downloads(
+            organization_id=str(magic_link.program.organization_id),
+            program_id=str(magic_link.program_id),
+            musician_id=str(magic_link.musician_id),
+        )
+        return Response(payload.model_dump(mode="json"), status=status.HTTP_200_OK)
+
+    def retrieve(self, request, token, piece_id, *args, **kwargs):
+        magic_link = _get_delivery_magic_link(token)
+        mark_magic_link_accessed(magic_link)
+        payload = get_program_delivery_downloads(
+            organization_id=str(magic_link.program.organization_id),
+            program_id=str(magic_link.program_id),
+            musician_id=str(magic_link.musician_id),
+            piece_id=piece_id,
+        )
+        return Response(payload.model_dump(mode="json"), status=status.HTTP_200_OK)

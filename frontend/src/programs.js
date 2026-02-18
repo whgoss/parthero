@@ -1633,6 +1633,77 @@ window.programAssignments = function programAssignments(
   };
 };
 
+window.magicDelivery = function magicDelivery(token, initialPayload = null) {
+  return {
+    token,
+    payload: initialPayload || { pieces: [] },
+    downloading: false,
+    saveError: null,
+    successMessage: null,
+    triggerDownloads(files) {
+      files.forEach((file) => {
+        const link = document.createElement("a");
+        link.href = file.url;
+        link.download = file.filename || "";
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    },
+    async requestDownloads(pieceId = null) {
+      const suffix = pieceId
+        ? `/downloads/piece/${pieceId}`
+        : "/downloads";
+      const response = await fetch(`/api/magic/${this.token}/delivery${suffix}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to prepare download links");
+      }
+      return response.json();
+    },
+    async downloadAll() {
+      this.downloading = true;
+      this.saveError = null;
+      this.successMessage = null;
+      try {
+        const payload = await this.requestDownloads();
+        const files = payload?.files || [];
+        if (!files.length) {
+          this.saveError = "No downloadable files are currently available.";
+          return;
+        }
+        this.triggerDownloads(files);
+        this.successMessage = "Download started. If some files were blocked, use piece links below.";
+      } catch (error) {
+        this.saveError = error?.message || "Unable to start downloads.";
+      } finally {
+        this.downloading = false;
+      }
+    },
+    async downloadPiece(pieceId) {
+      this.downloading = true;
+      this.saveError = null;
+      this.successMessage = null;
+      try {
+        const payload = await this.requestDownloads(pieceId);
+        const files = payload?.files || [];
+        if (!files.length) {
+          this.saveError = "No downloadable files are available for this piece.";
+          return;
+        }
+        this.triggerDownloads(files);
+        this.successMessage = "Piece download started.";
+      } catch (error) {
+        this.saveError = error?.message || "Unable to start piece downloads.";
+      } finally {
+        this.downloading = false;
+      }
+    },
+  };
+};
+
 window.magicAssignments = function magicAssignments(token, initialPayload = null) {
   return {
     token,

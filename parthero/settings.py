@@ -164,3 +164,11 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 # Queue settings
 EMAIL_QUEUE_NAME = os.environ.get("EMAIL_QUEUE_NAME", "email-queue")
 EMAIL_QUEUE_URL = os.environ.get("EMAIL_QUEUE_URL", "")
+
+# Magic-link and download URL settings
+MAGIC_LINK_DEFAULT_EXPIRATION_DAYS = int(
+    os.environ.get("MAGIC_LINK_DEFAULT_EXPIRATION_DAYS", "90")
+)
+DOWNLOAD_URL_EXPIRATION_SECONDS = int(
+    os.environ.get("DOWNLOAD_URL_EXPIRATION_SECONDS", "600")
+)

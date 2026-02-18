@@ -253,3 +253,27 @@ class ProgramAssignmentStatusDTO(BaseDTO):
     principals: List[ProgramAssignmentPrincipalStatusDTO]
     roster_musicians: List[MusicianDTO]
     summary: ProgramAssignmentSummaryDTO
+
+
+class ProgramDeliveryFileDTO(BaseDTO):
+    piece_id: str
+    filename: str
+
+
+class ProgramDeliveryPieceDTO(BaseDTO):
+    title: str
+    composer: str
+    files: List[ProgramDeliveryFileDTO]
+
+
+class ProgramDeliveryDTO(BaseDTO):
+    pieces: List[ProgramDeliveryPieceDTO]
+
+
+class ProgramDeliveryDownloadFileDTO(BaseDTO):
+    filename: str
+    url: str
+
+
+class ProgramDeliveryDownloadsDTO(BaseDTO):
+    files: List[ProgramDeliveryDownloadFileDTO]

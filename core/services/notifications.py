@@ -27,6 +27,11 @@ from core.services.queue import enqueue_email_payload
 
 
 def _is_string_principal(program_musician: ProgramMusician) -> bool:
+    """Return True when a principal only belongs to the strings section.
+
+    String principals are excluded from principal assignment emails in the
+    current workflow.
+    """
     string_instruments = set(INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS])
     musician_instruments = {
         InstrumentEnum(instrument.instrument.name)
@@ -38,6 +43,13 @@ def _is_string_principal(program_musician: ProgramMusician) -> bool:
 
 
 def send_part_assignment_emails(organization_id: str, program_id: str):
+    """Queue assignment notifications for principals who actually need to assign.
+
+    Skips:
+    - string principals
+    - principals auto-assigned by unambiguous harp/keyboard rules
+    - principals with no assignable parts in scope
+    """
     principals = (
         ProgramMusician.objects.filter(
             program_id=program_id,
@@ -71,9 +83,31 @@ def send_part_assignment_emails(organization_id: str, program_id: str):
         enqueue_email_payload(payload)
 
 
+def send_part_delivery_emails(organization_id: str, program_id: str):
+    """Queue delivery notifications for every musician on the program roster."""
+    roster_musicians = ProgramMusician.objects.filter(
+        program_id=program_id,
+        musician__organization_id=organization_id,
+    ).select_related("musician")
+
+    for program_musician in roster_musicians:
+        payload = EmailQueuePayloadDTO(
+            organization_id=organization_id,
+            program_id=program_id,
+            musician_id=str(program_musician.musician_id),
+            notification_type=NotificationType.PART_DELIVERY,
+        )
+        enqueue_email_payload(payload)
+
+
 def send_assignment_email(
     organization_id: str, program_id: str, musician_id: str
 ) -> None:
+    """Render and send one principal assignment email with magic link.
+
+    A Notification row is persisted before send; status transitions to SENT/FAILED.
+    Duplicate ASSIGNMENT notifications for the same program+musician are ignored.
+    """
     program = Program.objects.get(id=program_id, organization_id=organization_id)
     musician = Musician.objects.get(id=musician_id, organization_id=organization_id)
     program_musician = (
@@ -99,7 +133,7 @@ def send_assignment_email(
     if not assignment_payload.pieces:
         return None
 
-    # Has a notification already been sent for this musician on this program?
+    # Dedupe on (program, recipient, type) so queue retries are safe.
     notification = Notification.objects.filter(
         program_id=program_id,
         recipient_id=musician_id,
@@ -123,7 +157,7 @@ def send_assignment_email(
         "musician": musician,
         "program": program,
         "pieces": pieces,
-        "url": get_magic_link_url(magic_link.token),
+        "url": get_magic_link_url(magic_link.token, link_type=MagicLinkType.ASSIGNMENT),
     }
     subject = f"Assign Parts for {program.name}"
     text_body = render_to_string("emails/assignment.txt", context)
@@ -170,8 +204,83 @@ def send_part_delivery_email(
     program_id: str,
     musician_id: str,
 ) -> None:
-    # Reserved for part-delivery email implementation.
-    return None
+    """Render and send one part-delivery email with delivery magic link.
+
+    Only roster musicians are eligible. Duplicate PART_DELIVERY notifications
+    for the same program+musician are ignored.
+    """
+    program = Program.objects.get(id=program_id, organization_id=organization_id)
+    musician = Musician.objects.get(id=musician_id, organization_id=organization_id)
+    is_on_roster = ProgramMusician.objects.filter(
+        program_id=program_id,
+        musician_id=musician_id,
+        musician__organization_id=organization_id,
+    ).exists()
+    if not is_on_roster:
+        return None
+
+    notification = Notification.objects.filter(
+        program_id=program_id,
+        recipient_id=musician_id,
+        type=NotificationType.PART_DELIVERY.value,
+    ).first()
+    if notification:
+        return None
+
+    magic_link = create_magic_link(
+        program_id=program_id,
+        musician_id=musician_id,
+        link_type=MagicLinkType.DELIVERY,
+    )
+
+    pieces = get_pieces_for_program(
+        organization_id=organization_id,
+        program_id=program_id,
+    )
+    context = {
+        "musician": musician,
+        "program": program,
+        "pieces": pieces,
+        "url": get_magic_link_url(magic_link.token, link_type=MagicLinkType.DELIVERY),
+    }
+    subject = f"Parts Ready for {program.name}"
+    text_body = render_to_string("emails/delivery.txt", context)
+    html_body = render_to_string("emails/delivery.html", context)
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        to=[musician.email],
+    )
+    msg.attach_alternative(html_body, "text/html")
+
+    notification = Notification(
+        created=timezone.now(),
+        method=NotificationMethod.EMAIL.value,
+        type=NotificationType.PART_DELIVERY.value,
+        program=program,
+        status=NotificationStatus.CREATED.value,
+        recipient_email=musician.email,
+        recipient_first_name=musician.first_name,
+        recipient_last_name=musician.last_name,
+        recipient=musician,
+        magic_link=magic_link,
+        subject=subject,
+        body=text_body,
+        body_html=html_body,
+    )
+    notification.save()
+
+    try:
+        success = msg.send()
+    except Exception:
+        success = False
+
+    if success:
+        notification.status = NotificationStatus.SENT.value
+        notification.save(update_fields=["status"])
+    else:
+        notification.status = NotificationStatus.FAILED.value
+        notification.save(update_fields=["status"])
 
 
 def send_notification_email(
@@ -181,6 +290,7 @@ def send_notification_email(
     musician_id: str,
     notification_type: NotificationType,
 ) -> None:
+    """Dispatch a queued notification payload to the type-specific sender."""
     if notification_type == NotificationType.ASSIGNMENT:
         send_assignment_email(
             organization_id=organization_id,

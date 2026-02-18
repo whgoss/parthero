@@ -6,6 +6,7 @@ from core.models.music import Instrument, Part, PartInstrument, Piece
 from core.models.programs import ProgramPartMusician, ProgramPiece
 from core.services.notifications import (
     send_notification_email,
+    send_part_delivery_emails,
     send_part_assignment_emails,
 )
 from core.services.organizations import create_musician
@@ -328,3 +329,66 @@ def test_send_notification_email_dispatches_part_delivery(monkeypatch):
     )
 
     assert calls == [("org-1", "program-1", "musician-1")]
+
+
+def test_send_part_delivery_emails_enqueues_roster_musicians(monkeypatch):
+    organization = create_organization()
+    program = create_program(
+        organization_id=str(organization.id),
+        name="Delivery Queue Program",
+        performance_dates=[],
+    )
+    musician_a = create_musician(
+        organization_id=str(organization.id),
+        first_name="Ari",
+        last_name="Player",
+        email="ari-player@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.TRUMPET],
+    )
+    musician_b = create_musician(
+        organization_id=str(organization.id),
+        first_name="Bea",
+        last_name="Player",
+        email="bea-player@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.VIOLIN_1],
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician_a.id),
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician_b.id),
+    )
+
+    payloads = []
+
+    def _enqueue_email_payload(payload):
+        payloads.append(payload)
+        return "msg-1"
+
+    monkeypatch.setattr(
+        "core.services.notifications.enqueue_email_payload",
+        _enqueue_email_payload,
+    )
+
+    send_part_delivery_emails(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+    )
+
+    payloads_by_musician = {payload.musician_id: payload for payload in payloads}
+    assert set(payloads_by_musician.keys()) == {
+        str(musician_a.id),
+        str(musician_b.id),
+    }
+    assert all(
+        payload.notification_type == NotificationType.PART_DELIVERY
+        for payload in payloads
+    )

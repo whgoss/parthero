@@ -436,6 +436,13 @@ def update_program_checklist(
         if program_checklist.delivery_sent_on is None:
             program_checklist.delivery_sent_on = timezone.now()
             program_checklist.delivery_sent_by = user
+            # Nested import prevents circular dependency
+            from core.services.notifications import send_part_delivery_emails
+
+            send_part_delivery_emails(
+                organization_id=organization_id,
+                program_id=program_id,
+            )
     program_checklist.save()
     return ProgramChecklistDTO.from_model(program_checklist)
 

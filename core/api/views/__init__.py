@@ -4,6 +4,8 @@ from core.api.views.magic_links import (
     MagicAssignmentConfirmViewSet,
     MagicAssignmentPartViewSet,
     MagicAssignmentViewSet,
+    MagicDeliveryDownloadViewSet,
+    MagicDeliveryViewSet,
 )
 from core.api.views.music import PartAssetViewSet, PieceSearchViewSet
 from core.api.views.organizations import MusicianSearchViewSet
@@ -19,6 +21,8 @@ __all__ = [
     "MagicAssignmentConfirmViewSet",
     "MagicAssignmentPartViewSet",
     "MagicAssignmentViewSet",
+    "MagicDeliveryDownloadViewSet",
+    "MagicDeliveryViewSet",
     "ProgramAssignmentViewSet",
     "MusicianSearchViewSet",
     "PartAssetViewSet",

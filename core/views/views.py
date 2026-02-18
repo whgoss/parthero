@@ -13,6 +13,7 @@ from core.services.music import (
 from core.services.organizations import get_setup_checklist
 from core.services.domo import search_for_piece
 from core.services.s3 import create_download_url
+from parthero.settings import DOWNLOAD_URL_EXPIRATION_SECONDS
 
 
 @login_required
@@ -106,7 +107,9 @@ def download_part_asset(request, piece_id, part_asset_id):
         return HttpResponseNotFound("Unable to find asset")
 
     download_url = create_download_url(
-        str(request.organization.id), part_asset.file_key
+        organization_id=request.organization.id,
+        file_key=part_asset.file_key,
+        expiration=DOWNLOAD_URL_EXPIRATION_SECONDS,
     )
     return redirect(download_url)
 

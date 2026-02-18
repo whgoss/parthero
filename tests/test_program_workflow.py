@@ -244,3 +244,32 @@ def test_assignments_sent_triggers_assignment_email_enqueue(monkeypatch):
     )
 
     assert calls == [(str(program.organization_id), str(program.id))]
+
+
+def test_delivery_sent_triggers_delivery_email_enqueue(monkeypatch):
+    user = _create_user()
+    program = _create_program_with_checklist()
+    calls = []
+
+    def _mock_send_part_delivery_emails(organization_id: str, program_id: str):
+        calls.append((organization_id, program_id))
+
+    monkeypatch.setattr(
+        "core.services.notifications.send_part_delivery_emails",
+        _mock_send_part_delivery_emails,
+    )
+
+    update_program_checklist(
+        organization_id=str(program.organization_id),
+        program_id=str(program.id),
+        user_id=str(user.id),
+        pieces_completed=True,
+        roster_completed=True,
+        bowings_completed=True,
+        overrides_completed=True,
+        assignments_sent=True,
+        assignments_completed=True,
+        delivery_sent=True,
+    )
+
+    assert calls == [(str(program.organization_id), str(program.id))]

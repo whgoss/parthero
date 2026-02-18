@@ -5,11 +5,17 @@ from django.utils import timezone
 
 from core.enum.instruments import InstrumentEnum
 from core.enum.notifications import MagicLinkType
-from core.models.music import Instrument, Part, PartInstrument, Piece
+from core.enum.music import PartAssetType
+from core.enum.status import UploadStatus
+from core.models.music import Instrument, Part, PartAsset, PartInstrument, Piece
 from core.models.programs import ProgramChecklist, ProgramPartMusician, ProgramPiece
 from core.services.assignments import (
     assign_program_part_by_librarian,
     get_program_assignments_status,
+)
+from core.services.delivery import (
+    get_program_delivery_downloads,
+    get_program_delivery_payload,
 )
 from core.services.magic_links import create_magic_link
 from core.services.organizations import create_musician
@@ -244,3 +250,145 @@ def test_librarian_can_assign_any_roster_musician_to_part():
     assert assignment is not None
     assert str(assignment.musician_id) == str(section.id)
     assert any(m.id == str(section.id) for m in payload.roster_musicians)
+
+
+def test_program_delivery_payload_and_downloads_for_assigned_musician(monkeypatch):
+    organization = create_organization()
+    program = create_program(
+        organization_id=str(organization.id),
+        name="Delivery Payload Program",
+        performance_dates=[],
+    )
+    musician = create_musician(
+        organization_id=str(organization.id),
+        first_name="Del",
+        last_name="Ivery",
+        email="delivery-payload@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.TRUMPET],
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+    )
+    piece = Piece.objects.create(
+        organization_id=organization.id,
+        title="Delivery Piece",
+        composer="Composer",
+        instrumentation="",
+        duration=None,
+    )
+    ProgramPiece.objects.create(program_id=program.id, piece_id=piece.id)
+    part = Part.objects.create(piece_id=piece.id)
+    trumpet = Instrument.objects.get(name=InstrumentEnum.TRUMPET.value)
+    PartInstrument.objects.create(part=part, instrument=trumpet, primary=True)
+    ProgramPartMusician.objects.create(
+        program_id=program.id,
+        part_id=part.id,
+        musician_id=musician.id,
+    )
+    asset = PartAsset.objects.create(
+        piece_id=piece.id,
+        upload_filename="Trumpet 1.pdf",
+        file_key="file-key.pdf",
+        asset_type=PartAssetType.CLEAN.value,
+        status=UploadStatus.UPLOADED.value,
+    )
+    asset.parts.add(part)
+    bowing_asset = PartAsset.objects.create(
+        piece_id=piece.id,
+        upload_filename="Very Long and Nasty Bowing Filename.pdf",
+        file_key="bowing-key.pdf",
+        asset_type=PartAssetType.BOWING.value,
+        status=UploadStatus.UPLOADED.value,
+    )
+    bowing_asset.parts.add(part)
+
+    payload = get_program_delivery_payload(
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+    )
+    assert len(payload.pieces) == 1
+    assert payload.pieces[0].title == "Delivery Piece"
+    payload_filenames = {f.filename for f in payload.pieces[0].files}
+    assert payload_filenames == {
+        "Delivery Piece - Bowing.pdf",
+        "Delivery Piece - Trumpet.pdf",
+    }
+
+    def _create_download_url(
+        organization_id: str,
+        file_key: str,
+        expiration: int,
+        download_filename: str | None = None,
+    ):
+        return f"https://downloads.test/{organization_id}/{file_key}?exp={expiration}"
+
+    monkeypatch.setattr(
+        "core.services.delivery.create_download_url",
+        _create_download_url,
+    )
+    downloads = get_program_delivery_downloads(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+        piece_id=str(piece.id),
+    )
+    assert len(downloads.files) == 2
+    assert {f.id for f in downloads.files} == {str(asset.id), str(bowing_asset.id)}
+    assert all(f.url.startswith("https://downloads.test/") for f in downloads.files)
+
+
+def test_program_delivery_payload_includes_unassigned_string_parts_for_roster_musician():
+    organization = create_organization()
+    program = create_program(
+        organization_id=str(organization.id),
+        name="String Delivery Program",
+        performance_dates=[],
+    )
+    violinist = create_musician(
+        organization_id=str(organization.id),
+        first_name="Vi",
+        last_name="Olin",
+        email="string-delivery@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.VIOLIN_1],
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(violinist.id),
+    )
+    piece = Piece.objects.create(
+        organization_id=organization.id,
+        title="String Piece",
+        composer="Composer",
+        instrumentation="",
+        duration=None,
+    )
+    ProgramPiece.objects.create(program_id=program.id, piece_id=piece.id)
+    part = Part.objects.create(piece_id=piece.id, number=2)
+    violin_1 = Instrument.objects.get(name=InstrumentEnum.VIOLIN_1.value)
+    PartInstrument.objects.create(part=part, instrument=violin_1, primary=True)
+    asset = PartAsset.objects.create(
+        piece_id=piece.id,
+        upload_filename="Violin 1 2.pdf",
+        file_key="violin-file-key.pdf",
+        asset_type=PartAssetType.CLEAN.value,
+        status=UploadStatus.UPLOADED.value,
+    )
+    asset.parts.add(part)
+
+    payload = get_program_delivery_payload(
+        program_id=str(program.id),
+        musician_id=str(violinist.id),
+    )
+
+    assert len(payload.pieces) == 1
+    assert payload.pieces[0].title == "String Piece"
+    assert [f.filename for f in payload.pieces[0].files] == [
+        "String Piece - Violin 1 2.pdf"
+    ]

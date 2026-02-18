@@ -6,6 +6,8 @@ from core.api.views import (
     MagicAssignmentConfirmViewSet,
     MagicAssignmentPartViewSet,
     MagicAssignmentViewSet,
+    MagicDeliveryDownloadViewSet,
+    MagicDeliveryViewSet,
     ProgramAssignmentViewSet,
     ProgramPieceViewSet,
     ProgramMusicianViewSet,
@@ -37,6 +39,11 @@ domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
 magic_assignments_data = MagicAssignmentViewSet.as_view({"get": "retrieve"})
 magic_assignments_part = MagicAssignmentPartViewSet.as_view({"patch": "partial_update"})
 magic_assignments_confirm = MagicAssignmentConfirmViewSet.as_view({"post": "create"})
+magic_delivery_data = MagicDeliveryViewSet.as_view({"get": "retrieve"})
+magic_delivery_downloads = MagicDeliveryDownloadViewSet.as_view({"get": "list"})
+magic_delivery_piece_downloads = MagicDeliveryDownloadViewSet.as_view(
+    {"get": "retrieve"}
+)
 
 
 urlpatterns = [
@@ -124,5 +131,20 @@ urlpatterns = [
         "magic/<str:token>/assignments/confirm",
         magic_assignments_confirm,
         name="api_magic_assignments_confirm",
+    ),
+    path(
+        "magic/<str:token>/delivery",
+        magic_delivery_data,
+        name="api_magic_delivery_data",
+    ),
+    path(
+        "magic/<str:token>/delivery/downloads",
+        magic_delivery_downloads,
+        name="api_magic_delivery_downloads",
+    ),
+    path(
+        "magic/<str:token>/delivery/downloads/piece/<str:piece_id>",
+        magic_delivery_piece_downloads,
+        name="api_magic_delivery_piece_downloads",
     ),
 ]
