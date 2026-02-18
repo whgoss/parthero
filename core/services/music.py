@@ -290,6 +290,13 @@ def get_parts(organization_id: str, piece_id: str) -> List[PartDTO]:
     return PartDTO.from_models(parts)
 
 
+def get_part_instruments(part: Part) -> set[InstrumentEnum]:
+    instruments = set()
+    for part_instrument in part.instruments.all():
+        instruments.add(InstrumentEnum(part_instrument.instrument.name))
+    return instruments
+
+
 def get_instrument(
     instrument: InstrumentEnum,
 ) -> InstrumentDTO | None:
@@ -466,8 +473,10 @@ def get_instrument_section(
         instrument_section = InstrumentSectionEnum.BRASS
     elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.PERCUSSION]:
         instrument_section = InstrumentSectionEnum.PERCUSSION
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.AUXILIARY]:
-        instrument_section = InstrumentSectionEnum.AUXILIARY
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.HARP]:
+        instrument_section = InstrumentSectionEnum.HARP
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.KEYBOARD]:
+        instrument_section = InstrumentSectionEnum.KEYBOARD
     elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS]:
         instrument_section = InstrumentSectionEnum.STRINGS
     elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.VOICE]:

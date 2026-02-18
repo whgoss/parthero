@@ -138,7 +138,8 @@ class InstrumentSectionEnum(BaseEnum):
     BRASS = "Brass"
     WOODWINDS = "Woodwinds"
     PERCUSSION = "Percussion"
-    AUXILIARY = "Auxiliary"
+    HARP = "Harp"
+    KEYBOARD = "Keyboard"
     VOICE = "Voice"
     OTHER = "Other"
 
@@ -176,14 +177,15 @@ INSTRUMENT_SECTIONS = {
         InstrumentEnum.TRIANGLE,
         InstrumentEnum.TOMS,
     ],
-    InstrumentSectionEnum.AUXILIARY: [
+    InstrumentSectionEnum.HARP: [
         InstrumentEnum.HARP,
+    ],
+    InstrumentSectionEnum.KEYBOARD: [
         InstrumentEnum.PIANO,
         InstrumentEnum.CELESTA,
-        InstrumentEnum.GUITAR,
-        InstrumentEnum.ELECTRIC_GUITAR,
-        InstrumentEnum.BASS_GUITAR,
-        InstrumentEnum.ELECTRONICA,
+        InstrumentEnum.HARPSICHORD,
+        InstrumentEnum.ORGAN,
+        InstrumentEnum.PEDAL_PIANO,
     ],
     InstrumentSectionEnum.STRINGS: [
         InstrumentEnum.VIOLIN_1,
@@ -203,7 +205,11 @@ INSTRUMENT_SECTIONS = {
 }
 
 
-INSTRUMENT_PRIMARIES = {
+#
+# Instrument relationships used for score/part presentation.
+# Example: a standalone Piccolo 3 part should render as "Piccolo (Flute 3)".
+#
+INSTRUMENT_CHAIR_PARENTS = {
     InstrumentEnum.ALTO_FLUTE: InstrumentEnum.FLUTE,
     InstrumentEnum.BASS_FLUTE: InstrumentEnum.FLUTE,
     InstrumentEnum.PICCOLO: InstrumentEnum.FLUTE,
@@ -217,3 +223,84 @@ INSTRUMENT_PRIMARIES = {
     InstrumentEnum.BASS_TROMBONE: InstrumentEnum.TROMBONE,
     InstrumentEnum.PICCOLO_TRUMPET: InstrumentEnum.TRUMPET,
 }
+
+
+#
+# Principal assignment subsections.
+# Key = "lead" instrument (principal ownership bucket).
+# Value = instruments that principal can assign in that subsection.
+#
+INSTRUMENT_ASSIGNMENT_SUBSECTIONS = {
+    InstrumentEnum.FLUTE: {
+        InstrumentEnum.FLUTE,
+        InstrumentEnum.PICCOLO,
+        InstrumentEnum.ALTO_FLUTE,
+        InstrumentEnum.BASS_FLUTE,
+    },
+    InstrumentEnum.OBOE: {
+        InstrumentEnum.OBOE,
+        InstrumentEnum.ENGLISH_HORN,
+        InstrumentEnum.OBOE_DAMORE,
+        InstrumentEnum.BASS_OBOE,
+        InstrumentEnum.HECKELPHONE,
+    },
+    InstrumentEnum.CLARINET: {
+        InstrumentEnum.CLARINET,
+        InstrumentEnum.BASS_CLARINET,
+        InstrumentEnum.CONTRABASS_CLARINET,
+    },
+    InstrumentEnum.BASSOON: {
+        InstrumentEnum.BASSOON,
+        InstrumentEnum.CONTRABASSOON,
+    },
+    InstrumentEnum.TRUMPET: {
+        InstrumentEnum.TRUMPET,
+        InstrumentEnum.PICCOLO_TRUMPET,
+    },
+    InstrumentEnum.FRENCH_HORN: {
+        InstrumentEnum.FRENCH_HORN,
+    },
+    InstrumentEnum.TROMBONE: {
+        InstrumentEnum.TROMBONE,
+        InstrumentEnum.BASS_TROMBONE,
+    },
+    InstrumentEnum.TUBA: {
+        InstrumentEnum.TUBA,
+    },
+    InstrumentEnum.PERCUSSION: set(
+        INSTRUMENT_SECTIONS[InstrumentSectionEnum.PERCUSSION]
+    ),
+    InstrumentEnum.HARP: set(INSTRUMENT_SECTIONS[InstrumentSectionEnum.HARP]),
+    InstrumentEnum.PIANO: set(INSTRUMENT_SECTIONS[InstrumentSectionEnum.KEYBOARD]),
+}
+
+
+INSTRUMENT_ASSIGNMENT_LEADS = {
+    subsection_instrument: lead_instrument
+    for lead_instrument, subsection in INSTRUMENT_ASSIGNMENT_SUBSECTIONS.items()
+    for subsection_instrument in subsection
+}
+
+
+def get_chair_parent_instrument(instrument: InstrumentEnum) -> InstrumentEnum | None:
+    return INSTRUMENT_CHAIR_PARENTS.get(instrument)
+
+
+def get_assignment_lead_instrument(instrument: InstrumentEnum) -> InstrumentEnum:
+    return INSTRUMENT_ASSIGNMENT_LEADS.get(instrument, instrument)
+
+
+def get_assignment_subsection_instruments(
+    instrument: InstrumentEnum,
+) -> set[InstrumentEnum]:
+    lead_instrument = get_assignment_lead_instrument(instrument)
+    return set(INSTRUMENT_ASSIGNMENT_SUBSECTIONS.get(lead_instrument, set()))
+
+
+def get_assignment_scope_for_instruments(
+    instruments: set[InstrumentEnum],
+) -> set[InstrumentEnum]:
+    scope: set[InstrumentEnum] = set()
+    for instrument in instruments:
+        scope.update(get_assignment_subsection_instruments(instrument))
+    return scope

@@ -67,3 +67,16 @@ def test_get_valid_magic_link_rejects_expired_links():
 
     with pytest.raises(MagicLink.DoesNotExist):
         get_valid_magic_link(token=magic_link.token, link_type=MagicLinkType.ASSIGNMENT)
+
+
+def test_get_valid_magic_link_rejects_revoked_links():
+    _, program, musician = _create_program_and_musician()
+    magic_link = create_magic_link(
+        program_id=str(program.id),
+        musician_id=str(musician.id),
+        link_type=MagicLinkType.ASSIGNMENT,
+    )
+    MagicLink.objects.filter(id=magic_link.id).update(revoked=True)
+
+    with pytest.raises(MagicLink.DoesNotExist):
+        get_valid_magic_link(token=magic_link.token, link_type=MagicLinkType.ASSIGNMENT)

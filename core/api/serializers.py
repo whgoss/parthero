@@ -60,6 +60,10 @@ class ProgramChecklistPatchSerializer(serializers.Serializer):
     delivery_completed = serializers.BooleanField(required=False)
 
 
+class ProgramAssignmentPartPatchSerializer(serializers.Serializer):
+    musician_id = serializers.CharField(required=True, allow_null=True)
+
+
 class PartDTOWrapperSerializer(serializers.Serializer):
     def validate(self, attrs):
         # attrs is empty because we’re not declaring explicit fields,

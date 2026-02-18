@@ -35,8 +35,12 @@ def create_magic_link(
 
 
 def get_valid_magic_link(token: str, link_type: MagicLinkType) -> MagicLink:
-    magic_link = MagicLink.objects.get(token=token, type=link_type.value)
-    if magic_link.expires_on <= timezone.now():
+    magic_link = MagicLink.objects.get(
+        token=token,
+        type=link_type.value,
+        revoked=False,
+    )
+    if magic_link.expires_on <= timezone.now() or magic_link.revoked:
         raise MagicLink.DoesNotExist
     return magic_link
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from core.dtos.base import BaseDTO
+from core.dtos.organizations import MusicianDTO
 from core.enum.instruments import InstrumentEnum
 from core.models.programs import (
     Program,
@@ -198,13 +199,6 @@ class ProgramChecklistDTO(BaseDTO):
         )
 
 
-class ProgramAssignmentEligibleMusicianDTO(BaseDTO):
-    first_name: str
-    last_name: str
-    email: str
-    instruments: List[str]
-
-
 class ProgramAssignmentAssignedMusicianDTO(BaseDTO):
     first_name: str
     last_name: str
@@ -227,7 +221,7 @@ class ProgramAssignmentPieceDTO(BaseDTO):
 
 class ProgramAssignmentDTO(BaseDTO):
     pieces: List[ProgramAssignmentPieceDTO]
-    eligible_musicians: List[ProgramAssignmentEligibleMusicianDTO]
+    eligible_musicians: List[MusicianDTO]
     eligible_musician_ids: List[str]
     all_assigned: bool
 
@@ -257,4 +251,5 @@ class ProgramAssignmentSummaryDTO(BaseDTO):
 class ProgramAssignmentStatusDTO(BaseDTO):
     pieces: List[ProgramAssignmentPieceDTO]
     principals: List[ProgramAssignmentPrincipalStatusDTO]
+    roster_musicians: List[MusicianDTO]
     summary: ProgramAssignmentSummaryDTO

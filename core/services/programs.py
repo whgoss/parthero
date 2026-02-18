@@ -154,6 +154,15 @@ def get_musician_for_program(
     return ProgramMusicianDTO.from_model(program_musician)
 
 
+def get_program_musician_instruments(
+    program_musician: ProgramMusician,
+) -> set[InstrumentEnum]:
+    instruments = set()
+    for musician_instrument in program_musician.instruments.all():
+        instruments.add(InstrumentEnum(musician_instrument.instrument.name))
+    return instruments
+
+
 def add_musician_to_program(
     organization_id: str,
     program_id: str,

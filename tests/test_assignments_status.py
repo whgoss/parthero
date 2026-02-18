@@ -7,7 +7,10 @@ from core.enum.instruments import InstrumentEnum
 from core.enum.notifications import MagicLinkType
 from core.models.music import Instrument, Part, PartInstrument, Piece
 from core.models.programs import ProgramChecklist, ProgramPartMusician, ProgramPiece
-from core.services.assignments import get_program_assignments_status
+from core.services.assignments import (
+    assign_program_part_by_librarian,
+    get_program_assignments_status,
+)
 from core.services.magic_links import create_magic_link
 from core.services.organizations import create_musician
 from core.services.programs import add_musician_to_program, create_program
@@ -175,3 +178,69 @@ def test_program_assignments_status_marks_completed_when_all_parts_assigned_with
     assert len(payload.principals) == 1
     assert payload.principals[0].status == "Completed"
     assert payload.principals[0].link_accessed is True
+
+
+def test_librarian_can_assign_any_roster_musician_to_part():
+    organization = create_organization()
+    program = create_program(
+        organization_id=str(organization.id),
+        name="Librarian Assignment Program",
+        performance_dates=[],
+    )
+
+    principal = create_musician(
+        organization_id=str(organization.id),
+        first_name="Pri",
+        last_name="Ncipal",
+        email="principal-librarian@example.com",
+        principal=True,
+        core_member=True,
+        instruments=[InstrumentEnum.TRUMPET],
+    )
+    section = create_musician(
+        organization_id=str(organization.id),
+        first_name="Sec",
+        last_name="Tion",
+        email="section-librarian@example.com",
+        principal=False,
+        core_member=True,
+        instruments=[InstrumentEnum.VIOLIN_1],
+    )
+
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(principal.id),
+    )
+    add_musician_to_program(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        musician_id=str(section.id),
+    )
+
+    piece = Piece.objects.create(
+        organization_id=organization.id,
+        title="Librarian Piece",
+        composer="Composer",
+        instrumentation="",
+        duration=None,
+    )
+    ProgramPiece.objects.create(program_id=program.id, piece_id=piece.id)
+    part = Part.objects.create(piece_id=piece.id)
+    trumpet = Instrument.objects.get(name=InstrumentEnum.TRUMPET.value)
+    PartInstrument.objects.create(part=part, instrument=trumpet, primary=True)
+
+    payload = assign_program_part_by_librarian(
+        organization_id=str(organization.id),
+        program_id=str(program.id),
+        part_id=str(part.id),
+        musician_id=str(section.id),
+    )
+
+    assignment = ProgramPartMusician.objects.filter(
+        program_id=program.id,
+        part_id=part.id,
+    ).first()
+    assert assignment is not None
+    assert str(assignment.musician_id) == str(section.id)
+    assert any(m.id == str(section.id) for m in payload.roster_musicians)

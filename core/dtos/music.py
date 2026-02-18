@@ -17,7 +17,7 @@ from core.enum.status import UploadStatus
 from core.enum.instruments import (
     InstrumentEnum,
     InstrumentSectionEnum,
-    INSTRUMENT_PRIMARIES,
+    get_chair_parent_instrument,
 )
 
 
@@ -131,9 +131,10 @@ class PartDTO(BaseDTO):
 
         # If there's only 1 instrument
         if len(names) == 1:
-            # Is this a part for non-primary woodwind instrument?
-            if primary.instrument.name in INSTRUMENT_PRIMARIES.keys():
-                return f"{primary_name} ({INSTRUMENT_PRIMARIES[primary.instrument.name].value} {self.number})"
+            # Is this a part that should display parent chair ownership?
+            parent_instrument = get_chair_parent_instrument(primary.instrument.name)
+            if parent_instrument:
+                return f"{primary_name} ({parent_instrument.value} {self.number})"
             # Is there a chair number?
             if self.number:
                 return f"{names[0]} {self.number}"

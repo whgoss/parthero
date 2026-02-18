@@ -23,7 +23,8 @@
             type="button"
             class="btn-primary ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
             x-show="canMarkAsCompleted"
-            :disabled="!canActuallyCompleteAssignments"
+            :disabled="!canActuallyCompleteAssignments || completingAssignments"
+            @click="markAssignmentsAsCompleted()"
         >
             Mark Assignments as Complete
         </button>
@@ -132,16 +133,13 @@
                                                 ></span>
                                             </td>
                                             <td class="px-3 py-2 text-slate-700">
-                                                <template x-if="part.assigned_musician">
-                                                    <a
-                                                        class="text-blue-700 hover:text-blue-900 hover:underline"
-                                                        :href="part.assigned_musician.profile_url"
-                                                        x-text="`${part.assigned_musician.first_name} ${part.assigned_musician.last_name}`"
-                                                    ></a>
-                                                </template>
-                                                <template x-if="!part.assigned_musician">
-                                                    <span class="text-slate-400">Unassigned</span>
-                                                </template>
+                                                <input
+                                                    type="text"
+                                                    class="librarian-assignment-input block w-full rounded-lg border border-slate-200 px-2 py-1 text-sm"
+                                                    :data-part-id="part.id"
+                                                    :disabled="loadingStatus || savingAssignmentPartId === part.id"
+                                                    placeholder="Assign musician..."
+                                                />
                                             </td>
                                         </tr>
                                     </template>
@@ -156,6 +154,7 @@
 
     <div
         x-show="showSendModal"
+        x-cloak
         class="modal-backdrop"
         @click.self="closeSendModal()"
     >

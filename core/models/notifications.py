@@ -1,6 +1,14 @@
 import secrets
 
-from django.db.models import CharField, DateTimeField, SET_NULL, ForeignKey, TextField
+from django.utils import timezone
+from django.db.models import (
+    BooleanField,
+    CharField,
+    DateTimeField,
+    SET_NULL,
+    ForeignKey,
+    TextField,
+)
 from core.enum.notifications import (
     MagicLinkType,
     NotificationMethod,
@@ -17,6 +25,7 @@ def generate_magic_link_token():
 
 
 class MagicLink(UUIDPrimaryKeyModel):
+    created = DateTimeField(default=timezone.now)
     token = CharField(max_length=255, unique=True, default=generate_magic_link_token)
     type = CharField(
         max_length=255,
@@ -26,6 +35,7 @@ class MagicLink(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, null=True, blank=True, on_delete=SET_NULL)
     musician = ForeignKey(Musician, null=True, blank=True, on_delete=SET_NULL)
     expires_on = DateTimeField()
+    revoked = BooleanField(default=False)
     last_accessed_on = DateTimeField(null=True, blank=True)
     completed_on = DateTimeField(null=True, blank=True)
 

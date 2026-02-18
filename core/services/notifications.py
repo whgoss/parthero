@@ -17,6 +17,10 @@ from core.enum.notifications import (
 from core.models.notifications import Notification
 from core.models.organizations import Musician
 from core.models.programs import Program, ProgramMusician
+from core.services.assignments import (
+    auto_assign_harp_keyboard_principal_parts_if_unambiguous,
+    get_assignment_payload,
+)
 from core.services.magic_links import create_magic_link, get_magic_link_url
 from core.services.programs import get_pieces_for_program
 from core.services.queue import enqueue_email_payload
@@ -47,6 +51,17 @@ def send_part_assignment_emails(organization_id: str, program_id: str):
     for principal in principals:
         if _is_string_principal(principal):
             continue
+        if auto_assign_harp_keyboard_principal_parts_if_unambiguous(
+            program_id=program_id,
+            principal_musician_id=str(principal.musician.id),
+        ):
+            continue
+        assignment_payload = get_assignment_payload(
+            program_id=program_id,
+            principal_musician_id=str(principal.musician.id),
+        )
+        if not assignment_payload.pieces:
+            continue
         payload = EmailQueuePayloadDTO(
             organization_id=organization_id,
             program_id=program_id,
@@ -76,6 +91,12 @@ def send_assignment_email(
     if not program_musician or not program_musician.musician.principal:
         return None
     if _is_string_principal(program_musician):
+        return None
+    assignment_payload = get_assignment_payload(
+        program_id=program_id,
+        principal_musician_id=musician_id,
+    )
+    if not assignment_payload.pieces:
         return None
 
     # Has a notification already been sent for this musician on this program?
