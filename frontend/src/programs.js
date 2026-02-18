@@ -351,6 +351,9 @@ window.programBowings = function programBowings(
     completed: Boolean(
       initialChecklist?.bowings_completed ?? initialChecklist?.bowings_completed_on
     ),
+    deliverySent: Boolean(
+      initialChecklist?.delivery_sent ?? initialChecklist?.delivery_sent_on
+    ),
     saving: false,
     saveError: null,
     openPieceIds: [],
@@ -442,6 +445,9 @@ window.programBowings = function programBowings(
       }
     },
     async markAsIncomplete() {
+      if (this.deliverySent) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {
@@ -720,6 +726,9 @@ window.programPieces = function programPieces(
     completed: Boolean(
       initialChecklist?.pieces_completed ?? initialChecklist?.pieces_completed_on
     ),
+    deliverySent: Boolean(
+      initialChecklist?.delivery_sent ?? initialChecklist?.delivery_sent_on
+    ),
     loading: false,
     error: null,
     hasSearched: false,
@@ -855,6 +864,9 @@ window.programPieces = function programPieces(
       }
     },
     async markAsIncomplete() {
+      if (this.deliverySent) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {
@@ -900,6 +912,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
     programId,
     completed: Boolean(
       initialChecklist?.roster_completed ?? initialChecklist?.roster_completed_on
+    ),
+    deliverySent: Boolean(
+      initialChecklist?.delivery_sent ?? initialChecklist?.delivery_sent_on
     ),
     name: "",
     instrument: "",
@@ -1237,6 +1252,9 @@ window.programRoster = function programRoster(programId, initialChecklist = null
       }
     },
     async markAsIncomplete() {
+      if (this.deliverySent) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {
@@ -1272,6 +1290,9 @@ window.programOverrides = function programOverrides(programId, initialChecklist 
     completed: Boolean(
       initialChecklist?.overrides_completed ?? initialChecklist?.overrides_completed_on
     ),
+    deliverySent: Boolean(
+      initialChecklist?.delivery_sent ?? initialChecklist?.delivery_sent_on
+    ),
     saving: false,
     saveError: null,
     async markAsComplete() {
@@ -1300,6 +1321,9 @@ window.programOverrides = function programOverrides(programId, initialChecklist 
       }
     },
     async markAsIncomplete() {
+      if (this.deliverySent) {
+        return;
+      }
       this.saving = true;
       this.saveError = null;
       try {

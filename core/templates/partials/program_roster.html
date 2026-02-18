@@ -23,7 +23,7 @@
             type="button"
             class="btn-primary-warning ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
             x-show="completed == true"
-            :disabled="saving"
+            :disabled="saving || deliverySent"
             @click="markAsIncomplete()"
         >
             Mark Roster as Incomplete
@@ -87,136 +87,139 @@
     </div>
     </div>
 
-    <hr class="my-6 border-slate-200">
-    <div class="flex flex-wrap items-center mb-4">
-    <h2 class="text-lg font-medium">Add Musician to Program Roster</h2>
+    <!-- Add Musicians to Program Roster -->
+    <div x-show="!completed" x-cloak>
+        <hr class="my-6 border-slate-200" >
+        <div class="flex flex-wrap items-center mb-4">
+        <h2 class="text-lg font-medium">Add Musician to Program Roster</h2>
 
-    <div class="ml-auto flex items-center gap-2">
-        <!-- Load Principals -->
-        <button
-        type="button"
-        class="btn-secondary"
-        :disabled="completed || saving"
-        @click="loadPrincipals()">
-        Load Principals
-        </button>
-
-        <!-- Load Core Members -->
-        <button
-        type="button"
-        class="btn-secondary"
-        :disabled="completed || saving"
-        @click="loadCoreMembers()">
-        Load Core Members
-        </button>
-
-        <!-- Add a Musician -->
-        <button
-            href="/musicians/"
+        <div class="ml-auto flex items-center gap-2">
+            <!-- Load Principals -->
+            <button
+            type="button"
             class="btn-secondary"
-            :disabled="completed || saving">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                class="h-4 w-4 shrink-0">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
-                        d="M10 4v12m6-6H4" />
-            </svg>
-            Add a Musician
-        </button>
-    </div>
-    
-    </div>
-    <div>
-        <p class="mb-4 text-sm text-slate-500">
-        Add musicians from your master roster to this program.
-        </p>
-    </div>
+            :disabled="completed || saving"
+            @click="loadPrincipals()">
+            Load Principals
+            </button>
 
-    <!-- Musician Search -->
-    <div class="grid gap-3 sm:grid-cols-2">
-    <div class="relative">
-        <input
-        type="text"
-        class="form-input"
-        placeholder="Search by name"
-        x-model="name"
-        @input.debounce.400ms="search()"
-        />
-        <button
-        type="button"
-        class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
-        :disabled="completed"
-        x-show="name"
-        @click="clearSearch()"
-        aria-label="Clear search"
-        >
-        ✕
-        </button>
-    </div>
-    <div class="relative">
-        <input
-        type="text"
-        class="form-input pr-10"
-        placeholder="Search by instrument or section"
-        x-model="instrument"
-        @input.debounce.400ms="search()"
-        />
-        <button
-        type="button"
-        class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
-        :disabled="completed"
-        x-show="instrument"
-        @click="clearSearch()"
-        aria-label="Clear search"
-        >
-        ✕
-        </button>
-    </div>
-    </div>
+            <!-- Load Core Members -->
+            <button
+            type="button"
+            class="btn-secondary"
+            :disabled="completed || saving"
+            @click="loadCoreMembers()">
+            Load Core Members
+            </button>
 
-    <div class="mt-4">
-    <div x-show="loading" class="flex items-center gap-2 text-sm text-slate-500">
-        <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
-        Searching...
-    </div>
-    <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
-    <div x-show="saveError" class="mt-2 text-sm text-red-600" x-text="saveError"></div>
-
-    <template x-if="!loading && hasSearched && results.length === 0">
-        <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
-        No musicians found.
+            <!-- Add a Musician -->
+            <button
+                href="/musicians/"
+                class="btn-secondary"
+                :disabled="completed || saving">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    class="h-4 w-4 shrink-0">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+                            d="M10 4v12m6-6H4" />
+                </svg>
+                Add a Musician
+            </button>
         </div>
-    </template>
+        
+        </div>
+        <div>
+            <p class="mb-4 text-sm text-slate-500">
+            Add musicians from your master roster to this program.
+            </p>
+        </div>
 
-    <ul class="mt-3 space-y-2">
-        <template x-for="musician in results" :key="musician.id">
-        <li
-            class="rounded-lg border border-slate-200 p-3 transition hover:bg-slate-50 cursor-pointer"
-            :class="isInRoster(musician) ? 'border-blue-200 bg-blue-50 cursor-default' : completed ? 'opacity-50 cursor-not-allowed' : ''"
-            @click="!completed && addMusician(musician)"
-        >
-            <div class="flex items-center justify-between gap-3">
-            <div>
-                <div>
-                <span
-                    class="inline-flex items-center justify-center rounded-md border border-green-200 bg-green-50 gap-2 px-2 py-1 text-xs font-medium text-green-700"
-                    x-show="isInRoster(musician)"
+        <!-- Musician Search -->
+        <div class="grid gap-3 sm:grid-cols-2">
+            <div class="relative">
+                <input
+                type="text"
+                class="form-input"
+                placeholder="Search by name"
+                x-model="name"
+                @input.debounce.400ms="search()"
+                />
+                <button
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+                :disabled="completed"
+                x-show="name"
+                @click="clearSearch()"
+                aria-label="Clear search"
                 >
-                    Selected
-                </span>
-                <span class="text-sm font-medium text-slate-900">
-                    <span x-text="musician.first_name"></span>
-                    <span x-text="musician.last_name"></span>
-                </span>
-                </div>
-                <div class="text-xs text-slate-500" x-text="musician.email"></div>
+                ✕
+                </button>
             </div>
-            <div class="text-xs text-slate-500" x-text="formatInstrumentList(musician)"></div>
+            <div class="relative">
+                <input
+                type="text"
+                class="form-input pr-10"
+                placeholder="Search by instrument or section"
+                x-model="instrument"
+                @input.debounce.400ms="search()"
+                />
+                <button
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600"
+                :disabled="completed"
+                x-show="instrument"
+                @click="clearSearch()"
+                aria-label="Clear search"
+                >
+                ✕
+                </button>
             </div>
-        </li>
+        </div>
+
+        <div class="mt-4">
+            <div x-show="loading" class="flex items-center gap-2 text-sm text-slate-500">
+                <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
+                Searching...
+            </div>
+            <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
+            <div x-show="saveError" class="mt-2 text-sm text-red-600" x-text="saveError"></div>
+
+        <template x-if="!loading && hasSearched && results.length === 0">
+            <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
+            No musicians found.
+            </div>
         </template>
-    </ul>
+
+        <ul class="mt-3 space-y-2">
+            <template x-for="musician in results" :key="musician.id">
+            <li
+                class="rounded-lg border border-slate-200 p-3 transition hover:bg-slate-50 cursor-pointer"
+                :class="isInRoster(musician) ? 'border-blue-200 bg-blue-50 cursor-default' : completed ? 'opacity-50 cursor-not-allowed' : ''"
+                @click="!completed && addMusician(musician)"
+            >
+                <div class="flex items-center justify-between gap-3">
+                <div>
+                    <div>
+                    <span
+                        class="inline-flex items-center justify-center rounded-md border border-green-200 bg-green-50 gap-2 px-2 py-1 text-xs font-medium text-green-700"
+                        x-show="isInRoster(musician)"
+                    >
+                        Selected
+                    </span>
+                    <span class="text-sm font-medium text-slate-900">
+                        <span x-text="musician.first_name"></span>
+                        <span x-text="musician.last_name"></span>
+                    </span>
+                    </div>
+                    <div class="text-xs text-slate-500" x-text="musician.email"></div>
+                </div>
+                <div class="text-xs text-slate-500" x-text="formatInstrumentList(musician)"></div>
+                </div>
+            </li>
+            </template>
+        </ul>
+        </div>
     </div>
 </div>

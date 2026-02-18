@@ -21,6 +21,7 @@
             type="button"
             class="btn-primary-warning ml-auto disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:opacity-100 disabled:cursor-not-allowed"
             x-show="completed == true"
+            :disabled="saving || deliverySent"
             @click="markAsIncomplete()"
         >
             Mark Overrides as Incomplete

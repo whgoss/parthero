@@ -137,7 +137,7 @@
                                                     type="text"
                                                     class="librarian-assignment-input block w-full rounded-lg border border-slate-200 px-2 py-1 text-sm"
                                                     :data-part-id="part.id"
-                                                    :disabled="loadingStatus || savingAssignmentPartId === part.id"
+                                                    :disabled="loadingStatus || savingAssignmentPartId === part.id || completed"
                                                     placeholder="Assign musician..."
                                                 />
                                             </td>
