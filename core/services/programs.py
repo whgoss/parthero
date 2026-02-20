@@ -258,17 +258,6 @@ def update_program_musician_principal(
     return ProgramMusicianDTO.from_model(program_musician)
 
 
-def get_musician_for_program(
-    organization_id: str, program_id: str, musician_id: str
-) -> ProgramMusicianDTO:
-    program_musician = ProgramMusician.objects.get(
-        program_id=program_id,
-        musician_id=musician_id,
-        program__organization_id=organization_id,
-    )
-    return ProgramMusicianDTO.from_model(program_musician)
-
-
 def get_program_musician_instruments(
     program_musician: ProgramMusician,
 ) -> set[InstrumentEnum]:

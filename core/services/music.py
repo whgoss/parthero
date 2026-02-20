@@ -12,14 +12,9 @@ from core.dtos.music import (
     PartAssetDTO,
     PartAssetUploadDTO,
     InstrumentDTO,
-    InstrumentSectionDTO,
 )
 from core.enum.music import PartAssetType
-from core.enum.instruments import (
-    InstrumentEnum,
-    InstrumentSectionEnum,
-    INSTRUMENT_SECTIONS,
-)
+from core.enum.instruments import InstrumentEnum
 from core.enum.status import UploadStatus
 from core.models.organizations import Musician, SetupChecklist
 from core.models.music import (
@@ -28,7 +23,6 @@ from core.models.music import (
     PartAsset,
     PartInstrument,
     Instrument,
-    InstrumentSection,
     MusicianInstrument,
 )
 from core.services.s3 import create_upload_url
@@ -37,7 +31,7 @@ from core.utils import get_file_extension, is_integer
 logger = logging.getLogger()
 
 # Codes used in parsing instrumentation notation
-CODE_MAP = {
+INSTRUMENT_ABBREVIATIONS = {
     "pic": [InstrumentEnum.PICCOLO],
     "picc": [InstrumentEnum.PICCOLO],
     "eh": [InstrumentEnum.ENGLISH_HORN],
@@ -131,22 +125,6 @@ def get_piece(organization_id: str, piece_id: str) -> PieceDTO:
         .count()
     )
     return PieceDTO.from_model(piece, completed_parts=completed_parts)
-
-
-def get_pieces(organization_id: str) -> List[PieceDTO]:
-    query = Q(organization__id=organization_id)
-    piece_models = Piece.objects.filter(query).annotate(
-        parts_count=Count("parts", distinct=True),
-        completed_parts=Count(
-            "parts",
-            filter=Q(
-                parts__assets__status=UploadStatus.UPLOADED.value,
-                parts__assets__asset_type=PartAssetType.CLEAN.value,
-            ),
-            distinct=True,
-        ),
-    )
-    return PieceDTO.from_models(piece_models)
 
 
 def search_for_piece(
@@ -441,7 +419,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
 
             # Figure out the primary instrument
             primary_code = _normalize_filename_token(primary_code)
-            primary_instrument = CODE_MAP.get(primary_code)
+            primary_instrument = INSTRUMENT_ABBREVIATIONS.get(primary_code)
             if not primary_instrument:
                 logger.warning(f"Unknown instrument code {code}")
                 continue
@@ -450,7 +428,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
 
             # Figure out the doubling
             doubling_code = _normalize_filename_token(doubling_code)
-            doubling_sections = CODE_MAP.get(doubling_code)
+            doubling_sections = INSTRUMENT_ABBREVIATIONS.get(doubling_code)
             if doubling_sections:
                 for doubling in doubling_sections:
                     instruments.append(doubling)
@@ -464,7 +442,7 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
             result.append(part)
             continue
 
-        instruments = CODE_MAP.get(code)
+        instruments = INSTRUMENT_ABBREVIATIONS.get(code)
         if not instruments:
             logger.warning(f"Unknown instrument code {code}")
             continue
@@ -479,50 +457,6 @@ def create_parts_from_instrumentation(piece_id: str, notation: str) -> List[Part
             result.append(part)
 
     return result
-
-
-def looks_like_numbered_part(tail: str) -> bool:
-    # These are parts with numbers that don't correspond to the seat number (i.e. violin 1)
-    # and need to be exempted from this check
-    unnumbered_parts = [
-        InstrumentEnum.VIOLIN_1.value.lower(),
-        InstrumentEnum.VIOLIN_2.value.lower(),
-    ]
-
-    # e.g. " 2.pdf", "_ii.pdf", "-1", "(III)"
-    PART_NUMBER_REGEX = re.compile(
-        r"""(?:^|[^a-z0-9])(?:1|2|3|4|5|i|ii|iii|iv|v)(?:[^a-z0-9]|$)""", re.VERBOSE
-    )
-    return bool(PART_NUMBER_REGEX.search(tail)) and not any(
-        unnumbered_part in tail for unnumbered_part in unnumbered_parts
-    )
-
-
-def get_instrument_section(
-    instrument: InstrumentEnum,
-) -> InstrumentSectionDTO:
-    instrument_section = None
-    if instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.WOODWINDS]:
-        instrument_section = InstrumentSectionEnum.WOODWINDS
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.BRASS]:
-        instrument_section = InstrumentSectionEnum.BRASS
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.PERCUSSION]:
-        instrument_section = InstrumentSectionEnum.PERCUSSION
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.HARP]:
-        instrument_section = InstrumentSectionEnum.HARP
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.KEYBOARD]:
-        instrument_section = InstrumentSectionEnum.KEYBOARD
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS]:
-        instrument_section = InstrumentSectionEnum.STRINGS
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.VOCAL]:
-        instrument_section = InstrumentSectionEnum.VOCAL
-    else:
-        instrument_section = InstrumentSectionEnum.OTHER
-
-    instrument_section_model = InstrumentSection.objects.get(
-        name=instrument_section.value
-    )
-    return InstrumentSectionDTO.from_model(instrument_section_model)
 
 
 def _parse_bracketable_section(
@@ -580,7 +514,7 @@ def _parse_bracketable_section(
                     # Figure out and add the doubling
                     _, doubling_code = instrument_details.split("/", 1)
                     doubling_code = doubling_code.strip().lower()
-                    doubling_instruments = CODE_MAP.get(doubling_code)
+                    doubling_instruments = INSTRUMENT_ABBREVIATIONS.get(doubling_code)
                     if not doubling_instruments:
                         raise Exception(
                             f"Unable to find instrument for abbreviation '{instrument_details}'"
@@ -594,7 +528,7 @@ def _parse_bracketable_section(
                     instruments.append(primary_instrument)
                 # Is it a dedicated part that uses a different instrument?
                 else:
-                    instruments = CODE_MAP.get(instrument_details)
+                    instruments = INSTRUMENT_ABBREVIATIONS.get(instrument_details)
                     if not instruments:
                         raise Exception(
                             f"Unable to find instrument for abbreviation '{instrument_details}'"

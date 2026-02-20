@@ -40,11 +40,6 @@ def upsert_bucket_for_organization(organization_id: str):
             raise error
 
 
-def upload_file(file_buffer, organization_id: str, file_key: str):
-    s3_client = get_s3_client()
-    s3_client.upload_fileobj(file_buffer, Bucket=organization_id, Key=file_key)
-
-
 def delete_file(organization_id: str, file_key: str):
     s3_client = get_s3_client()
     s3_client.delete_object(
