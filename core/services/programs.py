@@ -9,6 +9,7 @@ from core.dtos.music import PieceDTO
 from core.dtos.programs import (
     ProgramDTO,
     ProgramMusicianDTO,
+    ProgramMusicianSearchResultDTO,
     ProgramChecklistDTO,
     ProgramSearchResultDTO,
 )
@@ -192,6 +193,53 @@ def get_musicians_for_program(
         program_id=program_id, program__organization_id=organization_id
     ).select_related("program", "musician", "musician__organization")
     return ProgramMusicianDTO.from_models(program_musicians)
+
+
+def search_for_program_musicians(
+    organization_id: str,
+    program_id: str,
+    search: Optional[str] = None,
+    limit: int = 25,
+    offset: int = 0,
+    sort: Optional[str] = None,
+) -> ProgramMusicianSearchResultDTO:
+    musicians = ProgramMusician.objects.filter(
+        program_id=program_id,
+        program__organization_id=organization_id,
+    ).select_related("program", "musician", "musician__organization")
+
+    if search:
+        musicians = musicians.filter(
+            Q(musician__first_name__icontains=search)
+            | Q(musician__last_name__icontains=search)
+            | Q(musician__email__icontains=search)
+        )
+
+    sort_field = "musician__last_name"
+    sort_direction = "asc"
+    if sort and ":" in sort:
+        field, direction = sort.split(":", 1)
+        requested_field = (field or "").strip()
+        sort_direction = (direction or "").strip().lower()
+        requested_map = {
+            "first_name": "musician__first_name",
+            "last_name": "musician__last_name",
+            "email": "musician__email",
+            "principal": "musician__principal",
+        }
+        sort_field = requested_map.get(requested_field, "musician__last_name")
+
+    sort_prefix = "-" if sort_direction == "dsc" else ""
+    musicians = musicians.order_by(sort_prefix + sort_field, "musician__first_name")
+
+    limit = min(max(limit, 1), 100)
+    offset = max(offset, 0)
+    total = musicians.count()
+    page = musicians[offset : offset + limit]
+    return ProgramMusicianSearchResultDTO(
+        total=total,
+        data=ProgramMusicianDTO.from_models(page),
+    )
 
 
 def get_musician_for_program(

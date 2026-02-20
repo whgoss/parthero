@@ -17,6 +17,7 @@ from core.services.programs import (
     get_pieces_for_program,
     get_program_checklist,
     get_musicians_for_program,
+    search_for_program_musicians,
     search_for_programs,
     remove_musician_from_program,
     remove_piece_from_program,
@@ -121,6 +122,36 @@ class ProgramMusicianViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         )
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ProgramMusicianSearchViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsInOrganization]
+
+    def list(self, request, program_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        try:
+            limit = int(request.query_params.get("limit", 25))
+        except (TypeError, ValueError):
+            limit = 25
+        try:
+            offset = int(request.query_params.get("offset", 0))
+        except (TypeError, ValueError):
+            offset = 0
+
+        limit = min(max(limit, 1), 100)
+        offset = max(offset, 0)
+
+        search = request.query_params.get("search")
+        sort = request.query_params.get("sort")
+        results = search_for_program_musicians(
+            organization_id=request.organization.id,
+            program_id=program_id,
+            search=search,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+        )
+        return Response(results.model_dump(mode="json"), status=status.HTTP_200_OK)
 
 
 class ProgramMusicianInstrumentViewSet(viewsets.GenericViewSet):

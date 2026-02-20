@@ -11,6 +11,7 @@ from core.api.views import (
     ProgramAssignmentViewSet,
     ProgramSearchViewSet,
     ProgramPieceViewSet,
+    ProgramMusicianSearchViewSet,
     ProgramMusicianViewSet,
     ProgramMusicianInstrumentViewSet,
     RosterMusicianViewSet,
@@ -26,6 +27,7 @@ program_piece = ProgramPieceViewSet.as_view({"put": "update", "delete": "delete"
 program_musicians_list = ProgramMusicianViewSet.as_view(
     {"get": "list", "post": "create"}
 )
+program_musicians_search = ProgramMusicianSearchViewSet.as_view({"get": "list"})
 program_musicians_delete = ProgramMusicianViewSet.as_view({"delete": "delete"})
 program_musician_instrument_update = ProgramMusicianInstrumentViewSet.as_view(
     {"put": "update", "delete": "delete"}
@@ -83,6 +85,11 @@ urlpatterns = [
         "programs/<str:program_id>/musicians",
         program_musicians_list,
         name="api_program_musicians",
+    ),
+    path(
+        "programs/<str:program_id>/musicians/search",
+        program_musicians_search,
+        name="api_program_musicians_search",
     ),
     path(
         "programs/<str:program_id>/musicians/<str:program_musician_id>",

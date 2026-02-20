@@ -3,7 +3,8 @@
     class="p-6"
     data-tab-panel="roster"
     x-show="activeTab === 'roster'"
-    x-data="programRoster('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent))"
+    x-data="{ ...programRoster('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent)), ...littleBIGtable({ url: '/api/programs/{{ program.id }}/musicians/search', key_prefix: 'programRosterTable', limit: 25, messages: { loading: 'Loading program roster...', failed: 'Unable to load program roster right now.', summary: 'rows' } }) }"
+    x-init="initProgramRoster(); init()"
 >
     {{ instrument_options|json_script:"instrument-options" }}
     <div class="flex items-center gap-3 mb-4">
@@ -31,35 +32,85 @@
     </div>
 
     <!-- Program Roster Table -->
-    <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div class="mt-4 table-card">
+      <div class="table-toolbar">
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-medium text-slate-800">Program musicians</p>
+          <span
+            x-cloak
+            x-show="!meta.loading && (params.total || 0) > 0"
+            class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
+          >
+            <span x-text="params.total || 0"></span>&nbsp;total
+          </span>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <div class="table-search-wrap sm:w-72">
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" class="h-4 w-4">
+                <circle cx="9" cy="9" r="4.5" stroke-width="1.5" />
+                <path d="M12.5 12.5 15.5 15.5" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              class="table-search-input pr-10"
+              placeholder="Search program roster"
+              x-model.debounce.300ms="params.search"
+              @input.debounce.300ms="doSearch()"
+            />
+            <button
+              type="button"
+              class="search-clear-btn"
+              x-cloak
+              x-show="params.search"
+              @click="params.search=''; doSearch()"
+              aria-label="Clear roster search"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-base">
+          <thead class="table-head">
             <tr>
-            <th class="px-4 py-2.5 text-left">First Name</th>
-            <th class="px-4 py-2.5 text-left">Last Name</th>
-            <th class="px-4 py-2.5 text-left">Email</th>
-            <th class="px-4 py-2.5 text-left">Principal</th>
-            <th class="px-4 py-2.5 text-left">Sections / Instruments</th>
-            <th class="px-4 py-2.5 text-left"></th>
+              <th class="table-th-first">First Name</th>
+              <th class="table-th">Last Name</th>
+              <th class="table-th">Email</th>
+              <th class="table-th">Principal</th>
+              <th class="table-th">Sections / Instruments</th>
+              <th class="table-th"></th>
             </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
-            <template x-if="!loading && roster.length === 0">
-            <tr>
-                <td class="px-4 py-3 text-sm text-slate-500" colspan="6">
-                No musicians assigned yet.
+          </thead>
+          <tbody class="table-body text-slate-700">
+            <template x-if="meta.loading">
+              <tr>
+                <td colspan="6" class="px-4 py-10 text-center">
+                  <div class="inline-flex items-center gap-2 text-sm text-slate-500">
+                    <span class="table-loading-spinner"></span>
+                    Loading program roster...
+                  </div>
                 </td>
-            </tr>
+              </tr>
             </template>
-            <template x-for="program_musician in roster" :key="program_musician.id">
-            <tr>
-                <td class="px-4 py-3" x-text="program_musician.first_name"></td>
-                <td class="px-4 py-3" x-text="program_musician.last_name"></td>
-                <td class="px-4 py-3" x-text="program_musician.email"></td>
-                <td class="px-4 py-3" x-text="program_musician.principal ? 'Yes' : 'No'"></td>
-                <td class="px-4 py-3">
-                <input
+            <template x-if="!meta.loading && !rows.length">
+              <tr>
+                <td class="px-4 py-8 text-sm text-slate-500 text-center" colspan="6">
+                  No musicians assigned yet.
+                </td>
+              </tr>
+            </template>
+            <template x-for="program_musician in rows" :key="program_musician.id">
+              <tr>
+                <td class="table-cell-first" x-text="program_musician.first_name"></td>
+                <td class="table-cell" x-text="program_musician.last_name"></td>
+                <td class="table-cell" x-text="program_musician.email"></td>
+                <td class="table-cell" x-text="program_musician.principal ? 'Yes' : 'No'"></td>
+                <td class="table-cell">
+                  <input
                     type="text"
                     class="form-input roster-instruments"
                     placeholder="Add sections or instruments"
@@ -68,23 +119,48 @@
                     @input="rosterInstruments[program_musician.id] = $event.target.value"
                     data-options-id="instrument-options"
                     :data-program-musician-id="program_musician.id"
-                />
+                  />
                 </td>
-                <td class="px-4 py-3">
-                <button
+                <td class="table-cell">
+                  <button
                     type="button"
                     class="btn-danger"
                     :disabled="completed || saving"
                     @click="removeMusician(program_musician)"
-                >
+                  >
                     Remove
-                </button>
+                  </button>
                 </td>
-            </tr>
+              </tr>
             </template>
-        </tbody>
+          </tbody>
         </table>
-    </div>
+      </div>
+
+      <div class="table-footer">
+        <p class="text-xs text-slate-500" x-html="meta.status"></p>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-500" for="program-roster-page-size">Rows</label>
+          <select
+            id="program-roster-page-size"
+            x-model.number="params.limit"
+            @change="setLimit()"
+            class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() <= 1" @click="goFirstPage()">First</button>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() <= 1" @click="goPrevPage()">Prev</button>
+          <span class="text-xs text-slate-600">
+            Page <span x-text="getCurrentPage()"></span> / <span x-text="getTotalPages()"></span>
+          </span>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() >= getTotalPages()" @click="goNextPage()">Next</button>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() >= getTotalPages()" @click="goLastPage()">Last</button>
+        </div>
+      </div>
     </div>
 
     <!-- Add Musicians to Program Roster -->
@@ -179,14 +255,14 @@
         </div>
 
         <div class="mt-4">
-            <div x-show="loading" class="flex items-center gap-2 text-sm text-slate-500">
+            <div x-show="loadingSearch" class="flex items-center gap-2 text-sm text-slate-500">
                 <span class="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></span>
                 Searching...
             </div>
             <div x-show="error" class="text-sm text-red-600" x-text="error"></div>
             <div x-show="saveError" class="mt-2 text-sm text-red-600" x-text="saveError"></div>
 
-        <template x-if="!loading && hasSearched && results.length === 0">
+        <template x-if="!loadingSearch && hasSearched && results.length === 0">
             <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500">
             No musicians found.
             </div>

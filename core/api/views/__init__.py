@@ -12,6 +12,7 @@ from core.api.views.organizations import RosterMusicianViewSet
 from core.api.views.programs import (
     ProgramChecklistViewSet,
     ProgramMusicianInstrumentViewSet,
+    ProgramMusicianSearchViewSet,
     ProgramMusicianViewSet,
     ProgramSearchViewSet,
     ProgramPieceViewSet,
@@ -30,6 +31,7 @@ __all__ = [
     "PieceSearchViewSet",
     "ProgramChecklistViewSet",
     "ProgramMusicianInstrumentViewSet",
+    "ProgramMusicianSearchViewSet",
     "ProgramMusicianViewSet",
     "ProgramSearchViewSet",
     "ProgramPieceViewSet",

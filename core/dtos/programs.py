@@ -99,6 +99,11 @@ class ProgramMusicianDTO(BaseDTO):
         )
 
 
+class ProgramMusicianSearchResultDTO(BaseDTO):
+    total: int
+    data: List[ProgramMusicianDTO]
+
+
 class ProgramMusicianInstrumentDTO(BaseDTO):
     program_id: str
     musician_id: str

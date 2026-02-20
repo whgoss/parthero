@@ -553,18 +553,27 @@ window.programRoster = function programRoster(programId, initialChecklist = null
     name: "",
     instrument: "",
     results: [],
-    roster: [],
     rosterInstruments: {},
     tagifyInstances: new Map(),
     isActive: false,
     rootEl: null,
-    loading: false,
+    loadingSearch: false,
     error: null,
     hasSearched: false,
     saving: false,
     saveError: null,
-    init() {
+    initProgramRoster() {
       this.rootEl = this.$el;
+      if (!this._wrappedRosterFetch && typeof this.fetch === "function") {
+        const originalFetch = this.fetch.bind(this);
+        this.fetch = async (...args) => {
+          await originalFetch(...args);
+          if (this.isActive) {
+            this.resetRosterTagify();
+          }
+        };
+        this._wrappedRosterFetch = true;
+      }
       if (!this._rosterTabListener) {
         this._rosterTabListener = () => {
           this.isActive = true;
@@ -573,89 +582,10 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         window.addEventListener("roster-tab:show", this._rosterTabListener);
       }
       this.isActive = this.$el && this.$el.offsetParent !== null;
-      this.fetchRoster();
     },
-    async fetchRoster() {
-      if (this.loading) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/programs/${this.programId}/musicians`, {
-          headers: { Accept: "application/json" },
-        });
-        if (!response.ok) {
-          throw new Error("Failed to fetch program roster");
-        }
-        this.roster = await response.json();
-      } catch (error) {
-        this.error = "Unable to load program roster.";
-      } finally {
-        this.loading = false;
-        if (this.isActive) {
-          this.resetRosterTagify();
-        }
-      }
-    },
-    async loadPrincipals() {
-      if (this.completed) {
-        return;
-      }
-      this.saving = true;
-      this.saveError = null;
-      try {
-        const response = await fetch(
-          `/api/programs/${this.programId}/musicians`,
-          {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-              "Accept": "application/json",
-              "Content-Type": "application/json",
-              "X-CSRFToken": csrfToken(),
-            },
-            body: JSON.stringify({ principals: true }),
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to load principals");
-        }
-        this.fetchRoster();
-      } catch (error) {
-        this.saveError = "Unable to load principals right now.";
-      } finally {
-        this.saving = false;
-      }
-    },
-    async loadCoreMembers() {
-      if (this.completed) {
-        return;
-      }
-      this.saving = true;
-      this.saveError = null;
-      try {
-        const response = await fetch(
-          `/api/programs/${this.programId}/musicians`,
-          {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-              "Accept": "application/json",
-              "Content-Type": "application/json",
-              "X-CSRFToken": csrfToken(),
-            },
-            body: JSON.stringify({ core_members: true }),
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to load core members");
-        }
-        this.fetchRoster();
-      } catch (error) {
-        this.saveError = "Unable to load core members right now.";
-      } finally {
-        this.saving = false;
-      }
+    async refreshRosterTable() {
+      await this.fetch();
+      this.$nextTick(() => this.resetRosterTagify());
     },
     resetRosterTagify() {
       this.destroyTagify();
@@ -706,15 +636,69 @@ window.programRoster = function programRoster(programId, initialChecklist = null
           if (this.completed) {
             return;
           }
-          const instrument = event?.detail?.data?.value;
-          if (instrument) {
-            this.updateMusicianInstrument(programMusicianId, instrument, method);
+          const selectedInstrument = event?.detail?.data?.value;
+          if (selectedInstrument) {
+            this.updateMusicianInstrument(programMusicianId, selectedInstrument, method);
           }
         };
 
         tagify.on("add", (event) => onTagChange(event, "PUT"));
         tagify.on("remove", (event) => onTagChange(event, "DELETE"));
       });
+    },
+    async loadPrincipals() {
+      if (this.completed) {
+        return;
+      }
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/musicians`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ principals: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to load principals");
+        }
+        await this.refreshRosterTable();
+      } catch (error) {
+        this.saveError = "Unable to load principals right now.";
+      } finally {
+        this.saving = false;
+      }
+    },
+    async loadCoreMembers() {
+      if (this.completed) {
+        return;
+      }
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/musicians`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken(),
+          },
+          body: JSON.stringify({ core_members: true }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to load core members");
+        }
+        await this.refreshRosterTable();
+      } catch (error) {
+        this.saveError = "Unable to load core members right now.";
+      } finally {
+        this.saving = false;
+      }
     },
     async updateMusicianInstrument(programMusicianId, instrument, method) {
       if (this.completed) {
@@ -737,14 +721,13 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to update musician instrument");
         }
-        this.roster = await response.json();
-        this.resetRosterTagify();
+        await this.refreshRosterTable();
       } catch (error) {
         this.saveError = "Unable to update musician instruments.";
       }
     },
     async search() {
-      this.loading = true;
+      this.loadingSearch = true;
       this.error = null;
       this.hasSearched = false;
 
@@ -758,7 +741,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
 
       if (!params.toString()) {
         this.results = [];
-        this.loading = false;
+        this.loadingSearch = false;
         return;
       }
 
@@ -776,7 +759,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         this.error = "Unable to fetch musicians right now.";
         this.results = [];
       } finally {
-        this.loading = false;
+        this.loadingSearch = false;
         this.hasSearched = true;
       }
     },
@@ -798,13 +781,10 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         .join(", ");
     },
     isInRoster(musician) {
-      return this.roster.some((member) => member.musician_id === musician.id);
+      return (this.rows || []).some((member) => member.musician_id === musician.id);
     },
     async addMusician(musician) {
-      if (this.completed) {
-        return;
-      }
-      if (this.isInRoster(musician)) {
+      if (this.completed || this.isInRoster(musician)) {
         return;
       }
       this.saving = true;
@@ -823,8 +803,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to add musician");
         }
-        this.roster = await response.json();
-        this.resetRosterTagify();
+        await this.refreshRosterTable();
       } catch (error) {
         this.saveError = "Unable to add musician right now.";
       } finally {
@@ -853,8 +832,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to remove musician");
         }
-        this.roster = await response.json();
-        this.resetRosterTagify();
+        await this.refreshRosterTable();
       } catch (error) {
         this.saveError = "Unable to remove musician right now.";
       } finally {
