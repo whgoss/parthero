@@ -56,10 +56,7 @@ def auto_assign_harp_keyboard_principal_parts_if_unambiguous(
         .prefetch_related("instruments__instrument", "musician")
         .first()
     )
-    if (
-        not principal_program_musician
-        or not principal_program_musician.musician.principal
-    ):
+    if not principal_program_musician or not principal_program_musician.principal:
         return False
 
     principal_scope = get_assignment_scope_for_instruments(
@@ -120,7 +117,7 @@ def get_assignment_payload(
     if not principal_program_musician:
         raise ProgramMusician.DoesNotExist
 
-    if not principal_program_musician.musician.principal:
+    if not principal_program_musician.principal:
         raise PermissionError("Only principals can assign parts.")
 
     principal_instruments = get_assignment_scope_for_instruments(
@@ -425,7 +422,7 @@ def get_program_assignments_status(
         ProgramMusician.objects.filter(
             program_id=program_id,
             program__organization_id=organization_id,
-            musician__principal=True,
+            principal=True,
         )
         .select_related("musician")
         .prefetch_related("instruments__instrument")

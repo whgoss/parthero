@@ -72,6 +72,12 @@ def _delivery_download_filename(asset: PartAsset, part_display_name: str) -> str
 
 
 def _get_delivery_file_rows(program_id: str, musician_id: str) -> list[dict]:
+    """Return flattened delivery rows for a musician on a program.
+
+    Each row represents one downloadable file entry on the delivery page.
+    Rows are keyed by the tuple (asset, assigned part) so combined assets can
+    appear once per assigned part with chair-specific filenames.
+    """
     assignments = _get_delivery_assignments_for_musician(
         program_id=program_id,
         musician_id=musician_id,
@@ -86,12 +92,15 @@ def _get_delivery_file_rows(program_id: str, musician_id: str) -> list[dict]:
 
     assets_by_part_id: defaultdict[str, list[PartAsset]] = defaultdict(list)
     for asset in assets:
+        # A single asset may be linked to multiple parts (combined parts), so index
+        # each asset under every relevant assigned part.
         for part in asset.parts.all():
             part_id = str(part.id)
             if part_id in part_ids:
                 assets_by_part_id[part_id].append(asset)
 
     for bucket in assets_by_part_id.values():
+        # Keep deterministic ordering for stable UI rendering and tests.
         bucket.sort(
             key=lambda asset: (
                 asset.asset_type != PartAssetType.CLEAN.value,
@@ -107,6 +116,8 @@ def _get_delivery_file_rows(program_id: str, musician_id: str) -> list[dict]:
         for asset in assets_by_part_id.get(part_id, []):
             rows.append(
                 {
+                    # Composite ID is intentional: one asset can yield multiple rows
+                    # (one per assigned part), and frontend row keys must be unique.
                     "id": f"{asset.id}:{part_id}",
                     "piece_id": str(assignment.part.piece_id),
                     "piece_title": assignment.part.piece.title,
@@ -124,7 +135,11 @@ def _get_delivery_file_rows(program_id: str, musician_id: str) -> list[dict]:
 def get_program_delivery_payload(
     program_id: str, musician_id: str
 ) -> ProgramDeliveryDTO:
-    """Build piece-grouped delivery metadata shown on the magic-link page."""
+    """Build piece-grouped delivery metadata shown on the magic-link page.
+
+    This payload powers the delivery table UI and contains piece groupings with
+    display filenames, but no pre-signed URLs yet.
+    """
     program = Program.objects.get(id=program_id)
     organization = OrganizationDTO.from_model(program.organization)
     rows = _get_delivery_file_rows(
@@ -168,7 +183,8 @@ def get_program_delivery_downloads(
 ) -> ProgramDeliveryDownloadsDTO:
     """Create short-lived pre-signed download URLs for delivery assets.
 
-    If ``piece_id`` is provided, only assets from that piece are returned.
+    If ``piece_id`` is provided, only download rows for that piece are returned.
+    IDs in the response are row IDs (asset+part), not raw asset IDs.
     """
     rows = _get_delivery_file_rows(
         program_id=program_id,

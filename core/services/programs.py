@@ -225,7 +225,7 @@ def search_for_program_musicians(
             "first_name": "musician__first_name",
             "last_name": "musician__last_name",
             "email": "musician__email",
-            "principal": "musician__principal",
+            "principal": "principal",
         }
         sort_field = requested_map.get(requested_field, "musician__last_name")
 
@@ -240,6 +240,22 @@ def search_for_program_musicians(
         total=total,
         data=ProgramMusicianDTO.from_models(page),
     )
+
+
+def update_program_musician_principal(
+    organization_id: str,
+    program_id: str,
+    program_musician_id: str,
+    principal: bool,
+) -> ProgramMusicianDTO:
+    program_musician = ProgramMusician.objects.get(
+        id=program_musician_id,
+        program_id=program_id,
+        program__organization_id=organization_id,
+    )
+    program_musician.principal = principal
+    program_musician.save(update_fields=["principal"])
+    return ProgramMusicianDTO.from_model(program_musician)
 
 
 def get_musician_for_program(
@@ -273,7 +289,11 @@ def add_musician_to_program(
         program=program, musician=musician
     ).first()
     if not program_musician:
-        program_musician = ProgramMusician(program=program, musician=musician)
+        program_musician = ProgramMusician(
+            program=program,
+            musician=musician,
+            principal=musician.principal,
+        )
         program_musician.save()
 
     musician_instrument = (
@@ -554,15 +574,34 @@ def add_musicians_to_program(
     core_members: bool = True,
 ) -> List[ProgramMusicianDTO]:
     program = Program.objects.get(id=program_id, organization_id=organization_id)
-    musicians = Musician.objects.filter(principal=principals, core_member=core_members)
+    musicians = Musician.objects.filter(
+        organization_id=organization_id,
+        principal=principals,
+        core_member=core_members,
+    )
     program_musicians = []
+    existing_musician_ids = set(
+        ProgramMusician.objects.filter(program_id=program_id).values_list(
+            "musician_id", flat=True
+        )
+    )
 
     # Add musicians to the program
     for musician in musicians:
-        program_musician = ProgramMusician(program=program, musician=musician)
+        if musician.id in existing_musician_ids:
+            continue
+        program_musician = ProgramMusician(
+            program=program,
+            musician=musician,
+            principal=musician.principal,
+        )
         program_musicians.append(program_musician)
+
     pgbulk.upsert(
-        ProgramMusician, program_musicians, unique_fields=["program_id", "musician_id"]
+        ProgramMusician,
+        program_musicians,
+        unique_fields=["program_id", "musician_id"],
+        update_fields=None,
     )
     saved_program_musicians = ProgramMusician.objects.filter(program_id=program_id)
 

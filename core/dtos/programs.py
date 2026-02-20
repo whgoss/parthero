@@ -87,7 +87,7 @@ class ProgramMusicianDTO(BaseDTO):
             first_name=model.musician.first_name,
             last_name=model.musician.last_name,
             email=model.musician.email,
-            principal=model.musician.principal,
+            principal=model.principal,
             core_member=model.musician.core_member,
             instruments=ProgramMusicianInstrumentDTO.from_models(
                 model.instruments.all()

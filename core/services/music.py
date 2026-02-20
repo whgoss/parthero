@@ -514,8 +514,8 @@ def get_instrument_section(
         instrument_section = InstrumentSectionEnum.KEYBOARD
     elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS]:
         instrument_section = InstrumentSectionEnum.STRINGS
-    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.VOICE]:
-        instrument_section = InstrumentSectionEnum.VOICE
+    elif instrument in INSTRUMENT_SECTIONS[InstrumentSectionEnum.VOCAL]:
+        instrument_section = InstrumentSectionEnum.VOCAL
     else:
         instrument_section = InstrumentSectionEnum.OTHER
 

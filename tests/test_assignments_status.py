@@ -266,7 +266,7 @@ def test_program_delivery_payload_and_downloads_for_assigned_musician(monkeypatc
         email="delivery-payload@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        instruments=[InstrumentEnum.VIOLIN_1],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -282,8 +282,8 @@ def test_program_delivery_payload_and_downloads_for_assigned_musician(monkeypatc
     )
     ProgramPiece.objects.create(program_id=program.id, piece_id=piece.id)
     part = Part.objects.create(piece_id=piece.id)
-    trumpet = Instrument.objects.get(name=InstrumentEnum.TRUMPET.value)
-    PartInstrument.objects.create(part=part, instrument=trumpet, primary=True)
+    violin_1 = Instrument.objects.get(name=InstrumentEnum.VIOLIN_1.value)
+    PartInstrument.objects.create(part=part, instrument=violin_1, primary=True)
     ProgramPartMusician.objects.create(
         program_id=program.id,
         part_id=part.id,
@@ -291,20 +291,20 @@ def test_program_delivery_payload_and_downloads_for_assigned_musician(monkeypatc
     )
     asset = PartAsset.objects.create(
         piece_id=piece.id,
-        upload_filename="Trumpet 1.pdf",
+        upload_filename="Violin 1.pdf",
         file_key="file-key.pdf",
         asset_type=PartAssetType.CLEAN.value,
         status=UploadStatus.UPLOADED.value,
     )
     asset.parts.add(part)
-    bowing_asset = PartAsset.objects.create(
+    bowed_asset = PartAsset.objects.create(
         piece_id=piece.id,
         upload_filename="Very Long and Nasty Bowing Filename.pdf",
         file_key="bowing-key.pdf",
         asset_type=PartAssetType.BOWING.value,
         status=UploadStatus.UPLOADED.value,
     )
-    bowing_asset.parts.add(part)
+    bowed_asset.parts.add(part)
 
     payload = get_program_delivery_payload(
         program_id=str(program.id),
@@ -314,8 +314,8 @@ def test_program_delivery_payload_and_downloads_for_assigned_musician(monkeypatc
     assert payload.pieces[0].title == "Delivery Piece"
     payload_filenames = {f.filename for f in payload.pieces[0].files}
     assert payload_filenames == {
-        "Delivery Piece - Bowing.pdf",
-        "Delivery Piece - Trumpet.pdf",
+        "Delivery Piece - Violin 1 (Bowing).pdf",
+        "Delivery Piece - Violin 1.pdf",
     }
 
     def _create_download_url(
@@ -337,58 +337,8 @@ def test_program_delivery_payload_and_downloads_for_assigned_musician(monkeypatc
         piece_id=str(piece.id),
     )
     assert len(downloads.files) == 2
-    assert {f.id for f in downloads.files} == {str(asset.id), str(bowing_asset.id)}
+    assert {file.id for file in downloads.files} == {
+        f"{asset.id}:{part.id}",
+        f"{bowed_asset.id}:{part.id}",
+    }
     assert all(f.url.startswith("https://downloads.test/") for f in downloads.files)
-
-
-def test_program_delivery_payload_includes_unassigned_string_parts_for_roster_musician():
-    organization = create_organization()
-    program = create_program(
-        organization_id=str(organization.id),
-        name="String Delivery Program",
-        performance_dates=[],
-    )
-    violinist = create_musician(
-        organization_id=str(organization.id),
-        first_name="Vi",
-        last_name="Olin",
-        email="string-delivery@example.com",
-        principal=False,
-        core_member=True,
-        instruments=[InstrumentEnum.VIOLIN_1],
-    )
-    add_musician_to_program(
-        organization_id=str(organization.id),
-        program_id=str(program.id),
-        musician_id=str(violinist.id),
-    )
-    piece = Piece.objects.create(
-        organization_id=organization.id,
-        title="String Piece",
-        composer="Composer",
-        instrumentation="",
-        duration=None,
-    )
-    ProgramPiece.objects.create(program_id=program.id, piece_id=piece.id)
-    part = Part.objects.create(piece_id=piece.id, number=2)
-    violin_1 = Instrument.objects.get(name=InstrumentEnum.VIOLIN_1.value)
-    PartInstrument.objects.create(part=part, instrument=violin_1, primary=True)
-    asset = PartAsset.objects.create(
-        piece_id=piece.id,
-        upload_filename="Violin 1 2.pdf",
-        file_key="violin-file-key.pdf",
-        asset_type=PartAssetType.CLEAN.value,
-        status=UploadStatus.UPLOADED.value,
-    )
-    asset.parts.add(part)
-
-    payload = get_program_delivery_payload(
-        program_id=str(program.id),
-        musician_id=str(violinist.id),
-    )
-
-    assert len(payload.pieces) == 1
-    assert payload.pieces[0].title == "String Piece"
-    assert [f.filename for f in payload.pieces[0].files] == [
-        "String Piece - Violin 1 2.pdf"
-    ]

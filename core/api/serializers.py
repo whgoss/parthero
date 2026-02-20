@@ -45,6 +45,10 @@ class ProgramMusicianCreateSerializer(serializers.Serializer):
     core_members = serializers.BooleanField(required=False)
 
 
+class ProgramMusicianPatchSerializer(serializers.Serializer):
+    principal = serializers.BooleanField(required=True)
+
+
 class ProgramMusicianInstrumentSerializer(serializers.Serializer):
     instrument = EnumChoiceField(InstrumentEnum, required=True)
 

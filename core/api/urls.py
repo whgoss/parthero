@@ -27,8 +27,10 @@ program_piece = ProgramPieceViewSet.as_view({"put": "update", "delete": "delete"
 program_musicians_list = ProgramMusicianViewSet.as_view(
     {"get": "list", "post": "create"}
 )
+program_musician_update = ProgramMusicianViewSet.as_view(
+    {"patch": "partial_update", "delete": "delete"}
+)
 program_musicians_search = ProgramMusicianSearchViewSet.as_view({"get": "list"})
-program_musicians_delete = ProgramMusicianViewSet.as_view({"delete": "delete"})
 program_musician_instrument_update = ProgramMusicianInstrumentViewSet.as_view(
     {"put": "update", "delete": "delete"}
 )
@@ -93,8 +95,8 @@ urlpatterns = [
     ),
     path(
         "programs/<str:program_id>/musicians/<str:program_musician_id>",
-        program_musicians_delete,
-        name="api_program_musicians_delete",
+        program_musician_update,
+        name="api_program_musician_update",
     ),
     path(
         "programs/<str:program_id>/musicians/<str:program_musician_id>/instruments",

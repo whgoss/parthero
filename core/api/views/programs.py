@@ -6,6 +6,7 @@ from core.api.permissions import IsInOrganization
 from core.api.serializers import (
     ProgramChecklistPatchSerializer,
     ProgramMusicianCreateSerializer,
+    ProgramMusicianPatchSerializer,
     ProgramMusicianInstrumentSerializer,
 )
 from core.models.programs import Program
@@ -22,6 +23,7 @@ from core.services.programs import (
     remove_musician_from_program,
     remove_piece_from_program,
     remove_program_musician_instrument,
+    update_program_musician_principal,
     update_program_checklist,
 )
 
@@ -113,6 +115,19 @@ class ProgramMusicianViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         musicians = get_musicians_for_program(request.organization.id, program_id)
         response_data = [musician.model_dump(mode="json") for musician in musicians]
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def partial_update(self, request, program_id, program_musician_id, *args, **kwargs):
+        Program.objects.get(id=program_id, organization_id=request.organization.id)
+        serializer = ProgramMusicianPatchSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        musician = update_program_musician_principal(
+            organization_id=request.organization.id,
+            program_id=program_id,
+            program_musician_id=program_musician_id,
+            principal=serializer.validated_data["principal"],
+        )
+        return Response(musician.model_dump(mode="json"), status=status.HTTP_200_OK)
 
     @transaction.atomic
     def delete(self, request, program_id, program_musician_id, *args, **kwargs):

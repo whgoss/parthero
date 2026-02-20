@@ -4,7 +4,7 @@ from core.enum.instruments import InstrumentEnum
 from core.enum.notifications import NotificationType
 from core.models.music import Instrument, Part, PartInstrument, Piece
 from core.models.notifications import Notification
-from core.models.programs import ProgramPiece
+from core.models.programs import ProgramPiece, ProgramPartMusician
 from core.services.notifications import send_assignment_email, send_part_delivery_email
 from core.services.organizations import create_musician
 from core.services.programs import add_musician_to_program, create_program
@@ -161,10 +161,24 @@ def test_send_part_delivery_email_deduplicates_by_notification_type(monkeypatch)
         core_member=True,
         instruments=[InstrumentEnum.TRUMPET],
     )
+    piece = Piece.objects.create(
+        organization_id=organization.id,
+        title="Notify Piece",
+        composer="Composer",
+        instrumentation="",
+        duration=None,
+    )
     add_musician_to_program(
         organization_id=str(organization.id),
         program_id=str(program.id),
         musician_id=str(musician.id),
+    )
+    ProgramPiece.objects.create(program_id=program.id, piece_id=piece.id)
+    part_id = _create_part(str(piece.id), InstrumentEnum.TRUMPET)
+    ProgramPartMusician.objects.create(
+        program_id=program.id,
+        part_id=part_id,
+        musician_id=musician.id,
     )
 
     sends = {"count": 0}

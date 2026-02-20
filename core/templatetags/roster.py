@@ -1,63 +1,7 @@
 from django import template
+from core.enum.instruments import InstrumentSectionEnum, INSTRUMENT_SECTIONS
 
 register = template.Library()
-
-# You can tweak these however you like
-STRING_FAMILIES = {
-    "violin",
-    "violin i",
-    "violin ii",
-    "viola",
-    "cello",
-    "double bass",
-    "bass",
-}
-
-WOODWINDS = {
-    "flute",
-    "piccolo",
-    "oboe",
-    "english horn",
-    "clarinet",
-    "bass clarinet",
-    "bassoon",
-    "contrabassoon",
-}
-
-BRASS = {
-    "horn",
-    "horn in f",
-    "french horn",
-    "trumpet",
-    "cornet",
-    "trombone",
-    "bass trombone",
-    "tuba",
-}
-
-PERCUSSION = {
-    "percussion",
-    "timpani",
-    "drums",
-    "mallets",
-}
-
-KEYBOARD_HARP = {
-    "piano",
-    "celesta",
-    "harpsichord",
-    "organ",
-    "harp",
-}
-
-CHOIR = {
-    "soprano",
-    "alto",
-    "tenor",
-    "bass (choir)",
-    "choir",
-    "chorus",
-}
 
 
 @register.filter
@@ -74,27 +18,29 @@ def section_pill_classes(section):
     )
 
     # Strings
-    if section in STRING_FAMILIES or section.startswith("violin"):
+    if section in INSTRUMENT_SECTIONS[
+        InstrumentSectionEnum.STRINGS
+    ] or section.startswith("violin"):
         return f"{base_classes} bg-blue-100 text-blue-800"
 
     # Woodwinds
-    if section in WOODWINDS:
+    if section in INSTRUMENT_SECTIONS[InstrumentSectionEnum.WOODWINDS]:
         return f"{base_classes} bg-green-100 text-green-800"
 
     # Brass
-    if section in BRASS:
+    if section in INSTRUMENT_SECTIONS[InstrumentSectionEnum.BRASS]:
         return f"{base_classes} bg-yellow-100 text-yellow-800"
 
     # Percussion
-    if section in PERCUSSION:
+    if section in INSTRUMENT_SECTIONS[InstrumentSectionEnum.PERCUSSION]:
         return f"{base_classes} bg-pink-100 text-pink-800"
 
     # Keyboard / harp
-    if section in KEYBOARD_HARP:
+    if section in INSTRUMENT_SECTIONS[InstrumentSectionEnum.KEYBOARD]:
         return f"{base_classes} bg-purple-100 text-purple-800"
 
     # Choir / vocal
-    if section in CHOIR:
+    if section in INSTRUMENT_SECTIONS[InstrumentSectionEnum.VOCAL]:
         return f"{base_classes} bg-red-100 text-red-900"
 
     # Fallback

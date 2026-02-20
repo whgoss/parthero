@@ -79,7 +79,6 @@
             <tr>
               <th class="table-th-first">First Name</th>
               <th class="table-th">Last Name</th>
-              <th class="table-th">Email</th>
               <th class="table-th">Principal</th>
               <th class="table-th">Sections / Instruments</th>
               <th class="table-th"></th>
@@ -107,8 +106,18 @@
               <tr>
                 <td class="table-cell-first" x-text="program_musician.first_name"></td>
                 <td class="table-cell" x-text="program_musician.last_name"></td>
-                <td class="table-cell" x-text="program_musician.email"></td>
-                <td class="table-cell" x-text="program_musician.principal ? 'Yes' : 'No'"></td>
+                <td class="table-cell">
+                  <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      :checked="program_musician.principal"
+                      :disabled="completed || saving"
+                      @change="toggleProgramPrincipal(program_musician, $event.target.checked)"
+                    />
+                    <span x-text="program_musician.principal ? 'Yes' : 'No'"></span>
+                  </label>
+                </td>
                 <td class="table-cell">
                   <input
                     type="text"

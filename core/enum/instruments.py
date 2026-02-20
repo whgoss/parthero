@@ -140,7 +140,7 @@ class InstrumentSectionEnum(BaseEnum):
     PERCUSSION = "Percussion"
     HARP = "Harp"
     KEYBOARD = "Keyboard"
-    VOICE = "Voice"
+    VOCAL = "Vocal"
     OTHER = "Other"
 
 
@@ -194,7 +194,7 @@ INSTRUMENT_SECTIONS = {
         InstrumentEnum.CELLO,
         InstrumentEnum.DOUBLE_BASS,
     ],
-    InstrumentSectionEnum.VOICE: [
+    InstrumentSectionEnum.VOCAL: [
         InstrumentEnum.SOPRANO,
         InstrumentEnum.MEZZO_SOPRANO,
         InstrumentEnum.ALTO,

@@ -721,9 +721,38 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to update musician instrument");
         }
-        await this.refreshRosterTable();
       } catch (error) {
         this.saveError = "Unable to update musician instruments.";
+      }
+    },
+    async toggleProgramPrincipal(programMusician, principal) {
+      if (this.completed || !programMusician?.id) {
+        return;
+      }
+      this.saving = true;
+      this.saveError = null;
+      try {
+        const response = await fetch(
+          `/api/programs/${this.programId}/musicians/${programMusician.id}`,
+          {
+            method: "PATCH",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken(),
+            },
+            body: JSON.stringify({ principal }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to update program principal");
+        }
+        programMusician.principal = principal;
+      } catch (error) {
+        this.saveError = "Unable to update principal right now.";
+      } finally {
+        this.saving = false;
       }
     },
     async search() {

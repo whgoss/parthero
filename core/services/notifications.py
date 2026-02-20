@@ -54,7 +54,7 @@ def send_part_assignment_emails(organization_id: str, program_id: str):
         ProgramMusician.objects.filter(
             program_id=program_id,
             musician__organization_id=organization_id,
-            musician__principal=True,
+            principal=True,
         )
         .select_related("musician")
         .prefetch_related("instruments__instrument")
@@ -133,7 +133,7 @@ def send_assignment_email(
         return None
 
     # Must be assigned to the program and a principal
-    if not program_musician or not program_musician.musician.principal:
+    if not program_musician or not program_musician.principal:
         return None
 
     assignment_payload = get_assignment_payload(

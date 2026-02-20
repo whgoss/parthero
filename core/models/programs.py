@@ -1,5 +1,6 @@
 from django.db.models import (
     CharField,
+    BooleanField,
     OneToOneField,
     DateTimeField,
     ForeignKey,
@@ -31,6 +32,7 @@ class ProgramPiece(UUIDPrimaryKeyModel):
 class ProgramMusician(UUIDPrimaryKeyModel):
     program = ForeignKey(Program, related_name="musicians", on_delete=CASCADE)
     musician = ForeignKey(Musician, on_delete=CASCADE)
+    principal = BooleanField(default=False)
 
     class Meta:
         constraints = [
