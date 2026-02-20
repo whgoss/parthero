@@ -35,14 +35,21 @@ export function littleBIGtable(options = {}) {
     rows: [],
     sort: {},
     init() {
+      // Apply caller options first so key_prefix/limit overrides are respected.
+      this.settings = { ...this.settings, ...options };
+      if (!this.settings.limit) {
+        this.settings.limit = 25;
+      }
+      const defaultLimit = parseInt(this.settings.limit, 25);
       const savedLimit = parseInt(
         localStorage.getItem(`${this.settings.key_prefix}.limit`),
         10
       );
       if (!Number.isNaN(savedLimit) && savedLimit >= 1 && savedLimit <= 100) {
         this.params.limit = savedLimit;
+      } else {
+        this.params.limit = defaultLimit;
       }
-      this.settings = { ...this.settings, ...options };
       this.fetch();
     },
     async fetch() {

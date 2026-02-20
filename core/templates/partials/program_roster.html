@@ -3,7 +3,7 @@
     class="p-6"
     data-tab-panel="roster"
     x-show="activeTab === 'roster'"
-    x-data="{ ...programRoster('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent)), ...littleBIGtable({ url: '/api/programs/{{ program.id }}/musicians/search', key_prefix: 'programRosterTable', limit: 25, messages: { loading: 'Loading program roster...', failed: 'Unable to load program roster right now.', summary: 'rows' } }) }"
+    x-data="{ ...programRoster('{{ program.id }}', JSON.parse(document.getElementById('program-checklist-initial-data').textContent)), ...littleBIGtable({ url: '/api/programs/{{ program.id }}/musicians/search', key_prefix: 'programRosterTable', limit: 10, messages: { loading: 'Loading program roster...', failed: 'Unable to load program roster right now.', summary: 'rows' } }) }"
     x-init="initProgramRoster(); init()"
 >
     {{ instrument_options|json_script:"instrument-options" }}
