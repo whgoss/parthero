@@ -82,9 +82,6 @@
                     · {{ upcoming_program.date|time:"g:i A" }}
                   {% endif %}
                 </p>
-                <p class="mt-0.5 text-xs text-slate-500">
-                  1800 N Carolina Ave
-                </p>
               </div>
             </div>
 
@@ -144,63 +141,117 @@
     </div>
 
     <!-- All Programs Table -->
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+    <div
+      class="table-card"
+      x-data="{ ...littleBIGtable({ url: '/api/programs/search', limit: 25, messages: { loading: 'Loading programs...', failed: 'Unable to load programs right now.', summary: 'rows' } }), formatPerformanceDate(value) { if (!value) return ''; const date = new Date(value); if (Number.isNaN(date.getTime())) return ''; return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date); }, performanceSummary(program) { const values = (program.performances || []).map((p) => this.formatPerformanceDate(p.date)).filter(Boolean); return values.length ? values : ['No dates set']; } }"
+      x-init="init()"
+    >
+      <div class="table-toolbar">
         <div class="flex items-center gap-2">
-          <p class="text-sm font-medium text-slate-800">
-            All programs
-          </p>
-          {% if programs %}
-            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-              {{ programs|length }} total
+          <p class="text-sm font-medium text-slate-800">All programs</p>
+          <span
+            x-cloak
+            x-show="!meta.loading && (params.total || 0) > 0"
+            class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
+          >
+            <span x-text="params.total || 0"></span>&nbsp;total
+          </span>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <div class="table-search-wrap sm:w-72">
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" class="h-4 w-4">
+                <circle cx="9" cy="9" r="4.5" stroke-width="1.5" />
+                <path d="M12.5 12.5 15.5 15.5" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
             </span>
-          {% endif %}
+            <input
+              type="text"
+              name="search"
+              placeholder="Search by program name"
+              x-model.debounce.300ms="params.search"
+              @input.debounce.300ms="doSearch()"
+              class="table-search-input pr-10"
+            />
+            <button
+              type="button"
+              class="search-clear-btn"
+              x-cloak
+              x-show="params.search"
+              @click="params.search=''; doSearch()"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-          <thead class="bg-slate-50">
+      <div class="table-responsive">
+        <table class="table-base">
+          <thead class="table-head">
             <tr>
-              <th scope="col" class="py-2.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Program
-              </th>
-              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Date(s)
-              </th>
-              <th scope="col" class="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Pieces
-              </th>
+              <th scope="col" class="table-th-first">Program</th>
+              <th scope="col" class="table-th">Date(s)</th>
+              <th scope="col" class="table-th">Pieces</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 bg-white">
-            {% if programs %}
-              {% for program in programs %}
-                <tr class="hover:bg-slate-50/60 cursor-pointer" onclick="window.location.href='/programs/{{ program.id }}/'">
-                  <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
-                    {{ program.name }}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
-                    {% for performance in program.performances %}
-                      <div>
-                        {{ performance.date|date:"M j, Y h:i a" }}
-                      </div>
-                    {% endfor %}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-700">
-                    {{ program.piece_count }}
-                  </td>
-                </tr>
-              {% endfor %}
-            {% else %}
+          <tbody class="table-body">
+            <template x-if="meta.loading">
               <tr>
-                <td colspan="4" class="px-4 py-8 text-center text-sm text-slate-500">
+                <td colspan="3" class="px-4 py-10 text-center">
+                  <div class="inline-flex items-center gap-2 text-sm text-slate-500">
+                    <span class="table-loading-spinner"></span>
+                    Loading programs...
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <template x-if="!meta.loading && !rows.length">
+              <tr>
+                <td colspan="3" class="px-4 py-8 text-center text-sm text-slate-500">
                   No programs created.
                 </td>
               </tr>
-            {% endif %}
+            </template>
+            <template x-for="program in rows" :key="program.id">
+              <tr class="table-row-clickable" @click="window.location.href=`/programs/${program.id}/`">
+                <td class="table-cell-first" x-text="program.name"></td>
+                <td class="table-cell text-slate-700">
+                  <template x-for="(dateLine, idx) in performanceSummary(program)" :key="`${program.id}-${idx}`">
+                    <div x-text="dateLine"></div>
+                  </template>
+                </td>
+                <td class="table-cell text-slate-700" x-text="program.piece_count"></td>
+              </tr>
+            </template>
           </tbody>
         </table>
+      </div>
+
+      <div class="table-footer">
+        <p class="text-xs text-slate-500" x-html="meta.status"></p>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-500" for="programs-page-size">Rows</label>
+          <select
+            id="programs-page-size"
+            x-model.number="params.limit"
+            @change="setLimit()"
+            class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() <= 1" @click="goFirstPage()">First</button>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() <= 1" @click="goPrevPage()">Prev</button>
+          <span class="text-xs text-slate-600">
+            Page <span x-text="getCurrentPage()"></span> / <span x-text="getTotalPages()"></span>
+          </span>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() >= getTotalPages()" @click="goNextPage()">Next</button>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() >= getTotalPages()" @click="goLastPage()">Last</button>
+        </div>
       </div>
     </div>
   </div>

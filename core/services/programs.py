@@ -6,7 +6,12 @@ from django.db import transaction
 from django.db.models import Min, F, Count, Q
 from django.utils import timezone
 from core.dtos.music import PieceDTO
-from core.dtos.programs import ProgramDTO, ProgramMusicianDTO, ProgramChecklistDTO
+from core.dtos.programs import (
+    ProgramDTO,
+    ProgramMusicianDTO,
+    ProgramChecklistDTO,
+    ProgramSearchResultDTO,
+)
 from core.enum.music import PartAssetType
 from core.enum.status import UploadStatus
 from core.models.music import Piece, MusicianInstrument, Instrument
@@ -80,6 +85,52 @@ def get_programs(organization_id: str) -> List[ProgramDTO]:
         .order_by(F("first_performance").asc(nulls_last=True))
     )
     return ProgramDTO.from_models(programs)
+
+
+def search_for_programs(
+    organization_id: str,
+    name: Optional[str] = None,
+    limit: int = 25,
+    offset: int = 0,
+    sort: Optional[str] = None,
+) -> ProgramSearchResultDTO:
+    programs = (
+        Program.objects.filter(organization_id=organization_id)
+        .select_related("organization", "checklist")
+        .prefetch_related("performances")
+        .annotate(
+            first_performance=Min("performances__date"),
+            piece_count=Count("pieces", distinct=True),
+        )
+    )
+    if name:
+        programs = programs.filter(name__icontains=name)
+
+    sort_field = "first_performance"
+    sort_direction = "asc"
+    if sort and ":" in sort:
+        field, direction = sort.split(":", 1)
+        sort_field = (field or "").strip()
+        sort_direction = (direction or "").strip().lower()
+    allowed_sort_fields = {"name", "first_performance", "piece_count"}
+    if sort_field not in allowed_sort_fields:
+        sort_field = "first_performance"
+    sort_prefix = "-" if sort_direction == "dsc" else ""
+    if sort_field == "first_performance":
+        programs = programs.order_by(
+            F("first_performance").desc(nulls_last=True)
+            if sort_direction == "dsc"
+            else F("first_performance").asc(nulls_last=True),
+            "name",
+        )
+    else:
+        programs = programs.order_by(f"{sort_prefix}{sort_field}", "name")
+
+    limit = min(max(limit, 1), 100)
+    offset = max(offset, 0)
+    total = programs.count()
+    page = programs[offset : offset + limit]
+    return ProgramSearchResultDTO(total=total, data=ProgramDTO.from_models(page))
 
 
 def get_pieces_for_program(organization_id: str, program_id: str) -> List[PieceDTO]:

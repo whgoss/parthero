@@ -9,6 +9,7 @@ from core.api.views import (
     MagicDeliveryDownloadViewSet,
     MagicDeliveryViewSet,
     ProgramAssignmentViewSet,
+    ProgramSearchViewSet,
     ProgramPieceViewSet,
     ProgramMusicianViewSet,
     ProgramMusicianInstrumentViewSet,
@@ -33,6 +34,7 @@ program_checklist = ProgramChecklistViewSet.as_view(
     {"get": "retrieve", "patch": "partial_update"}
 )
 program_assignments = ProgramAssignmentViewSet.as_view({"get": "list"})
+programs_search = ProgramSearchViewSet.as_view({"get": "list"})
 program_assignment_part = ProgramAssignmentViewSet.as_view({"patch": "partial_update"})
 musicians_search = RosterMusicianViewSet.as_view({"get": "list"})
 domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
@@ -96,6 +98,11 @@ urlpatterns = [
         "programs/<str:program_id>/checklist",
         program_checklist,
         name="api_program_checklist_patch",
+    ),
+    path(
+        "programs/search",
+        programs_search,
+        name="api_programs_search",
     ),
     path(
         "programs/<str:program_id>/assignments",

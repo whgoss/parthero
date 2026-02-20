@@ -42,6 +42,11 @@ class ProgramDTO(BaseDTO):
         )
 
 
+class ProgramSearchResultDTO(BaseDTO):
+    total: int
+    data: List[ProgramDTO]
+
+
 class ProgramPerformanceDTO(BaseDTO):
     program_id: str
     date: datetime

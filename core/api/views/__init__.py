@@ -13,6 +13,7 @@ from core.api.views.programs import (
     ProgramChecklistViewSet,
     ProgramMusicianInstrumentViewSet,
     ProgramMusicianViewSet,
+    ProgramSearchViewSet,
     ProgramPieceViewSet,
 )
 
@@ -30,5 +31,6 @@ __all__ = [
     "ProgramChecklistViewSet",
     "ProgramMusicianInstrumentViewSet",
     "ProgramMusicianViewSet",
+    "ProgramSearchViewSet",
     "ProgramPieceViewSet",
 ]
