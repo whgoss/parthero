@@ -395,6 +395,7 @@ window.programPieces = function programPieces(
           throw new Error("Failed to search pieces");
         }
         this.results = await response.json();
+        console.log(results);
       } catch (error) {
         this.error = "Unable to fetch pieces right now.";
         this.results = [];
@@ -769,7 +770,8 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to search musicians");
         }
-        this.results = await response.json();
+        const payload = await response.json();
+        this.results = Array.isArray(payload) ? payload : (payload?.data || []);
       } catch (error) {
         this.error = "Unable to fetch musicians right now.";
         this.results = [];

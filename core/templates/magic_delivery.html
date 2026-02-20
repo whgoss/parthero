@@ -19,20 +19,10 @@
         <div class="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-4">
           <h1 class="text-2xl font-semibold text-slate-900">Download Parts for {{ program.name }}</h1>
           <p class="mt-2 text-sm text-slate-600">
-            Hi {{ musician.first_name }} {{ musician.last_name }}. Download all parts, or use piece links if your browser blocks multi-file downloads.
+            Hi {{ musician.first_name }} {{ musician.last_name }}. Download each part file below.
           </p>
           <div x-show="saveError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" x-text="saveError"></div>
           <div x-show="successMessage" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700" x-text="successMessage"></div>
-          <div class="mt-4">
-            <button
-              type="button"
-              class="btn-primary disabled:bg-slate-300 disabled:border-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
-              :disabled="downloading"
-              @click="downloadAll()"
-            >
-              Download All Parts
-            </button>
-          </div>
         </div>
 
         <template x-if="(payload.pieces || []).length === 0">
@@ -48,18 +38,21 @@
                 <h2 class="text-lg font-semibold text-slate-900" x-text="piece.title"></h2>
                 <p class="text-sm text-slate-500" x-text="piece.composer"></p>
               </div>
-              <button
-                type="button"
-                class="btn-secondary whitespace-nowrap disabled:bg-slate-200 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
-                :disabled="downloading"
-                @click="downloadPiece(piece.id)"
-              >
-                Download This Piece
-              </button>
             </div>
             <ul class="mt-3 space-y-2">
               <template x-for="file in (piece.files || [])" :key="file.id">
-                <li class="text-sm text-slate-700" x-text="file.filename"></li>
+                <li class="flex items-center justify-between gap-3">
+                  <span class="text-sm text-slate-700" x-text="file.filename"></span>
+                  <button
+                    type="button"
+                    class="btn-secondary text-sm py-1 px-3 whitespace-nowrap disabled:bg-slate-200 disabled:border-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
+                    :disabled="downloadingFileId === file.id"
+                    @click="downloadFile(piece.id, file.id)"
+                  >
+                    <span x-show="downloadingFileId !== file.id">Download</span>
+                    <span x-show="downloadingFileId === file.id">Downloading...</span>
+                  </button>
+                </li>
               </template>
             </ul>
           </div>

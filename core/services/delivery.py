@@ -1,6 +1,6 @@
 from collections import defaultdict
 import re
-
+from typing import List
 from core.dtos.music import PartDTO
 from core.dtos.programs import (
     ProgramDeliveryDTO,
@@ -10,96 +10,47 @@ from core.dtos.programs import (
     ProgramDeliveryPieceDTO,
 )
 from core.dtos.organizations import OrganizationDTO
-from core.enum.instruments import INSTRUMENT_SECTIONS, InstrumentSectionEnum
 from core.enum.music import PartAssetType
 from core.enum.status import UploadStatus
-from core.models.music import Part, PartAsset
-from core.models.programs import Program, ProgramMusician, ProgramPartMusician
-from core.services.music import get_part_instruments
-from core.services.programs import get_program_musician_instruments
+from core.models.music import PartAsset
+from core.models.programs import Program, ProgramPartMusician
 from core.services.s3 import create_download_url
 from parthero.settings import DOWNLOAD_URL_EXPIRATION_SECONDS
 
 
-def _get_delivery_part_ids_for_musician(program_id: str, musician_id: str) -> set[str]:
-    """Resolve all part IDs this musician is allowed to download for a program.
-
-    Sources of truth:
-    - Explicit program part assignments (ProgramPartMusician)
-    - Unassigned string parts that match the musician's roster string instruments
-      (strings are not principal-assigned in this workflow)
-    """
-    assigned_part_ids = {
-        str(part_id)
-        for part_id in ProgramPartMusician.objects.filter(
-            program_id=program_id,
-            musician_id=musician_id,
-        ).values_list("part_id", flat=True)
-    }
-
-    program_musician = (
-        ProgramMusician.objects.filter(
+def _get_delivery_assignments_for_musician(
+    program_id: str, musician_id: str
+) -> List[ProgramPartMusician]:
+    """Return explicit part assignments for the musician on this program."""
+    return list(
+        ProgramPartMusician.objects.filter(
             program_id=program_id,
             musician_id=musician_id,
         )
-        .prefetch_related("instruments__instrument")
-        .first()
+        .select_related("part__piece")
+        .prefetch_related("part__instruments__instrument")
+        .order_by("part__piece__title", "part__number", "id")
     )
-    if not program_musician:
-        return assigned_part_ids
-
-    # Program roster instrumentation drives string fallback eligibility.
-    musician_instruments = get_program_musician_instruments(program_musician)
-    if not musician_instruments:
-        return assigned_part_ids
-
-    # Strings are not principal-assigned in this workflow.
-    # Include unassigned string parts for the musician's roster instruments.
-    string_instruments = set(INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS])
-    musician_string_instruments = musician_instruments.intersection(string_instruments)
-    if not musician_string_instruments:
-        return assigned_part_ids
-
-    assigned_part_set = set(
-        ProgramPartMusician.objects.filter(program_id=program_id).values_list(
-            "part_id", flat=True
-        )
-    )
-    unassigned_string_part_ids = set()
-    candidate_parts = (
-        Part.objects.filter(piece__programpiece__program_id=program_id)
-        .prefetch_related("instruments__instrument")
-        .distinct()
-    )
-    for part in candidate_parts:
-        if part.id in assigned_part_set:
-            continue
-        if get_part_instruments(part).intersection(musician_string_instruments):
-            unassigned_string_part_ids.add(str(part.id))
-
-    return assigned_part_ids.union(unassigned_string_part_ids)
 
 
-def _get_delivery_assets_for_musician(program_id: str, musician_id: str):
-    """Return uploaded clean/bowing assets scoped to the musician's delivery parts."""
-    delivery_part_ids = _get_delivery_part_ids_for_musician(
-        program_id=program_id,
-        musician_id=musician_id,
-    )
-    if not delivery_part_ids:
+def _get_delivery_assets_for_part_ids(
+    program_id: str, part_ids: set[str]
+) -> List[PartAsset]:
+    """Return uploaded clean/bowing assets scoped to part IDs."""
+    if not part_ids:
         return []
 
     return list(
         PartAsset.objects.filter(
             piece__programpiece__program_id=program_id,
-            parts__id__in=delivery_part_ids,
+            parts__id__in=part_ids,
             asset_type__in=[PartAssetType.CLEAN.value, PartAssetType.BOWING.value],
             status=UploadStatus.UPLOADED.value,
         )
         .select_related("piece")
-        .prefetch_related("parts__instruments__instrument")
+        .prefetch_related("parts")
         .distinct()
-        .order_by("piece__title", "upload_filename")
+        .order_by("piece__title", "asset_type", "upload_filename")
     )
 
 
@@ -109,23 +60,65 @@ def _sanitize_download_filename(value: str) -> str:
     return sanitized or "part"
 
 
-def _delivery_download_filename(asset: PartAsset) -> str:
-    """Build a friendly download filename from piece title + part descriptor."""
-    part_names = sorted(
-        [PartDTO.from_model(part).display_name for part in asset.parts.all()]
-    )
-
+def _delivery_download_filename(asset: PartAsset, part_display_name: str) -> str:
+    """Build a friendly filename from piece title + assigned part descriptor."""
     if asset.asset_type == PartAssetType.BOWING.value:
-        descriptor = "Bowing"
-    elif not part_names:
-        descriptor = "Part"
+        descriptor = f"{part_display_name} (Bowing)"
     else:
-        descriptor = part_names[0]
-        if len(part_names) > 1:
-            descriptor = f"{descriptor} (Combined)"
+        descriptor = f"{part_display_name}"
 
     base = _sanitize_download_filename(f"{asset.piece.title} - {descriptor}")
     return f"{base}.pdf"
+
+
+def _get_delivery_file_rows(program_id: str, musician_id: str) -> list[dict]:
+    assignments = _get_delivery_assignments_for_musician(
+        program_id=program_id,
+        musician_id=musician_id,
+    )
+    if not assignments:
+        return []
+
+    part_ids = {str(assignment.part_id) for assignment in assignments}
+    assets = _get_delivery_assets_for_part_ids(program_id=program_id, part_ids=part_ids)
+    if not assets:
+        return []
+
+    assets_by_part_id: defaultdict[str, list[PartAsset]] = defaultdict(list)
+    for asset in assets:
+        for part in asset.parts.all():
+            part_id = str(part.id)
+            if part_id in part_ids:
+                assets_by_part_id[part_id].append(asset)
+
+    for bucket in assets_by_part_id.values():
+        bucket.sort(
+            key=lambda asset: (
+                asset.asset_type != PartAssetType.CLEAN.value,
+                (asset.upload_filename or "").lower(),
+                str(asset.id),
+            )
+        )
+
+    rows: list[dict] = []
+    for assignment in assignments:
+        part_id = str(assignment.part_id)
+        part_display_name = PartDTO.from_model(assignment.part).display_name
+        for asset in assets_by_part_id.get(part_id, []):
+            rows.append(
+                {
+                    "id": f"{asset.id}:{part_id}",
+                    "piece_id": str(assignment.part.piece_id),
+                    "piece_title": assignment.part.piece.title,
+                    "piece_composer": assignment.part.piece.composer,
+                    "filename": _delivery_download_filename(
+                        asset=asset,
+                        part_display_name=part_display_name,
+                    ),
+                    "asset": asset,
+                }
+            )
+    return rows
 
 
 def get_program_delivery_payload(
@@ -134,26 +127,26 @@ def get_program_delivery_payload(
     """Build piece-grouped delivery metadata shown on the magic-link page."""
     program = Program.objects.get(id=program_id)
     organization = OrganizationDTO.from_model(program.organization)
-    part_assets = _get_delivery_assets_for_musician(
+    rows = _get_delivery_file_rows(
         program_id=program_id,
         musician_id=musician_id,
     )
 
-    pieces_map: defaultdict[str, list[ProgramDeliveryFileDTO]] = defaultdict(list)
+    parts_map: defaultdict[str, list[ProgramDeliveryFileDTO]] = defaultdict(list)
     pieces_meta: dict[str, tuple[str, str]] = {}
-    for part_asset in part_assets:
-        piece_id = str(part_asset.piece_id)
-        pieces_meta[piece_id] = (part_asset.piece.title, part_asset.piece.composer)
-        pieces_map[piece_id].append(
+    for row in rows:
+        piece_id = row["piece_id"]
+        pieces_meta[piece_id] = (row["piece_title"], row["piece_composer"])
+        parts_map[piece_id].append(
             ProgramDeliveryFileDTO(
-                id=str(part_asset.id),
+                id=row["id"],
                 piece_id=piece_id,
-                filename=_delivery_download_filename(part_asset),
+                filename=row["filename"],
             )
         )
 
     pieces: list[ProgramDeliveryPieceDTO] = []
-    for piece_id, files in pieces_map.items():
+    for piece_id, files in parts_map.items():
         title, composer = pieces_meta[piece_id]
         pieces.append(
             ProgramDeliveryPieceDTO(
@@ -177,28 +170,29 @@ def get_program_delivery_downloads(
 
     If ``piece_id`` is provided, only assets from that piece are returned.
     """
-    assets = _get_delivery_assets_for_musician(
+    rows = _get_delivery_file_rows(
         program_id=program_id,
         musician_id=musician_id,
     )
     files: list[ProgramDeliveryDownloadFileDTO] = []
-    for asset in assets:
-        if piece_id and str(asset.piece_id) != str(piece_id):
+    for row in rows:
+        if piece_id and row["piece_id"] != str(piece_id):
             continue
+        asset = row["asset"]
         if not asset.file_key:
             continue
         url = create_download_url(
             organization_id=organization_id,
             file_key=asset.file_key,
             expiration=DOWNLOAD_URL_EXPIRATION_SECONDS,
-            download_filename=_delivery_download_filename(asset),
+            download_filename=row["filename"],
         )
         if not url:
             continue
         files.append(
             ProgramDeliveryDownloadFileDTO(
-                id=str(asset.id),
-                filename=_delivery_download_filename(asset),
+                id=row["id"],
+                filename=row["filename"],
                 url=url,
             )
         )

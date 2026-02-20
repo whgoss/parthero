@@ -161,7 +161,17 @@ def search_for_piece(
 
     pieces = Piece.objects.filter(search_query)
     if organization_id:
-        pieces = pieces.filter(organization__id=organization_id)
+        pieces = pieces.filter(organization__id=organization_id).annotate(
+            parts_count=Count("parts", distinct=True),
+            completed_parts=Count(
+                "parts",
+                filter=Q(
+                    parts__assets__status=UploadStatus.UPLOADED.value,
+                    parts__assets__asset_type=PartAssetType.CLEAN.value,
+                ),
+                distinct=True,
+            ),
+        )
     return PieceDTO.from_models(pieces)
 
 

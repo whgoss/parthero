@@ -8,7 +8,7 @@ from core.api.views.magic_links import (
     MagicDeliveryViewSet,
 )
 from core.api.views.music import PartAssetViewSet, PieceSearchViewSet
-from core.api.views.organizations import MusicianSearchViewSet
+from core.api.views.organizations import RosterMusicianViewSet
 from core.api.views.programs import (
     ProgramChecklistViewSet,
     ProgramMusicianInstrumentViewSet,
@@ -24,7 +24,7 @@ __all__ = [
     "MagicDeliveryDownloadViewSet",
     "MagicDeliveryViewSet",
     "ProgramAssignmentViewSet",
-    "MusicianSearchViewSet",
+    "RosterMusicianViewSet",
     "PartAssetViewSet",
     "PieceSearchViewSet",
     "ProgramChecklistViewSet",

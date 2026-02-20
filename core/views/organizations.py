@@ -7,7 +7,6 @@ from django.contrib import messages
 from core.enum.instruments import InstrumentEnum
 from core.services.organizations import (
     create_musician,
-    get_roster,
     get_musician,
     update_musician,
 )
@@ -30,14 +29,14 @@ def upload_roster(request):
 
 @login_required
 def roster(request):
-    musicians = get_roster(request.organization.id)
-    context = {"musicians": musicians}
-    return render(request, "roster.html", context)
+    return render(request, "roster.html")
 
 
 @login_required
 def musician(request, musician_id: str | None = None):
-    musician = get_musician(request.organization.id, musician_id)
+    musician = None
+    if musician_id:
+        musician = get_musician(request.organization.id, musician_id)
     original_email = musician.email if musician else None
 
     if request.method == "POST":

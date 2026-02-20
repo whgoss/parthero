@@ -5,7 +5,12 @@ from core.enum.instruments import InstrumentEnum
 from core.models.users import UserOrganization
 from core.models.organizations import Organization, Musician, SetupChecklist
 from core.services.music import update_musician_instruments
-from core.dtos.organizations import OrganizationDTO, MusicianDTO, SetupChecklistDTO
+from core.dtos.organizations import (
+    OrganizationDTO,
+    MusicianDTO,
+    MusicianSearchResultDTO,
+    SetupChecklistDTO,
+)
 
 
 def create_organization(name: str) -> OrganizationDTO:
@@ -120,12 +125,43 @@ def search_for_musician(
     organization_id: str,
     name: Optional[str] = None,
     instrument: Optional[str] = None,
-) -> List[MusicianDTO]:
+    limit: int = 25,
+    offset: int = 0,
+    sort: Optional[str] = None,
+) -> MusicianSearchResultDTO:
     search_query = Q(organization_id=organization_id)
     if name:
-        search_query &= Q(Q(first_name__icontains=name) | Q(last_name__icontains=name))
+        search_query &= (
+            Q(first_name__icontains=name)
+            | Q(last_name__icontains=name)
+            | Q(email__icontains=name)
+        )
     if instrument:
         search_query &= Q(instruments__instrument__name__icontains=instrument)
 
-    musicians = Musician.objects.filter(search_query).distinct()
-    return MusicianDTO.from_models(musicians)
+    musicians = Musician.objects.filter(search_query).prefetch_related(
+        "instruments__instrument"
+    )
+    sort_field = "last_name"
+    sort_direction = "asc"
+    if sort and ":" in sort:
+        field, direction = sort.split(":", 1)
+        sort_field = (field or "").strip()
+        sort_direction = (direction or "").strip().lower()
+    allowed_sort_fields = {
+        "first_name",
+        "last_name",
+        "email",
+        "principal",
+        "core_member",
+    }
+    if sort_field not in allowed_sort_fields:
+        sort_field = "last_name"
+    sort_prefix = "-" if sort_direction == "dsc" else ""
+    musicians = musicians.order_by(f"{sort_prefix}{sort_field}", "first_name", "email")
+
+    limit = min(max(limit, 1), 100)
+    offset = max(offset, 0)
+    total = musicians.count()
+    page = musicians[offset : offset + limit]
+    return MusicianSearchResultDTO(total=total, data=MusicianDTO.from_models(page))

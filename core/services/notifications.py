@@ -16,7 +16,7 @@ from core.enum.notifications import (
 )
 from core.models.notifications import Notification
 from core.models.organizations import Musician
-from core.models.programs import Program, ProgramMusician
+from core.models.programs import Program, ProgramMusician, ProgramPartMusician
 from core.services.assignments import (
     auto_assign_harp_keyboard_principal_parts_if_unambiguous,
     get_assignment_payload,
@@ -230,14 +230,19 @@ def send_part_delivery_email(
     if not program:
         return None
 
+    # Ensure the musician is on the roster and has parts assigned
     musician = Musician.objects.get(id=musician_id, organization_id=organization_id)
     is_on_program_roster = ProgramMusician.objects.filter(
         program_id=program_id,
         musician_id=musician_id,
         musician__organization_id=organization_id,
     ).exists()
-
     if not is_on_program_roster:
+        return None
+    has_parts_on_program = ProgramPartMusician.objects.filter(
+        program_id=program_id, musician_id=musician_id
+    ).exists()
+    if not has_parts_on_program:
         return None
 
     # Dedupe on (program, recipient, type) so queue retries are safe

@@ -273,6 +273,7 @@ class ProgramDeliveryDTO(BaseDTO):
 
 
 class ProgramDeliveryDownloadFileDTO(BaseDTO):
+    id: str
     filename: str
     url: str
 

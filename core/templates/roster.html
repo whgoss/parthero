@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load roster %}
 {% block content %}
   <div class="max-w-5xl mx-auto">
     <!-- Header + primary actions -->
@@ -63,22 +62,24 @@
     </div>
 
     <!-- Roster table card -->
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div
+      class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"
+      x-data="{ ...littleBIGtable({ url: '/api/musicians/search', limit: 25, messages: { loading: 'Loading roster...', failed: 'Unable to load roster right now.', summary: 'rows' } }), primaryInstrument(musician) { return musician?.instruments?.[0]?.instrument || null }, instrumentCount(musician) { return musician?.instruments?.length || 0 }, sectionPillClasses(sectionName) { const section = (sectionName || '').replace('–', '-').toLowerCase(); const base = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium'; if (['violin','violin i','violin ii','viola','cello','double bass','bass'].includes(section) || section.startsWith('violin')) return `${base} bg-blue-100 text-blue-800`; if (['flute','piccolo','oboe','english horn','clarinet','bass clarinet','bassoon','contrabassoon'].includes(section)) return `${base} bg-green-100 text-green-800`; if (['horn','horn in f','french horn','trumpet','cornet','trombone','bass trombone','tuba'].includes(section)) return `${base} bg-yellow-100 text-yellow-800`; if (['percussion','timpani','drums','mallets'].includes(section)) return `${base} bg-pink-100 text-pink-800`; if (['piano','celesta','harpsichord','organ','harp'].includes(section)) return `${base} bg-purple-100 text-purple-800`; if (['soprano','alto','tenor','bass (choir)','choir','chorus'].includes(section)) return `${base} bg-red-100 text-red-900`; return `${base} bg-gray-100 text-gray-700`; } }"
+      x-init="init()"
+    >
       <!-- Table header: summary + filters -->
       <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <p class="text-sm font-medium text-slate-800">
             All musicians
           </p>
-          {% if musicians %}
-            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-              {{ musicians|length }} total
-            </span>
-          {% endif %}
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+            <span x-text="params.total || 0"></span>&nbsp;total
+          </span>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
           <!-- Optional: simple search -->
-          <div class="relative flex-1 sm:flex-none">
+          <div class="relative flex-1 sm:flex-none sm:w-64">
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg"
                    viewBox="0 0 20 20"
@@ -93,6 +94,8 @@
               type="text"
               name="search"
               placeholder="Search by name or email"
+              x-model.debounce.300ms="params.search"
+              @input.debounce.300ms="doSearch()"
               class="block w-full rounded-md border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -125,52 +128,85 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
-            {% if musicians %}
-              {% for musician in musicians %}
-                <tr class="hover:bg-slate-50/80 cursor-pointer" onclick="window.location.href='/musicians/{{ musician.id }}/'">
-                  <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
-                    {{ musician.first_name }}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-900">
-                    {{ musician.last_name }}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm">
-                    {% if musician.instruments %}
-                        <span class="{{ musician.instruments.0.instrument.value|section_pill_classes }}">
-                        {{ musician.instruments.0.instrument.value }}
-                        </span>
-                    {% else %}
-                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
-                        Unassigned
-                        </span>
-                    {% endif %}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600">
-                    <a href="mailto:{{ musician.email }}" class="hover:text-blue-700">
-                      {{ musician.email }}
-                    </a>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600 items-center">
-                    {% if musician.principal %}
-                    <img class="w-3 h-3" src="/static/images/green_checkmark.png" />
-                    {% endif %}
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600 items-center">
-                    {% if musician.core_member %}
-                    <img class="w-3 h-3" src="/static/images/green_checkmark.png" />
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            {% else %}
+            <template x-if="meta.loading">
               <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500">
+                <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-500">
+                  Loading roster...
+                </td>
+              </tr>
+            </template>
+            <template x-if="!meta.loading && !rows.length">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-500">
                   No musicians yet. Upload your roster or add your first musician to get started.
                 </td>
               </tr>
-            {% endif %}
+            </template>
+            <template x-for="musician in rows" :key="musician.id">
+              <tr class="hover:bg-slate-50/80 cursor-pointer" @click="window.location.href=`/musicians/${musician.id}/`">
+                  <td class="whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900">
+                    <span x-text="musician.first_name"></span>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-900">
+                    <span x-text="musician.last_name"></span>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm">
+                    <template x-if="primaryInstrument(musician)">
+                      <div class="flex items-center gap-2">
+                        <span :class="sectionPillClasses(primaryInstrument(musician))" x-text="primaryInstrument(musician)"></span>
+                        <span
+                          x-show="instrumentCount(musician) > 1"
+                          class="text-xs text-slate-500"
+                          x-text="`+${instrumentCount(musician) - 1} more`"
+                        ></span>
+                      </div>
+                    </template>
+                    <template x-if="!primaryInstrument(musician)">
+                      <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                        Unassigned
+                      </span>
+                    </template>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600">
+                    <a :href="`mailto:${musician.email}`" class="hover:text-blue-700" @click.stop>
+                      <span x-text="musician.email"></span>
+                    </a>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600 items-center">
+                    <img x-show="musician.principal" class="w-3 h-3" src="/static/images/green_checkmark.png" />
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-sm text-slate-600 items-center">
+                    <img x-show="musician.core_member" class="w-3 h-3" src="/static/images/green_checkmark.png" />
+                  </td>
+                </tr>
+            </template>
           </tbody>
         </table>
+      </div>
+
+      <div class="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-xs text-slate-500" x-html="meta.status"></p>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-500" for="roster-page-size">Rows</label>
+          <select
+            id="roster-page-size"
+            x-model.number="params.limit"
+            @change="setLimit()"
+            class="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() <= 1" @click="goFirstPage()">First</button>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() <= 1" @click="goPrevPage()">Prev</button>
+          <span class="text-xs text-slate-600">
+            Page <span x-text="getCurrentPage()"></span> / <span x-text="getTotalPages()"></span>
+          </span>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() >= getTotalPages()" @click="goNextPage()">Next</button>
+          <button type="button" class="btn-secondary text-xs px-2 py-1" :disabled="meta.loading || getCurrentPage() >= getTotalPages()" @click="goLastPage()">Last</button>
+        </div>
       </div>
     </div>
   </div>

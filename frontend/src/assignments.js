@@ -311,19 +311,17 @@ export function magicDelivery(token, initialPayload = null) {
   return {
     token,
     payload: initialPayload || { pieces: [] },
-    downloading: false,
+    downloadingFileId: null,
     saveError: null,
     successMessage: null,
-    triggerDownloads(files) {
-      files.forEach((file) => {
-        const link = document.createElement("a");
-        link.href = file.url;
-        link.download = file.filename || "";
-        link.rel = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
+    triggerDownload(file) {
+      const link = document.createElement("a");
+      link.href = file.url;
+      link.download = file.filename || "";
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
     async requestDownloads(pieceId = null) {
       const suffix = pieceId
@@ -337,42 +335,23 @@ export function magicDelivery(token, initialPayload = null) {
       }
       return response.json();
     },
-    async downloadAll() {
-      this.downloading = true;
-      this.saveError = null;
-      this.successMessage = null;
-      try {
-        const payload = await this.requestDownloads();
-        const files = payload?.files || [];
-        if (!files.length) {
-          this.saveError = "No downloadable files are currently available.";
-          return;
-        }
-        this.triggerDownloads(files);
-        this.successMessage = "Download started. If some files were blocked, use piece links below.";
-      } catch (error) {
-        this.saveError = error?.message || "Unable to start downloads.";
-      } finally {
-        this.downloading = false;
-      }
-    },
-    async downloadPiece(pieceId) {
-      this.downloading = true;
+    async downloadFile(pieceId, fileId) {
+      this.downloadingFileId = fileId;
       this.saveError = null;
       this.successMessage = null;
       try {
         const payload = await this.requestDownloads(pieceId);
-        const files = payload?.files || [];
-        if (!files.length) {
-          this.saveError = "No downloadable files are available for this piece.";
+        const file = (payload?.files || []).find((item) => item.id === fileId);
+        if (!file) {
+          this.saveError = "That file is not currently available for download.";
           return;
         }
-        this.triggerDownloads(files);
-        this.successMessage = "Piece download started.";
+        this.triggerDownload(file);
+        this.successMessage = "Download started.";
       } catch (error) {
-        this.saveError = error?.message || "Unable to start piece downloads.";
+        this.saveError = error?.message || "Unable to start download.";
       } finally {
-        this.downloading = false;
+        this.downloadingFileId = null;
       }
     },
   };

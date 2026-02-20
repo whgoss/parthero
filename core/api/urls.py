@@ -12,7 +12,7 @@ from core.api.views import (
     ProgramPieceViewSet,
     ProgramMusicianViewSet,
     ProgramMusicianInstrumentViewSet,
-    MusicianSearchViewSet,
+    RosterMusicianViewSet,
     DomoWorkSearchViewSet,
 )
 
@@ -34,7 +34,7 @@ program_checklist = ProgramChecklistViewSet.as_view(
 )
 program_assignments = ProgramAssignmentViewSet.as_view({"get": "list"})
 program_assignment_part = ProgramAssignmentViewSet.as_view({"patch": "partial_update"})
-musicians_search = MusicianSearchViewSet.as_view({"get": "list"})
+musicians_search = RosterMusicianViewSet.as_view({"get": "list"})
 domo_search = DomoWorkSearchViewSet.as_view({"get": "list"})
 magic_assignments_data = MagicAssignmentViewSet.as_view({"get": "retrieve"})
 magic_assignments_part = MagicAssignmentPartViewSet.as_view({"patch": "partial_update"})

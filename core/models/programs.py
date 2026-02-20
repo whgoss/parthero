@@ -83,31 +83,31 @@ class ProgramRehearsal(UUIDPrimaryKeyModel):
 class ProgramChecklist(UUIDPrimaryKeyModel):
     program = OneToOneField(Program, related_name="checklist", on_delete=CASCADE)
     pieces_completed_on = DateTimeField(null=True, blank=True)
-    pieces_completed_by = OneToOneField(
+    pieces_completed_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     roster_completed_on = DateTimeField(null=True, blank=True)
-    roster_completed_by = OneToOneField(
+    roster_completed_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     overrides_completed_on = DateTimeField(null=True, blank=True)
-    overrides_completed_by = OneToOneField(
+    overrides_completed_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     bowings_completed_on = DateTimeField(null=True, blank=True)
-    bowings_completed_by = OneToOneField(
+    bowings_completed_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     assignments_sent_on = DateTimeField(null=True, blank=True)
-    assignments_sent_by = OneToOneField(
+    assignments_sent_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     assignments_completed_on = DateTimeField(null=True, blank=True)
-    assignments_completed_by = OneToOneField(
+    assignments_completed_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     delivery_sent_on = DateTimeField(null=True, blank=True)
-    delivery_sent_by = OneToOneField(
+    delivery_sent_by = ForeignKey(
         User, related_name="+", null=True, blank=True, on_delete=SET_NULL
     )
     delivery_completed_on = DateTimeField(null=True, blank=True)

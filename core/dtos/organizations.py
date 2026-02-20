@@ -59,6 +59,11 @@ class MusicianDTO(BaseDTO):
         )
 
 
+class MusicianSearchResultDTO(BaseDTO):
+    total: int
+    data: List[MusicianDTO]
+
+
 class MusicianInstrumentDTO(BaseDTO):
     musician_id: str
     instrument: InstrumentEnum
