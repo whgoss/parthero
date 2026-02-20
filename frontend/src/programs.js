@@ -395,7 +395,6 @@ window.programPieces = function programPieces(
           throw new Error("Failed to search pieces");
         }
         this.results = await response.json();
-        console.log(results);
       } catch (error) {
         this.error = "Unable to fetch pieces right now.";
         this.results = [];

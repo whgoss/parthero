@@ -42,6 +42,7 @@ window.domoPieceSearch = function domoPieceSearch() {
         this.results = await response.json();
       } catch (error) {
         this.error = "Unable to fetch pieces right now.";
+        console.log(error);
         this.results = [];
       } finally {
         this.loading = false;
