@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.db.models import Count, Q
 from core.dtos.music import (
     PieceDTO,
+    PieceSearchResultDTO,
     PartDTO,
     PartAssetDTO,
     PartAssetUploadDTO,
@@ -152,27 +153,51 @@ def search_for_piece(
     title: Optional[str] = None,
     composer: Optional[str] = None,
     organization_id: Optional[str] = None,
-) -> List[PieceDTO]:
+    limit: int = 25,
+    offset: int = 0,
+    sort: Optional[str] = None,
+) -> PieceSearchResultDTO:
     search_query = Q()
-    if title:
-        search_query |= Q(title__icontains=title)
-    if composer:
-        search_query |= Q(composer__icontains=composer)
+    search_text = title or composer
+    if search_text:
+        search_query &= Q(title__icontains=search_text) | Q(
+            composer__icontains=search_text
+        )
+    if title and composer:
+        search_query &= Q(composer__icontains=composer)
 
     pieces = Piece.objects.filter(search_query)
     if organization_id:
-        pieces = pieces.filter(organization__id=organization_id).annotate(
-            parts_count=Count("parts", distinct=True),
-            completed_parts=Count(
-                "parts",
-                filter=Q(
-                    parts__assets__status=UploadStatus.UPLOADED.value,
-                    parts__assets__asset_type=PartAssetType.CLEAN.value,
-                ),
-                distinct=True,
+        pieces = pieces.filter(organization__id=organization_id)
+    pieces = pieces.annotate(
+        parts_count=Count("parts", distinct=True),
+        completed_parts=Count(
+            "parts",
+            filter=Q(
+                parts__assets__status=UploadStatus.UPLOADED.value,
+                parts__assets__asset_type=PartAssetType.CLEAN.value,
             ),
-        )
-    return PieceDTO.from_models(pieces)
+            distinct=True,
+        ),
+    )
+
+    sort_field = "title"
+    sort_direction = "asc"
+    if sort and ":" in sort:
+        field, direction = sort.split(":", 1)
+        sort_field = (field or "").strip()
+        sort_direction = (direction or "").strip().lower()
+    allowed_sort_fields = {"title", "composer", "parts_count", "completed_parts"}
+    if sort_field not in allowed_sort_fields:
+        sort_field = "title"
+    sort_prefix = "-" if sort_direction == "dsc" else ""
+    pieces = pieces.order_by(f"{sort_prefix}{sort_field}", "composer", "title")
+
+    limit = min(max(limit, 1), 100)
+    offset = max(offset, 0)
+    total = pieces.count()
+    page = pieces[offset : offset + limit]
+    return PieceSearchResultDTO(total=total, data=PieceDTO.from_models(page))
 
 
 def create_part(

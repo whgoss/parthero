@@ -104,6 +104,11 @@ class PieceDTO(BaseDTO):
         )
 
 
+class PieceSearchResultDTO(BaseDTO):
+    total: int
+    data: List[PieceDTO]
+
+
 class PartDTO(BaseDTO):
     piece_id: str
     instruments: Optional[List["PartInstrumentDTO"]] = None

@@ -7,7 +7,6 @@ from core.forms.music import PieceForm
 from core.services.music import (
     create_piece,
     get_piece,
-    get_pieces,
     get_part_asset,
 )
 from core.services.organizations import get_setup_checklist
@@ -72,12 +71,7 @@ def get_piece_view(request, piece_id):
 
 @login_required
 def get_pieces_view(request):
-    pieces = get_pieces(request.organization.id)
-    context = {
-        "pieces": pieces,
-        "piece_count": len(pieces),
-    }
-    return render(request, "pieces.html", context)
+    return render(request, "pieces.html")
 
 
 @login_required

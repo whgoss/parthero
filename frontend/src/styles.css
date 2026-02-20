@@ -30,7 +30,7 @@ we're using and insert it into our final bundled .css
   }
 
   .page-header {
-    @apply text-xl font-bold text-slate-900;
+    @apply text-2xl font-bold text-slate-900;
   }
 
   .page-subheader {
@@ -75,6 +75,70 @@ we're using and insert it into our final bundled .css
 
   .modal-actions {
     @apply mt-5 flex items-center justify-end gap-2;
+  }
+
+  .table-card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden;
+  }
+
+  .table-toolbar {
+    @apply flex flex-col gap-3 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .table-search-wrap {
+    @apply relative flex-1 sm:flex-none sm:w-64;
+  }
+
+  .table-search-input {
+    @apply block w-full rounded-md border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs sm:text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500;
+  }
+
+  .search-clear-btn {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-slate-600;
+  }
+
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+
+  .table-base {
+    @apply min-w-full divide-y divide-slate-200 text-sm;
+  }
+
+  .table-head {
+    @apply bg-slate-50;
+  }
+
+  .table-th {
+    @apply px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .table-th-first {
+    @apply py-2.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .table-body {
+    @apply divide-y divide-slate-100 bg-white;
+  }
+
+  .table-row-clickable {
+    @apply hover:bg-slate-50/80 cursor-pointer;
+  }
+
+  .table-cell {
+    @apply whitespace-nowrap px-3 py-2.5 text-sm text-slate-900;
+  }
+
+  .table-cell-first {
+    @apply whitespace-nowrap py-2.5 pl-4 pr-3 text-sm text-slate-900;
+  }
+
+  .table-footer {
+    @apply flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .table-loading-spinner {
+    @apply inline-flex h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600;
   }
 }
 

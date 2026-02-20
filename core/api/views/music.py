@@ -88,16 +88,26 @@ class PieceSearchViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated, IsInOrganization]
 
     def list(self, request, *args, **kwargs):
-        title = request.query_params.get("title")
+        try:
+            limit = int(request.query_params.get("limit", 25))
+        except (TypeError, ValueError):
+            limit = 25
+        try:
+            offset = int(request.query_params.get("offset", 0))
+        except (TypeError, ValueError):
+            offset = 0
+
+        search_text = request.query_params.get("search")
+        title = request.query_params.get("title") or search_text
         composer = request.query_params.get("composer")
+        sort = request.query_params.get("sort")
 
-        results = []
-        if title or composer:
-            results = search_for_piece(
-                title=title,
-                composer=composer,
-                organization_id=request.organization.id,
-            )
-
-        response_data = [result.model_dump(mode="json") for result in results]
-        return Response(response_data, status=status.HTTP_200_OK)
+        results = search_for_piece(
+            title=title,
+            composer=composer,
+            organization_id=request.organization.id,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+        )
+        return Response(results.model_dump(mode="json"), status=status.HTTP_200_OK)
