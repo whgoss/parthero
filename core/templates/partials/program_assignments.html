@@ -88,7 +88,7 @@
         <div class="bg-white">
             <div
                 x-show="(statusPayload.summary.string_parts_total || 0) > 0"
-                class="px-4 pt-3 pb-1 text-xs italic text-slate-500"
+                class="text-note"
                 x-text="statusPayload.summary.all_string_parts_assigned ? 'String players are auto-assigned by section. All string parts are currently assigned.' : 'String players are auto-assigned by section and are not listed in this table.'"
             ></div>
             <template x-if="(statusPayload.pieces || []).length === 0">
