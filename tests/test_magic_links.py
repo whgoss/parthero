@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from core.enum.instruments import InstrumentEnum
 from core.enum.notifications import MagicLinkType
 from core.models.notifications import MagicLink
 from core.models.programs import ProgramPerformance
@@ -32,7 +33,8 @@ def _create_program_and_musician():
         email=f"principal-{timezone.now().timestamp()}@example.com",
         principal=True,
         core_member=True,
-        instruments=[],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
     return organization, program, musician
 

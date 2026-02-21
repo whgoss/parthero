@@ -129,7 +129,18 @@ def _get_delivery_file_rows(program_id: str, musician_id: str) -> list[dict]:
                     "asset": asset,
                 }
             )
-    return rows
+    # Guardrail: if multiple assets produce the same visible filename for the same
+    # piece/part row (common with certain doubling ingest paths), keep one row.
+    deduped_rows: list[dict] = []
+    seen: set[tuple[str, str, str]] = set()
+    for row in rows:
+        key = (row["piece_id"], row["filename"], row["id"].split(":", 1)[1])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped_rows.append(row)
+
+    return deduped_rows
 
 
 def get_program_delivery_payload(

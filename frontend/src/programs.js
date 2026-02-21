@@ -553,6 +553,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
     name: "",
     instrument: "",
     results: [],
+    rosterMusicianIdMap: {},
     rosterInstruments: {},
     tagifyInstances: new Map(),
     isActive: false,
@@ -582,6 +583,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         window.addEventListener("roster-tab:show", this._rosterTabListener);
       }
       this.isActive = this.$el && this.$el.offsetParent !== null;
+      this.refreshRosterMembership();
     },
     async refreshRosterTable() {
       await this.fetch();
@@ -645,6 +647,61 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         tagify.on("add", (event) => onTagChange(event, "PUT"));
         tagify.on("remove", (event) => onTagChange(event, "DELETE"));
       });
+      this.syncTagifyReadOnlyState();
+    },
+    syncTagifyReadOnlyState() {
+      this.tagifyInstances.forEach((instance) => {
+        if (typeof instance.setDisabled === "function") {
+          instance.setDisabled(this.completed);
+        }
+        if (typeof instance.setReadonly === "function") {
+          instance.setReadonly(this.completed);
+        }
+        if (instance?.DOM?.scope) {
+          if (this.completed) {
+            instance.DOM.scope.setAttribute("disabled", "true");
+          } else {
+            instance.DOM.scope.removeAttribute("disabled");
+            instance.DOM.scope.removeAttribute("readonly");
+          }
+        }
+        if (instance?.DOM?.input) {
+          instance.DOM.input.disabled = this.completed;
+          if (!this.completed) {
+            instance.DOM.input.removeAttribute("disabled");
+            instance.DOM.input.removeAttribute("readonly");
+          }
+        }
+        if (instance?.DOM?.originalInput) {
+          instance.DOM.originalInput.disabled = this.completed;
+          if (!this.completed) {
+            instance.DOM.originalInput.removeAttribute("disabled");
+            instance.DOM.originalInput.removeAttribute("readonly");
+          }
+        }
+      });
+    },
+    async refreshRosterMembership() {
+      try {
+        const response = await fetch(`/api/programs/${this.programId}/musicians`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch program roster membership");
+        }
+        const musicians = await response.json();
+        const rosterMap = (Array.isArray(musicians) ? musicians : []).reduce((acc, programMusician) => {
+          const musicianId = String(programMusician.musician_id || "");
+          if (!musicianId) {
+            return acc;
+          }
+          acc[musicianId] = String(programMusician.id);
+          return acc;
+        }, {});
+        this.rosterMusicianIdMap = rosterMap;
+      } catch (_error) {
+        // Keep existing membership state if this refresh fails.
+      }
     },
     async loadPrincipals() {
       if (this.completed) {
@@ -666,7 +723,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to load principals");
         }
-        await this.refreshRosterTable();
+        await Promise.all([this.refreshRosterTable(), this.refreshRosterMembership()]);
       } catch (error) {
         this.saveError = "Unable to load principals right now.";
       } finally {
@@ -693,7 +750,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to load core members");
         }
-        await this.refreshRosterTable();
+        await Promise.all([this.refreshRosterTable(), this.refreshRosterMembership()]);
       } catch (error) {
         this.saveError = "Unable to load core members right now.";
       } finally {
@@ -810,7 +867,17 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         .join(", ");
     },
     isInRoster(musician) {
-      return (this.rows || []).some((member) => member.musician_id === musician.id);
+      return Boolean(this.rosterMusicianIdMap[String(musician.id)]);
+    },
+    async toggleMusicianSelection(musician) {
+      if (this.completed) {
+        return;
+      }
+      if (this.isInRoster(musician)) {
+        await this.removeMusicianByMusicianId(musician.id);
+        return;
+      }
+      await this.addMusician(musician);
     },
     async addMusician(musician) {
       if (this.completed || this.isInRoster(musician)) {
@@ -832,12 +899,19 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to add musician");
         }
-        await this.refreshRosterTable();
+        await Promise.all([this.refreshRosterTable(), this.refreshRosterMembership()]);
       } catch (error) {
         this.saveError = "Unable to add musician right now.";
       } finally {
         this.saving = false;
       }
+    },
+    async removeMusicianByMusicianId(musicianId) {
+      const programMusicianId = this.rosterMusicianIdMap[String(musicianId)];
+      if (!programMusicianId) {
+        return;
+      }
+      await this.removeMusician({ id: programMusicianId, musician_id: musicianId });
     },
     async removeMusician(musician) {
       if (this.completed) {
@@ -861,7 +935,11 @@ window.programRoster = function programRoster(programId, initialChecklist = null
         if (!response.ok) {
           throw new Error("Failed to remove musician");
         }
-        await this.refreshRosterTable();
+        const musicianId = String(musician.musician_id);
+        const nextMembership = { ...this.rosterMusicianIdMap };
+        delete nextMembership[musicianId];
+        this.rosterMusicianIdMap = nextMembership;
+        await Promise.all([this.refreshRosterTable(), this.refreshRosterMembership()]);
       } catch (error) {
         this.saveError = "Unable to remove musician right now.";
       } finally {
@@ -886,6 +964,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
           throw new Error("Failed to mark roster as completed");
         }
         this.completed = true;
+        this.syncTagifyReadOnlyState();
         window.dispatchEvent(new Event("program-checklist:refresh"));
       } catch (error) {
         this.saveError = "Unable to mark roster as completed right now.";
@@ -914,6 +993,7 @@ window.programRoster = function programRoster(programId, initialChecklist = null
           throw new Error("Failed to mark roster as incomplete");
         }
         this.completed = false;
+        this.syncTagifyReadOnlyState();
         window.dispatchEvent(new Event("program-checklist:refresh"));
       } catch (error) {
         this.saveError = "Unable to mark roster as incomplete right now.";

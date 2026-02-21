@@ -91,6 +91,135 @@ def auto_assign_harp_keyboard_principal_parts_if_unambiguous(
     return True
 
 
+def auto_assign_program_parts_if_unambiguous(program_id: str) -> int:
+    """Auto-assign unassigned parts with deterministic no-decision defaults.
+
+    This currently targets strings, harp, and keyboard parts so the librarian gets
+    a strong default assignment pass as soon as rostering is finalized.
+
+    Existing assignments are never overwritten.
+    """
+    string_instruments = set(INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS])
+    auto_assignable_instruments = set(string_instruments)
+    auto_assignable_instruments.update(INSTRUMENT_SECTIONS[InstrumentSectionEnum.HARP])
+    auto_assignable_instruments.update(
+        INSTRUMENT_SECTIONS[InstrumentSectionEnum.KEYBOARD]
+    )
+
+    program_piece_ids = list(
+        ProgramPiece.objects.filter(program_id=program_id).values_list(
+            "piece_id", flat=True
+        )
+    )
+    if not program_piece_ids:
+        return 0
+
+    parts = (
+        Part.objects.filter(piece_id__in=program_piece_ids)
+        .select_related("piece")
+        .prefetch_related("instruments__instrument")
+    )
+    if not parts:
+        return 0
+
+    assigned_part_ids = set(
+        ProgramPartMusician.objects.filter(program_id=program_id).values_list(
+            "part_id", flat=True
+        )
+    )
+
+    program_musicians = (
+        ProgramMusician.objects.filter(program_id=program_id)
+        .prefetch_related("instruments__instrument")
+        .select_related("musician")
+    )
+    musician_instruments = {
+        str(program_musician.musician_id): get_program_musician_instruments(
+            program_musician
+        )
+        for program_musician in program_musicians
+    }
+
+    # Strings: assign by section instrument (chair number does not drive strings).
+    # If there are multiple string players and multiple same-section parts, assign
+    # deterministically by sorted part/musician order.
+    string_parts_by_instrument = defaultdict(list)
+    for part in parts:
+        if part.id in assigned_part_ids:
+            continue
+        part_instruments = get_part_instruments(part)
+        if len(part_instruments) != 1:
+            continue
+        primary_instrument = next(iter(part_instruments))
+        if primary_instrument in string_instruments:
+            string_parts_by_instrument[primary_instrument].append(part)
+
+    created = 0
+    for instrument, section_parts in string_parts_by_instrument.items():
+        eligible_program_musicians = [
+            program_musician
+            for program_musician in program_musicians
+            if instrument
+            in musician_instruments.get(str(program_musician.musician_id), set())
+        ]
+        if not eligible_program_musicians:
+            continue
+
+        section_parts.sort(
+            key=lambda part: (
+                part.piece.title.lower(),
+                part.number is None,
+                part.number if part.number is not None else 0,
+                str(part.id),
+            )
+        )
+        eligible_program_musicians.sort(
+            key=lambda program_musician: (
+                program_musician.musician.last_name.lower(),
+                program_musician.musician.first_name.lower(),
+                str(program_musician.musician_id),
+            )
+        )
+        for part, program_musician in zip(section_parts, eligible_program_musicians):
+            set_program_part_assignment(
+                program_id=program_id,
+                part_id=str(part.id),
+                musician_id=str(program_musician.musician_id),
+            )
+            created += 1
+            assigned_part_ids.add(part.id)
+
+    # Harp/keyboard: only auto-assign when strictly unambiguous.
+    for part in parts:
+        if part.id in assigned_part_ids:
+            continue
+        part_instruments = get_part_instruments(part)
+        if not part_instruments:
+            continue
+        if not part_instruments.intersection(auto_assignable_instruments):
+            continue
+        if part_instruments.intersection(string_instruments):
+            continue
+
+        eligible_musician_ids = [
+            musician_id
+            for musician_id, instruments in musician_instruments.items()
+            if part_instruments.intersection(instruments)
+        ]
+        if len(eligible_musician_ids) != 1:
+            continue
+
+        set_program_part_assignment(
+            program_id=program_id,
+            part_id=str(part.id),
+            musician_id=eligible_musician_ids[0],
+        )
+        created += 1
+        assigned_part_ids.add(part.id)
+
+    return created
+
+
 def get_assignment_payload(
     program_id: str, principal_musician_id: str
 ) -> ProgramAssignmentDTO:
@@ -344,16 +473,18 @@ def get_program_assignments_status(
         .prefetch_related("instruments__instrument")
     )
     string_instruments = set(INSTRUMENT_SECTIONS[InstrumentSectionEnum.STRINGS])
-    parts = []
+    parts: list[Part] = []
+    string_parts: list[Part] = []
     for part in all_parts:
         part_instruments = get_part_instruments(part)
-        # String-only parts are not part of assignment workflow.
         if part_instruments and part_instruments.issubset(string_instruments):
+            string_parts.append(part)
             continue
         parts.append(part)
+
     assignments = ProgramPartMusician.objects.filter(
         program_id=program_id,
-        part_id__in=[part.id for part in parts],
+        part_id__in=[part.id for part in all_parts],
     ).select_related("musician")
     assignments_by_part = {
         str(assignment.part_id): assignment for assignment in assignments
@@ -520,6 +651,10 @@ def get_program_assignments_status(
         for part in piece.parts
         if part.assigned_musician is not None
     )
+    string_parts_total = len(string_parts)
+    string_parts_assigned = sum(
+        1 for part in string_parts if str(part.id) in assignments_by_part
+    )
 
     return ProgramAssignmentStatusDTO(
         pieces=pieces,
@@ -529,5 +664,10 @@ def get_program_assignments_status(
             total_parts=total_parts,
             assigned_parts=assigned_parts,
             all_assigned=total_parts > 0 and assigned_parts == total_parts,
+            string_parts_total=string_parts_total,
+            string_parts_assigned=string_parts_assigned,
+            all_string_parts_assigned=(
+                string_parts_total > 0 and string_parts_assigned == string_parts_total
+            ),
         ),
     )

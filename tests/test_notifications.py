@@ -38,7 +38,8 @@ def test_send_assignment_email_deduplicates_by_notification_type(monkeypatch):
         email="nora-principal@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        primary_instrument=InstrumentEnum.TRUMPET,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -102,7 +103,8 @@ def test_send_assignment_email_skips_principal_without_assignable_parts(monkeypa
         email="eddie-euphonium@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.EUPHONIUM],
+        primary_instrument=InstrumentEnum.EUPHONIUM,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -159,7 +161,8 @@ def test_send_part_delivery_email_deduplicates_by_notification_type(monkeypatch)
         email="delivery@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        primary_instrument=InstrumentEnum.TRUMPET,
+        secondary_instruments=[],
     )
     piece = Piece.objects.create(
         organization_id=organization.id,

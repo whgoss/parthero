@@ -124,6 +124,23 @@ function initializeFilePonds(scope = document) {
 window.initializeFilePonds = initializeFilePonds;
 
 document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".instrument").forEach((instrumentElem) => {
+    const initialScriptId = instrumentElem.dataset.initialId;
+    const whitelistScriptId = instrumentElem.dataset.optionsId;
+    const whitelist = JSON.parse(document.getElementById(whitelistScriptId).textContent);
+    const initial = JSON.parse(document.getElementById(initialScriptId).textContent);
+
+    const tagify = new Tagify(instrumentElem, {
+      whitelist,
+      enforceWhitelist: true,
+      maxTags: 1,
+      dropdown: { enabled: 0, closeOnSelect: true },
+      originalInputValueFormat: (valuesArr) => valuesArr.map((t) => t.value).join(","),
+    });
+
+    tagify.loadOriginalValues(initial);
+  });
+
   document.querySelectorAll(".instruments").forEach((instrumentElem) => {
     const initialScriptId = instrumentElem.dataset.initialId;
     const whitelistScriptId = instrumentElem.dataset.optionsId;

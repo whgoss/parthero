@@ -2,6 +2,7 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from core.dtos.base import BaseDTO
+from pydantic import Field
 from core.enum.instruments import InstrumentEnum
 from core.models.music import MusicianInstrument
 from core.models.organizations import Organization, Musician, SetupChecklist
@@ -37,7 +38,9 @@ class MusicianDTO(BaseDTO):
     principal: bool
     core_member: bool
     organization: OrganizationDTO
-    instruments: List["MusicianInstrumentDTO"]
+    primary_instrument: Optional["MusicianInstrumentDTO"] = None
+    secondary_instruments: List["MusicianInstrumentDTO"] = Field(default_factory=list)
+    instruments: List["MusicianInstrumentDTO"] = Field(default_factory=list)
     phone_number: Optional[str] = None
     address: Optional[str] = None
 
@@ -45,6 +48,16 @@ class MusicianDTO(BaseDTO):
     def from_model(cls, model: Musician):
         if not model:
             return None
+        musician_instruments = MusicianInstrumentDTO.from_models(
+            model.instruments.all()
+        )
+        primary_instrument = next(
+            (instrument for instrument in musician_instruments if instrument.primary),
+            None,
+        )
+        secondary_instruments = [
+            instrument for instrument in musician_instruments if not instrument.primary
+        ]
         return cls(
             id=str(model.id),
             first_name=model.first_name,
@@ -53,7 +66,9 @@ class MusicianDTO(BaseDTO):
             principal=model.principal,
             core_member=model.core_member,
             organization=OrganizationDTO.from_model(model.organization),
-            instruments=MusicianInstrumentDTO.from_models(model.instruments.all()),
+            primary_instrument=primary_instrument,
+            secondary_instruments=secondary_instruments,
+            instruments=musician_instruments,
             phone_number=model.phone_number if model.phone_number else None,
             address=model.address if model.address else None,
         )
@@ -67,6 +82,7 @@ class MusicianSearchResultDTO(BaseDTO):
 class MusicianInstrumentDTO(BaseDTO):
     musician_id: str
     instrument: InstrumentEnum
+    primary: bool
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
@@ -74,6 +90,7 @@ class MusicianInstrumentDTO(BaseDTO):
             id=str(model.id),
             musician_id=str(model.musician.id),
             instrument=InstrumentEnum(model.instrument.name),
+            primary=model.primary,
         )
 
 

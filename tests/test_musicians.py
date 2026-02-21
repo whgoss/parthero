@@ -32,10 +32,8 @@ def test_create_musician():
         email=email,
         principal=False,
         core_member=True,
-        instruments=[
-            InstrumentEnum.VIOLIN_1,
-            InstrumentEnum.VIOLIN_2,
-        ],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[InstrumentEnum.VIOLIN_2],
     )
 
     assert musician.first_name == first_name
@@ -60,10 +58,8 @@ def test_update_musician():
         email=email,
         principal=False,
         core_member=True,
-        instruments=[
-            InstrumentEnum.VIOLIN_1,
-            InstrumentEnum.VIOLIN_2,
-        ],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[InstrumentEnum.VIOLIN_2],
     )
 
     new_email = faker.email()
@@ -75,9 +71,8 @@ def test_update_musician():
         email=new_email,
         principal=False,
         core_member=True,
-        instruments=[
-            InstrumentEnum.TIMPANI,
-        ],
+        primary_instrument=InstrumentEnum.TIMPANI,
+        secondary_instruments=[],
     )
 
     assert musician.first_name == first_name

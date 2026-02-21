@@ -41,7 +41,8 @@ def test_send_part_assignment_emails_enqueues_principals_only(monkeypatch):
         email="principal-queue@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        primary_instrument=InstrumentEnum.TRUMPET,
+        secondary_instruments=[],
     )
     string_principal = create_musician(
         organization_id=str(organization.id),
@@ -50,7 +51,8 @@ def test_send_part_assignment_emails_enqueues_principals_only(monkeypatch):
         email="violin-principal-queue@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.VIOLIN_1],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
     section = create_musician(
         organization_id=str(organization.id),
@@ -59,7 +61,8 @@ def test_send_part_assignment_emails_enqueues_principals_only(monkeypatch):
         email="section-queue@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        primary_instrument=InstrumentEnum.TRUMPET,
+        secondary_instruments=[],
     )
 
     add_musician_to_program(
@@ -129,7 +132,8 @@ def test_send_part_assignment_emails_skips_principals_without_assignable_parts(
         email="euphonium-principal@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.EUPHONIUM],
+        primary_instrument=InstrumentEnum.EUPHONIUM,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -181,7 +185,8 @@ def test_auto_assigns_unambiguous_harp_without_enqueue(monkeypatch):
         email="harp-principal@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.HARP],
+        primary_instrument=InstrumentEnum.HARP,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -238,7 +243,8 @@ def test_enqueues_harp_principal_when_assignment_is_ambiguous(monkeypatch):
         email="harp-principal@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.HARP],
+        primary_instrument=InstrumentEnum.HARP,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -345,7 +351,8 @@ def test_send_part_delivery_emails_enqueues_roster_musicians(monkeypatch):
         email="ari-player@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        primary_instrument=InstrumentEnum.TRUMPET,
+        secondary_instruments=[],
     )
     musician_b = create_musician(
         organization_id=str(organization.id),
@@ -354,7 +361,8 @@ def test_send_part_delivery_emails_enqueues_roster_musicians(monkeypatch):
         email="bea-player@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.VIOLIN_1],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),

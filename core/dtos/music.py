@@ -46,6 +46,7 @@ class InstrumentSectionDTO(BaseDTO):
 class MusicianInstrumentDTO(BaseDTO):
     musician: MusicianDTO
     instrument: InstrumentDTO
+    primary: bool
 
     @classmethod
     def from_model(cls, model: MusicianInstrument):
@@ -53,6 +54,7 @@ class MusicianInstrumentDTO(BaseDTO):
             id=str(model.id),
             musician=MusicianDTO.from_model(model.musician),
             instrument=InstrumentDTO.from_model(model.instrument),
+            primary=model.primary,
         )
 
 

@@ -257,6 +257,9 @@ class ProgramAssignmentSummaryDTO(BaseDTO):
     total_parts: int
     assigned_parts: int
     all_assigned: bool
+    string_parts_total: int = 0
+    string_parts_assigned: int = 0
+    all_string_parts_assigned: bool = False
 
 
 class ProgramAssignmentStatusDTO(BaseDTO):

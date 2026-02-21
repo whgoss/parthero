@@ -7,6 +7,7 @@ from django.db.models import (
     UniqueConstraint,
     BooleanField,
     CASCADE,
+    Q,
 )
 from core.models.base import UUIDPrimaryKeyModel
 from core.models.organizations import Musician, Organization
@@ -31,6 +32,20 @@ class InstrumentSection(UUIDPrimaryKeyModel):
 class MusicianInstrument(UUIDPrimaryKeyModel):
     musician = ForeignKey(Musician, related_name="instruments", on_delete=CASCADE)
     instrument = ForeignKey(Instrument, on_delete=CASCADE)
+    primary = BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["musician", "instrument"],
+                name="unique_musician_instrument",
+            ),
+            UniqueConstraint(
+                fields=["musician"],
+                condition=Q(primary=True),
+                name="unique_primary_instrument",
+            ),
+        ]
 
 
 class Piece(UUIDPrimaryKeyModel):

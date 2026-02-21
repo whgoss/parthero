@@ -58,6 +58,7 @@ def upload_roster(file, organization_id: str):
                     musician_instrument = MusicianInstrument(
                         musician_id=musician.id,
                         instrument_id=instrument.id,
+                        primary=True,
                     )
                     musician_instrument.save()
 
@@ -71,6 +72,7 @@ def upload_roster(file, organization_id: str):
                         musician_secondary_instrument = MusicianInstrument(
                             musician_id=musician.id,
                             instrument_id=secondary_instrument.id,
+                            primary=False,
                         )
                         musician_secondary_instrument.save()
             else:

@@ -38,7 +38,8 @@ def create_musician(
     email: str,
     principal: bool,
     core_member: bool,
-    instruments: Optional[List[InstrumentEnum]],
+    primary_instrument: InstrumentEnum,
+    secondary_instruments: Optional[List[InstrumentEnum]] = None,
 ) -> MusicianDTO | None:
     musician = Musician.objects.filter(
         organization__id=organization_id, email=email
@@ -56,8 +57,11 @@ def create_musician(
     )
     musician.save()
 
-    if instruments:
-        update_musician_instruments(musician.id, instruments)
+    update_musician_instruments(
+        musician.id,
+        primary_instrument=primary_instrument,
+        secondary_instruments=secondary_instruments or [],
+    )
 
     return MusicianDTO.from_model(musician)
 
@@ -67,9 +71,11 @@ def get_musician(organization_id: str, musician_id: str) -> MusicianDTO:
     return MusicianDTO.from_model(musician)
 
 
-def get_musician_by_email(organization_id: str, email: str) -> MusicianDTO:
-    musician = Musician.objects.get(organization__id=organization_id, email=email)
-    return MusicianDTO.from_model(musician)
+def get_musician_by_email(organization_id: str, email: str) -> MusicianDTO | None:
+    musician = Musician.objects.filter(
+        organization__id=organization_id, email=email
+    ).first()
+    return MusicianDTO.from_model(musician) if musician else None
 
 
 def musician_exists_by_email(email, organization_id: str) -> bool:
@@ -86,7 +92,8 @@ def update_musician(
     email: str,
     principal: bool,
     core_member: bool,
-    instruments: Optional[List[InstrumentEnum]],
+    primary_instrument: InstrumentEnum,
+    secondary_instruments: Optional[List[InstrumentEnum]] = None,
 ) -> MusicianDTO | None:
     musician = Musician.objects.filter(
         organization__id=organization_id, id=musician_id
@@ -100,8 +107,11 @@ def update_musician(
     musician.principal = principal
     musician.core_member = core_member
 
-    if instruments:
-        update_musician_instruments(musician.id, instruments)
+    update_musician_instruments(
+        musician.id,
+        primary_instrument=primary_instrument,
+        secondary_instruments=secondary_instruments or [],
+    )
 
     musician.save()
     return MusicianDTO.from_model(musician)

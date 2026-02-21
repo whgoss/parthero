@@ -367,22 +367,53 @@ def get_instruments_in_string(filename: str) -> List[InstrumentEnum]:
 
 
 @transaction.atomic
-def update_musician_instruments(musician_id: str, instruments: List[InstrumentEnum]):
+def update_musician_instruments(
+    musician_id: str,
+    primary_instrument: Optional[InstrumentEnum] = None,
+    secondary_instruments: Optional[List[InstrumentEnum]] = None,
+):
     musician = Musician.objects.get(id=musician_id)
-    instrument_strings = [instrument.value for instrument in instruments]
+    secondary_instruments = secondary_instruments or []
+    all_instruments = []
+    if primary_instrument:
+        all_instruments.append(primary_instrument)
+    for instrument in secondary_instruments:
+        if instrument != primary_instrument:
+            all_instruments.append(instrument)
 
+    instrument_strings = [instrument.value for instrument in all_instruments]
     instrument_models = list(Instrument.objects.filter(name__in=instrument_strings))
+    instrument_models_by_name = {
+        instrument.name: instrument for instrument in instrument_models
+    }
 
     # 1) Clear existing links
     MusicianInstrument.objects.filter(musician=musician).delete()
 
     # 2) Recreate
-    MusicianInstrument.objects.bulk_create(
-        [
-            MusicianInstrument(musician=musician, instrument=instrument_model)
-            for instrument_model in instrument_models
-        ]
-    )
+    rows = []
+    if primary_instrument and primary_instrument.value in instrument_models_by_name:
+        rows.append(
+            MusicianInstrument(
+                musician=musician,
+                instrument=instrument_models_by_name[primary_instrument.value],
+                primary=True,
+            )
+        )
+    for instrument in secondary_instruments:
+        if instrument == primary_instrument:
+            continue
+        instrument_model = instrument_models_by_name.get(instrument.value)
+        if instrument_model:
+            rows.append(
+                MusicianInstrument(
+                    musician=musician,
+                    instrument=instrument_model,
+                    primary=False,
+                )
+            )
+    if rows:
+        MusicianInstrument.objects.bulk_create(rows)
 
 
 @transaction.atomic

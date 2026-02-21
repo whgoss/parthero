@@ -55,7 +55,10 @@ def musician(request, musician_id: str | None = None):
                     email=form.cleaned_data["email"],
                     principal=form.cleaned_data.get("principal", False),
                     core_member=form.cleaned_data.get("core_member", False),
-                    instruments=form.cleaned_data.get("instruments"),
+                    primary_instrument=form.cleaned_data.get("primary_instrument"),
+                    secondary_instruments=form.cleaned_data.get(
+                        "secondary_instruments", []
+                    ),
                 )
                 messages.success(
                     request,
@@ -70,7 +73,10 @@ def musician(request, musician_id: str | None = None):
                     email=form.cleaned_data["email"],
                     principal=form.cleaned_data.get("principal", False),
                     core_member=form.cleaned_data.get("core_member", False),
-                    instruments=None,
+                    primary_instrument=form.cleaned_data.get("primary_instrument"),
+                    secondary_instruments=form.cleaned_data.get(
+                        "secondary_instruments", []
+                    ),
                 )
                 messages.success(
                     request,
@@ -93,15 +99,20 @@ def musician(request, musician_id: str | None = None):
             organization_id=request.organization.id,
         )
 
-    instruments = []
+    primary_instrument = []
+    secondary_instruments = []
     if musician:
-        for instrument in musician.instruments:
-            instruments.append(instrument.instrument.value)
+        if musician.primary_instrument:
+            primary_instrument = [musician.primary_instrument.instrument.value]
+        secondary_instruments = [
+            instrument.instrument.value for instrument in musician.secondary_instruments
+        ]
 
     context = {
         "musician": musician,
         "form": form,
-        "instruments": json.dumps(instruments),
+        "primary_instrument": json.dumps(primary_instrument),
+        "secondary_instruments": json.dumps(secondary_instruments),
         "instrument_options": InstrumentEnum.values(),
     }
     return render(request, "musician.html", context)

@@ -122,7 +122,8 @@ def test_get_musician_blocks_cross_tenant_access():
         email=faker.email(),
         principal=False,
         core_member=True,
-        instruments=[],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
 
     with pytest.raises(Musician.DoesNotExist):
@@ -140,7 +141,8 @@ def test_update_musician_blocks_cross_tenant_access():
         email=email,
         principal=False,
         core_member=True,
-        instruments=[],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
 
     result = update_musician(
@@ -151,7 +153,8 @@ def test_update_musician_blocks_cross_tenant_access():
         email=faker.email(),
         principal=False,
         core_member=True,
-        instruments=[],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
     assert result is None
 
@@ -207,7 +210,8 @@ def test_program_musician_mutations_block_cross_tenant_access():
         email=faker.email(),
         principal=False,
         core_member=True,
-        instruments=[],
+        primary_instrument=InstrumentEnum.VIOLIN_1,
+        secondary_instruments=[],
     )
 
     with pytest.raises(Program.DoesNotExist):

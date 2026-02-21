@@ -213,7 +213,8 @@ def search_for_program_musicians(
             Q(musician__first_name__icontains=search)
             | Q(musician__last_name__icontains=search)
             | Q(musician__email__icontains=search)
-        )
+            | Q(instruments__instrument__name__icontains=search)
+        ).distinct()
 
     sort_field = "musician__last_name"
     sort_direction = "asc"
@@ -285,11 +286,19 @@ def add_musician_to_program(
         )
         program_musician.save()
 
+    # Add them by their primary instrument if designated
     musician_instrument = (
-        MusicianInstrument.objects.filter(musician=musician)
+        MusicianInstrument.objects.filter(musician=musician, primary=True)
         .select_related("instrument")
         .first()
     )
+    if not musician_instrument:
+        musician_instrument = (
+            MusicianInstrument.objects.filter(musician=musician)
+            .select_related("instrument")
+            .first()
+        )
+
     if musician_instrument and musician_instrument.instrument:
         ProgramMusicianInstrument.objects.get_or_create(
             program_musician=program_musician,
@@ -486,6 +495,12 @@ def update_program_checklist(
         if roster_completed:
             program_checklist.roster_completed_on = timezone.now()
             program_checklist.roster_completed_by = user
+            # Nested import prevents circular dependency
+            from core.services.assignments import (
+                auto_assign_program_parts_if_unambiguous,
+            )
+
+            auto_assign_program_parts_if_unambiguous(program_id=program_id)
         else:
             program_checklist.roster_completed_on = None
             program_checklist.roster_completed_by = None
@@ -598,10 +613,19 @@ def add_musicians_to_program(
     program_musician_instruments = []
     for program_musician in saved_program_musicians:
         musician_instrument = (
-            MusicianInstrument.objects.filter(musician=program_musician.musician)
+            MusicianInstrument.objects.filter(
+                musician=program_musician.musician,
+                primary=True,
+            )
             .select_related("instrument")
             .first()
         )
+        if not musician_instrument:
+            musician_instrument = (
+                MusicianInstrument.objects.filter(musician=program_musician.musician)
+                .select_related("instrument")
+                .first()
+            )
 
         if musician_instrument and musician_instrument.instrument:
             program_musician_instrument = ProgramMusicianInstrument(

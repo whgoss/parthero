@@ -37,11 +37,20 @@ class MusicianForm(Form):
     )
     principal = BooleanField(required=False)
     core_member = BooleanField(required=False)
-    instruments = CharField(
+    primary_instrument = CharField(
+        required=True,
+        widget=TextInput(
+            attrs={
+                "id": "primary_instrument",
+                "class": "block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100",
+            }
+        ),
+    )
+    secondary_instruments = CharField(
         required=False,
         widget=TextInput(
             attrs={
-                "id": "instruments",
+                "id": "secondary_instruments",
                 "class": "block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100",
             }
         ),
@@ -62,23 +71,39 @@ class MusicianForm(Form):
             raise ValidationError("A musician with this email already exists.")
         return email
 
-    def clean_instruments(self):
+    def clean_primary_instrument(self):
+        """
+        Tagify will submit something like: "Violin 1"
+        Turn that into our InstrumentEnum
+        """
+        # Clean primary instrument
+        raw_primary = self.cleaned_data.get("primary_instrument", "") or ""
+        raw_primary_instrument = raw_primary.strip()
+        if not raw_primary_instrument:
+            raise ValidationError("Primary instrument is required.")
+        if raw_primary_instrument not in InstrumentEnum.values():
+            raise ValidationError("Invalid primary instrument.")
+
+        return InstrumentEnum(raw_primary_instrument)
+
+    def clean_secondary_instruments(self):
         """
         Tagify will submit something like: "Violin 1,Violin 2,Cello"
         Turn that into a Python list: ["Violin 1", "Violin 2", "Cello"]
         """
-        raw = self.cleaned_data.get("instruments", "") or ""
-        raw_instruments = [
+        # Clean secondary instruments
+        raw = self.cleaned_data.get("secondary_instruments", "") or ""
+        raw_secondary_instruments = [
             raw_instrument.strip()
             for raw_instrument in raw.split(",")
             if raw_instrument.strip()
         ]
         instruments = []
-        for raw_instrument in raw_instruments:
-            if raw_instrument not in InstrumentEnum.values():
-                raise ValidationError("Invalid instrument.")
+        for raw_secondary_instrument in raw_secondary_instruments:
+            if raw_secondary_instrument not in InstrumentEnum.values():
+                raise ValidationError("Invalid secondary instrument.")
             else:
-                instruments.append(InstrumentEnum(raw_instrument))
+                instruments.append(InstrumentEnum(raw_secondary_instrument))
         return instruments
 
     def clean(self):

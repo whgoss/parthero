@@ -37,7 +37,8 @@ def test_assignment_payload_scopes_to_principal_section():
         email="terry-trombone@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.TROMBONE],
+        primary_instrument=InstrumentEnum.TROMBONE,
+        secondary_instruments=[],
     )
     section_trombone = create_musician(
         organization_id=str(organization.id),
@@ -46,7 +47,8 @@ def test_assignment_payload_scopes_to_principal_section():
         email="bea-bassbone@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.BASS_TROMBONE],
+        primary_instrument=InstrumentEnum.BASS_TROMBONE,
+        secondary_instruments=[],
     )
     trumpet = create_musician(
         organization_id=str(organization.id),
@@ -55,7 +57,8 @@ def test_assignment_payload_scopes_to_principal_section():
         email="trent-trumpet@example.com",
         principal=False,
         core_member=True,
-        instruments=[InstrumentEnum.TRUMPET],
+        primary_instrument=InstrumentEnum.TRUMPET,
+        secondary_instruments=[],
     )
 
     for musician in [principal_trombone, section_trombone, trumpet]:
@@ -108,7 +111,8 @@ def test_assignment_payload_includes_piccolo_for_flute_principal():
         email="flo-flute@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.FLUTE],
+        primary_instrument=InstrumentEnum.FLUTE,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
@@ -152,7 +156,8 @@ def test_assignment_payload_includes_timpani_for_percussion_principal():
         email="percussion-principal@example.com",
         principal=True,
         core_member=True,
-        instruments=[InstrumentEnum.PERCUSSION],
+        primary_instrument=InstrumentEnum.PERCUSSION,
+        secondary_instruments=[],
     )
     add_musician_to_program(
         organization_id=str(organization.id),
