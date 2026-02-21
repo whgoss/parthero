@@ -696,9 +696,13 @@ def _normalize_instrumentation_token(seg: str) -> str:
     - Lowercases
     Example: "Violin-1" -> "violin 1"
     """
-    # Remove tokens like "opt"
-    seg = re.sub(r"\bopt\b", "", seg)
+    # Remove optional markers while preserving neighboring instrument details.
+    seg = re.sub(r"\bopt\b", "", seg, flags=re.IGNORECASE)
     seg = re.sub(r"[-_]+", " ", seg)  # violin-1, violin_1 -> violin 1
+    # Normalize bracket details without collapsing token boundaries like "] 2[".
+    seg = re.sub(r"\s*([./])\s*", r"\1", seg)
+    seg = re.sub(r"\[\s+", "[", seg)
+    seg = re.sub(r"\s+\]", "]", seg)
     seg = re.sub(r"\s+", " ", seg).lower()
     return seg
 

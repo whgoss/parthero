@@ -2,10 +2,25 @@ import pytest
 from moto import mock_aws
 from core.enum.music import PartAssetType
 from core.enum.instruments import InstrumentEnum
-from core.services.music import create_part_asset, create_piece, get_parts
+from core.services.music import (
+    _normalize_instrumentation_token,
+    create_part_asset,
+    create_piece,
+    get_parts,
+)
 from tests.mocks import create_organization
 
 pytestmark = pytest.mark.django_db
+
+
+def test_normalize_instrumentation_token_removes_opt_in_winds_section():
+    normalized = _normalize_instrumentation_token("3  3[1.2.Eh]  3  3[1.2.opt cbn]")
+    assert normalized.split() == ["3", "3[1.2.eh]", "3", "3[1.2.cbn]"]
+
+
+def test_normalize_instrumentation_token_removes_opt_in_brass_section():
+    normalized = _normalize_instrumentation_token("4 2 3[1.2.opt cbn] 1")
+    assert normalized.split() == ["4", "2", "3[1.2.cbn]", "1"]
 
 
 def _part_has_instrument(part, instrument_enum: InstrumentEnum) -> bool:
